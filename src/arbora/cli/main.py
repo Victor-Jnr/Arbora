@@ -12,8 +12,10 @@ from arbora.cli.session import (
     build_runtime,
     format_plan,
     hard_confirm_ids_for,
+    persist_routines,
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport
+from arbora.providers.ollama import DEFAULT_MODEL
 
 
 BANNER = f"""
@@ -25,6 +27,7 @@ Commands:
   /audit      Show recent audit events
   /routines   List trusted routines
   /revoke ID  Revoke a trusted routine
+  /provider   Show active model provider
   /dry on|off Toggle dry-run mode (default: on)
   /quit       Exit
 
@@ -45,9 +48,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--execute", action="store_true", help="Disable dry-run (actually perform actions)")
     parser.add_argument("--promote", metavar="NAME", help="Promote successful plan to a trusted routine")
     parser.add_argument("--memory-dir", type=Path, default=None, help="Override local memory directory")
+    parser.add_argument(
+        "--provider",
+        default=None,
+        help="Model provider: ollama (default) or echo",
+    )
     args = parser.parse_args(argv)
 
-    runtime = build_runtime(memory_root=args.memory_dir)
+    runtime = build_runtime(memory_root=args.memory_dir, provider=args.provider)
     dry_run = not args.execute
 
     if args.goal:
@@ -61,7 +69,10 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     print(BANNER)
-    print(f"\nDry-run mode: {'ON' if dry_run else 'OFF (live execution)'}\n")
+    print(f"\nProvider: {runtime.provider_name}")
+    if runtime.provider_name == "ollama":
+        print(f"Ollama model default: {DEFAULT_MODEL} (override with ARBORA_OLLAMA_MODEL)")
+    print(f"Dry-run mode: {'ON' if dry_run else 'OFF (live execution)'}\n")
 
     while True:
         try:
@@ -81,9 +92,39 @@ def main(argv: list[str] | None = None) -> int:
 
         plan = runtime.planner.plan(raw)
         runtime.audit.record("plan_created", plan.rationale or plan.goal, plan_id=plan.id, goal=raw)
+        matched = runtime.broker.find_matching_routine(plan)
         print()
         print(format_plan(plan))
         print()
+
+        if matched is not None:
+            print(f"Trusted routine matched: '{matched.name}' — skipping re-approval.")
+            hard_ids = frozenset()
+            if plan.has_hard_confirmation_steps:
+                print("Hard-confirmation steps still require an explicit yes.")
+                if _confirm("Confirm sensitive steps? [y/N] "):
+                    hard_ids = hard_confirm_ids_for(plan, True)
+                else:
+                    hard_step_ids = {s.id for s in plan.steps if s.requires_hard_confirmation()}
+                    decision = ApprovalDecision(
+                        plan_id=plan.id,
+                        approved_step_ids=frozenset(s.id for s in plan.steps if s.id not in hard_step_ids),
+                        rejected_step_ids=frozenset(hard_step_ids),
+                    )
+                    results = runtime.broker.execute_plan(
+                        plan, decision, dry_run=dry_run, hard_confirmed_step_ids=frozenset()
+                    )
+                    _print_report(ExecutionReport(plan_id=plan.id, results=results))
+                    continue
+
+            decision = approve_all(plan)
+            results = runtime.broker.execute_plan(
+                plan, decision, dry_run=dry_run, hard_confirmed_step_ids=hard_ids
+            )
+            _print_report(ExecutionReport(plan_id=plan.id, results=results))
+            runtime.memory.set("last_goal", raw)
+            runtime.memory.set("last_plan_id", plan.id)
+            continue
 
         if not _confirm("Approve this plan? [y/N] "):
             runtime.audit.record("plan_rejected", "User rejected plan", plan_id=plan.id)
@@ -120,14 +161,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         report = ExecutionReport(plan_id=plan.id, results=results)
         _print_report(report)
+        if promote:
+            persist_routines(runtime)
         runtime.memory.set("last_goal", raw)
         runtime.memory.set("last_plan_id", plan.id)
 
 
 def _run_once(runtime, goal: str, *, dry_run: bool, auto_approve: bool, hard_confirm: bool, promote_name: str | None) -> int:
     plan = runtime.planner.plan(goal)
+    matched = runtime.broker.find_matching_routine(plan)
     print(format_plan(plan))
-    if not auto_approve:
+    if matched is not None:
+        print(f"\nTrusted routine matched: '{matched.name}' — running without --yes.")
+    elif not auto_approve:
         print("\nRefusing to execute without --yes in non-interactive mode.")
         return 2
 
@@ -143,7 +189,7 @@ def _run_once(runtime, goal: str, *, dry_run: bool, auto_approve: bool, hard_con
     else:
         decision = approve_all(
             plan,
-            promote_to_trusted=promote_name is not None,
+            promote_to_trusted=promote_name is not None and matched is None,
             trusted_name=promote_name,
         )
 
@@ -151,6 +197,8 @@ def _run_once(runtime, goal: str, *, dry_run: bool, auto_approve: bool, hard_con
         plan, decision, dry_run=dry_run, hard_confirmed_step_ids=hard_ids
     )
     report = ExecutionReport(plan_id=plan.id, results=results)
+    if promote_name and matched is None:
+        persist_routines(runtime)
     _print_report(report)
     return 0 if report.all_ok else 1
 
@@ -166,6 +214,9 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
     if cmd == "/help":
         print(BANNER)
         return dry_run, False
+    if cmd == "/provider":
+        print(f"Active provider: {runtime.provider_name}")
+        return dry_run, False
     if cmd == "/audit":
         events = runtime.audit.events()[-20:]
         if not events:
@@ -178,13 +229,16 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
         if not routines:
             print("(no trusted routines)")
         for routine in routines:
-            print(f"  {routine.id}  {routine.name}  fp={routine.plan_fingerprint}  v{routine.version}")
+            goal = f" goal={routine.goal_norm!r}" if routine.goal_norm else ""
+            print(f"  {routine.id}  {routine.name}  fp={routine.plan_fingerprint}  v{routine.version}{goal}")
         return dry_run, False
     if cmd == "/revoke":
         if not arg:
             print("Usage: /revoke ROUTINE_ID")
             return dry_run, False
         ok = runtime.broker.revoke_routine(arg)
+        if ok:
+            persist_routines(runtime)
         print("Revoked." if ok else "Routine not found.")
         return dry_run, False
     if cmd == "/dry":

@@ -18,7 +18,7 @@ GOALS = [
 
 def main() -> None:
     with tempfile.TemporaryDirectory() as tmp:
-        runtime = build_runtime(memory_root=Path(tmp))
+        runtime = build_runtime(memory_root=Path(tmp), provider="echo")
         for goal in GOALS:
             plan = runtime.planner.plan(goal)
             print("=" * 60)

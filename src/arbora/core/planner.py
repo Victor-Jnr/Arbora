@@ -1,17 +1,27 @@
 """Goal planner — turns natural-language goals into inspectable tool plans.
 
-Stage 1 uses a deterministic stub so the plan → approve → execute loop
-can be demonstrated without a model provider. Provider-backed planning
-plugs in later behind the same Plan/ToolStep types.
+Known journeys use deterministic templates. Unmatched goals may use a model
+provider (e.g. local Ollama) to propose a JSON plan, which is validated before
+returning. Models propose; the permission broker still disposes.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
+from typing import Any
 
 from arbora.core.types import Plan, Sensitivity, ToolStep, new_id
 from arbora.providers.base import ModelProvider
+
+ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
+    "desktop": frozenset({"list_running_apps", "launch_app"}),
+    "files": frozenset({"list_directory", "ensure_directory", "write_text", "preview_organise"}),
+    "terminal": frozenset({"run_powershell"}),
+}
+
+SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
 
 
 class GoalPlanner:
@@ -37,12 +47,118 @@ class GoalPlanner:
         if self._looks_like_terminal(lower):
             return self._terminal_plan(text)
 
+        model_plan = self._plan_with_provider(text)
+        if model_plan is not None:
+            return model_plan
+
+        return self._fallback_context_plan(text)
+
+    def _plan_with_provider(self, goal: str) -> Plan | None:
+        provider = self._provider
+        if provider is None:
+            return None
+        # EchoProvider is a stub — skip unless it is a real backend.
+        if getattr(provider, "name", "") == "echo-local":
+            return None
+        available = getattr(provider, "available", None)
+        if callable(available) and not available():
+            return None
+
+        prompt = self._provider_prompt(goal)
+        try:
+            raw = provider.complete(prompt)
+        except Exception:
+            return None
+
+        parsed = self._extract_json_object(raw)
+        if parsed is None:
+            return None
+        return self._plan_from_provider_json(goal, parsed)
+
+    def _provider_prompt(self, goal: str) -> str:
+        catalog = {
+            adapter: sorted(actions) for adapter, actions in ALLOWED_ACTIONS.items()
+        }
+        return (
+            "Propose an Arbora tool plan for the user goal.\n"
+            "Return ONLY a JSON object with keys: rationale (string), steps (array).\n"
+            "Each step: adapter, action, args (object), summary, sensitivity, side_effects (array of strings).\n"
+            f"Allowed adapters/actions: {json.dumps(catalog)}\n"
+            "sensitivity must be one of: read, mutate, destructive, credential, financial.\n"
+            "Prefer read-only diagnostics first. Never invent adapters or actions.\n"
+            "Keep plans short (1-5 steps).\n"
+            f"User goal: {goal}\n"
+        )
+
+    def _plan_from_provider_json(self, goal: str, data: dict[str, Any]) -> Plan | None:
+        raw_steps = data.get("steps")
+        if not isinstance(raw_steps, list) or not raw_steps:
+            return None
+
+        steps: list[ToolStep] = []
+        for item in raw_steps[:8]:
+            if not isinstance(item, dict):
+                return None
+            adapter = str(item.get("adapter", "")).strip()
+            action = str(item.get("action", "")).strip()
+            if adapter not in ALLOWED_ACTIONS or action not in ALLOWED_ACTIONS[adapter]:
+                return None
+            args = item.get("args") if isinstance(item.get("args"), dict) else {}
+            sens_raw = str(item.get("sensitivity", "read")).strip().lower()
+            sensitivity = SENSITIVITY_VALUES.get(sens_raw, Sensitivity.READ)
+            # Force destructive detection for dangerous shell commands.
+            if adapter == "terminal" and action == "run_powershell":
+                command = str(args.get("command", "")).lower()
+                if any(token in command for token in ("remove-item", "rm ", "del ", "format-", "rmdir")):
+                    sensitivity = Sensitivity.DESTRUCTIVE
+            side = item.get("side_effects") if isinstance(item.get("side_effects"), list) else []
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter=adapter,
+                    action=action,
+                    args=dict(args),
+                    summary=str(item.get("summary") or f"{adapter}.{action}"),
+                    sensitivity=sensitivity,
+                    side_effects=tuple(str(s) for s in side),
+                )
+            )
+
+        rationale = str(data.get("rationale") or "Plan proposed by local model provider.")
+        provider_name = getattr(self._provider, "name", "provider")
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=f"[{provider_name}] {rationale}",
+            steps=steps,
+        )
+
+    @staticmethod
+    def _extract_json_object(text: str) -> dict[str, Any] | None:
+        text = text.strip()
+        if not text:
+            return None
+        try:
+            data = json.loads(text)
+            return data if isinstance(data, dict) else None
+        except json.JSONDecodeError:
+            pass
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(0))
+            return data if isinstance(data, dict) else None
+        except json.JSONDecodeError:
+            return None
+
+    def _fallback_context_plan(self, text: str) -> Plan:
         return Plan(
             id=new_id("plan_"),
             goal=text,
             rationale=(
-                "No specialised journey matched. Offering a read-only context "
-                "gathering plan. Refine the goal or connect a model provider for richer planning."
+                "No specialised journey matched and no usable model plan was produced. "
+                "Offering a read-only context gathering plan."
             ),
             steps=[
                 ToolStep(
@@ -309,8 +425,9 @@ class GoalPlanner:
 
     @staticmethod
     def _looks_like_organise_downloads(lower: str) -> bool:
-        return "download" in lower and any(w in lower for w in ("organis", "organiz", "sort", "file"))
-
+        return "download" in lower and any(
+            w in lower for w in ("organis", "organiz", "sort my", "sort the", "filing")
+        )
     @staticmethod
     def _looks_like_list_files(lower: str) -> bool:
         return any(phrase in lower for phrase in ("list files", "show files", "what's in", "whats in"))

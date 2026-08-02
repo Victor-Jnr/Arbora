@@ -41,6 +41,10 @@ class Authorization:
     requires_hard_confirmation: bool = False
 
 
+def normalize_goal(goal: str) -> str:
+    return " ".join(goal.strip().lower().split())
+
+
 class PermissionBroker:
     """Authorises tool side effects via scopes, trust, and hard confirmations."""
 
@@ -76,6 +80,9 @@ class PermissionBroker:
     def list_routines(self) -> list[TrustedRoutine]:
         return list(self._routines.values())
 
+    def load_routines(self, routines: list[TrustedRoutine]) -> None:
+        self._routines = {routine.id: routine for routine in routines}
+
     def fingerprint_plan(self, plan: Plan) -> str:
         payload = [
             {
@@ -88,6 +95,14 @@ class PermissionBroker:
         ]
         raw = json.dumps(payload, sort_keys=True, default=str)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+    def find_matching_routine(self, plan: Plan) -> TrustedRoutine | None:
+        """Return a trusted routine whose fingerprint matches this plan."""
+        fingerprint = self.fingerprint_plan(plan)
+        for routine in self._routines.values():
+            if routine.enabled and routine.plan_fingerprint == fingerprint:
+                return routine
+        return None
 
     def authorize_step(
         self,
@@ -111,6 +126,7 @@ class PermissionBroker:
                 return Authorization(False, "User rejected hard-confirmation step")
             return Authorization(True, "Hard confirmation granted")
 
+        # Trusted routines may run matching non-sensitive steps without a fresh approval.
         if via_trusted is not None and via_trusted.enabled:
             if self._step_in_scopes(step, via_trusted.scopes):
                 return Authorization(True, f"Allowed by trusted routine '{via_trusted.name}'")
@@ -131,24 +147,33 @@ class PermissionBroker:
         *,
         dry_run: bool = False,
         hard_confirmed_step_ids: frozenset[str] | None = None,
+        use_trusted_match: bool = True,
     ) -> list[StepResult]:
         hard_confirmed_step_ids = hard_confirmed_step_ids or frozenset()
         results: list[StepResult] = []
 
-        trusted: TrustedRoutine | None = None
+        trusted = self.find_matching_routine(plan) if use_trusted_match else None
         fingerprint = self.fingerprint_plan(plan)
-        for routine in self._routines.values():
-            if routine.enabled and routine.plan_fingerprint == fingerprint:
-                trusted = routine
-                break
+        if trusted is not None:
+            self._audit.record(
+                "trusted_routine_matched",
+                f"Matched trusted routine '{trusted.name}'",
+                routine_id=trusted.id,
+                plan_id=plan.id,
+                fingerprint=fingerprint,
+            )
 
         for step in plan.steps:
-            approved = step.id in decision.approved_step_ids
+            if trusted is not None and not step.requires_hard_confirmation():
+                approved = True
+            else:
+                approved = step.id in decision.approved_step_ids
+
             auth = self.authorize_step(
                 step,
                 approved=approved,
                 hard_confirmed=step.id in hard_confirmed_step_ids,
-                via_trusted=trusted if approved else None,
+                via_trusted=trusted,
             )
             if not auth.allowed:
                 result = StepResult(
@@ -202,11 +227,17 @@ class PermissionBroker:
             for step in plan.steps
             if step.sensitivity not in HARD_CONFIRMATION_CLASSES
         ]
+        # Replace any existing routine with the same fingerprint.
+        for existing_id, existing in list(self._routines.items()):
+            if existing.plan_fingerprint == fingerprint:
+                del self._routines[existing_id]
+
         routine = TrustedRoutine(
             id=new_id("rtn_"),
             name=name,
             plan_fingerprint=fingerprint,
             scopes=scopes,
+            goal_norm=normalize_goal(plan.goal),
         )
         self._routines[routine.id] = routine
         self._audit.record(

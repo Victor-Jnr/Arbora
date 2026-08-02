@@ -91,7 +91,7 @@ class ScopeGrant:
 
 @dataclass
 class TrustedRoutine:
-    """Previously approved, scoped automation that may run without re-planning."""
+    """Previously approved, scoped automation that may run without re-approval."""
 
     id: str
     name: str
@@ -99,6 +99,7 @@ class TrustedRoutine:
     scopes: list[ScopeGrant]
     version: int = 1
     enabled: bool = True
+    goal_norm: str = ""
 
 
 @dataclass

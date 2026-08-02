@@ -18,6 +18,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/README.md` | Index of numbered commit documents |
 | `documentation/001-stage1-prototype-bootstrap.md` | Change doc for Stage 1 prototype bootstrap |
 | `documentation/002-commit-documentation-process.md` | Change doc for documentation process + changelog |
+| `documentation/003-trusted-routines-and-ollama.md` | Change doc for trusted routines and Ollama provider |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `apps/README.md` | Placeholder for future desktop shell / UI |
 | `scripts/demo_journeys.py` | Dry-run smoke demo of priority journeys |
@@ -26,7 +27,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/core/types.py` | Shared plan, step, scope, trust, and audit types |
 | `src/arbora/core/audit.py` | Append-only in-memory audit log |
 | `src/arbora/core/broker.py` | Permission broker — sole gate to tool side effects |
-| `src/arbora/core/planner.py` | Rule-based goal → plan stub for priority journeys |
+| `src/arbora/core/planner.py` | Goal → plan via templates and optional local model |
+| `src/arbora/core/routines_store.py` | Serialize/load trusted routines for local memory |
 | `src/arbora/adapters/__init__.py` | Adapter package exports |
 | `src/arbora/adapters/desktop.py` | Windows app list/launch adapter |
 | `src/arbora/adapters/files.py` | Files/folders listing, write, organise preview |
@@ -36,10 +38,33 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/providers/__init__.py` | Provider package exports |
 | `src/arbora/providers/base.py` | Provider-agnostic model protocol |
 | `src/arbora/providers/echo.py` | Local stub provider (no network) |
+| `src/arbora/providers/ollama.py` | Local Ollama HTTP provider (`gpt-oss:20b` default) |
 | `src/arbora/cli/__init__.py` | CLI package marker |
 | `src/arbora/cli/session.py` | Runtime wiring and plan formatting helpers |
 | `src/arbora/cli/main.py` | Interactive and one-shot CLI chat shell |
 | `tests/test_broker_and_planner.py` | Broker, planner, trust, and memory regression tests |
+
+---
+
+## 003 — Trusted routines and local Ollama provider (2026-08-02)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/broker.py` | Auto-run matching trusted routines; hard confirms still enforced |
+| `src/arbora/core/types.py` | Added `goal_norm` on trusted routines |
+| `src/arbora/core/routines_store.py` | Added persistence helpers for trusted routines |
+| `src/arbora/core/planner.py` | Added validated Ollama/JSON planning for unmatched goals |
+| `src/arbora/providers/ollama.py` | Added local Ollama provider defaulting to `gpt-oss:20b` |
+| `src/arbora/providers/__init__.py` | Exported `OllamaProvider` |
+| `src/arbora/cli/session.py` | Wired provider selection and routine persistence |
+| `src/arbora/cli/main.py` | Trusted-match UX, `--provider`, `/provider` |
+| `tests/test_broker_and_planner.py` | Added trusted-reuse and provider-plan tests |
+| `scripts/demo_journeys.py` | Forced echo provider for offline demo |
+| `docs/prototype.md` | Documented Ollama + trusted-routine usage |
+| `documentation/003-trusted-routines-and-ollama.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 003 |
+| `CHANGELOG.md` | Added file roles and section 003 |
+| `README.md` | Pointed Documentation section at 003 |
 
 ---
 
