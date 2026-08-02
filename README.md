@@ -32,6 +32,7 @@
 - [Out of scope (for now)](#out-of-scope-for-now)
 - [Success criteria](#success-criteria)
 - [Repository layout (proposed)](#repository-layout-proposed)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [Security](#security)
 - [License](#license)
@@ -61,14 +62,14 @@ The name *Arbora* (Latin for “tree”) reflects a living system that grows wit
 
 | Dimension | Current state |
 | --- | --- |
-| Product | Vision and design |
-| Runnable application | Not yet |
-| Install / setup docs | Not applicable yet |
+| Product | Vision + Stage 1 prototype |
+| Runnable application | CLI prototype (`arbora`) — not a packaged product |
+| Install / setup docs | See [docs/prototype.md](docs/prototype.md) and [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Public API | Not defined |
-| License intent | [GPL-3.0](#license) |
+| License | [GPL-3.0](LICENSE) |
 | Collaboration model | Open source |
 
-This repository currently holds the product vision. Implementation, packaging, and end-user documentation will appear as the project moves from vision → prototype → MVP.
+This repository holds the product vision plus an early Stage 1 prototype: a permission broker, Windows adapters, a rule-based planner stub, and a CLI plan → approve → execute loop. Packaging and end-user documentation will mature toward MVP.
 
 If you are evaluating Arbora as a user, contributor, or collaborator: treat this document as the source of truth for *what we intend to build* and *what we refuse to build*.
 
@@ -514,19 +515,21 @@ An early tester can, on a clean Windows install of Arbora:
 
 Dates are intentionally omitted. Stages advance when the previous stage’s quality bar is met.
 
-### Stage 0 — Vision and foundations (current)
+### Stage 0 — Vision and foundations
 
 - product vision and safety contract (this document);
 - repository bootstrap, licensing, contribution norms;
 - architecture spikes for permission broker and Windows adapters.
 
-### Stage 1 — Prototype
+### Stage 1 — Prototype (current)
 
-- chat shell + planner stub;
+- CLI chat shell + planner stub;
 - first Windows tool adapters (apps, files, terminal) behind the broker;
 - manual approval UX;
 - local-only memory sketch;
 - demo scripts for the three priority journeys (even if brittle).
+
+See [docs/prototype.md](docs/prototype.md) for how to run what exists today.
 
 ### Stage 2 — MVP
 
@@ -602,17 +605,29 @@ As implementation begins, the repository is expected to grow toward a structure 
 arbora/
   README.md                 # this vision document
   LICENSE                   # GPL-3.0
-  docs/                     # design notes, ADRs, user docs
+  CHANGELOG.md              # per-file roles and one-line change summaries
+  documentation/            # numbered commit change documents (NNN-*.md)
+  docs/                     # design notes, ADRs, prototype notes
   apps/                     # desktop shell / UI
-  core/                     # planner, policy, permission broker
-  adapters/                 # Windows, browser, files, terminal, dev tools
-  memory/                   # encrypted local context store
-  providers/                # local and cloud model providers
+  src/arbora/               # Stage 1 Python package (core, adapters, memory, providers, cli)
   tests/                    # unit, integration, safety regression tests
   scripts/                  # developer and release helpers
 ```
 
-Exact language and package boundaries will be decided during Stage 1 prototypes. What must not change casually is the **permission broker boundary**.
+Exact language and package boundaries continue to evolve in Stage 1. What must not change casually is the **permission broker boundary**.
+
+---
+
+## Documentation
+
+Commit-tied change history lives in [`documentation/`](documentation/README.md). Each meaningful commit adds the next numbered file (`001-…`, `002-…`, …) and updates that index. Per-file roles and one-line change summaries live in [`CHANGELOG.md`](CHANGELOG.md). Design notes that are not commit-tied stay under [`docs/`](docs/).
+
+| Latest | Document |
+| --- | --- |
+| 002 | [Commit documentation process](documentation/002-commit-documentation-process.md) |
+| 001 | [Stage 1 prototype bootstrap](documentation/001-stage1-prototype-bootstrap.md) |
+
+Full index: [documentation/README.md](documentation/README.md).
 
 ---
 
@@ -637,6 +652,7 @@ Arbora welcomes collaborators who care about useful automation *and* user agency
 - Do not commit secrets, personal traces, or live credentials.
 - Discuss large architectural changes before implementing them.
 - Treat user-facing claims carefully: document intent vs. availability explicitly.
+- On each commit, add the next numbered document under [`documentation/`](documentation/README.md), update this README’s Documentation section, and append per-file one-liners to [`CHANGELOG.md`](CHANGELOG.md).
 
 Issue templates, a code of conduct, and contributor guidelines will be added as the repository leaves pure vision stage. Until then, use this README as the north star.
 
@@ -676,7 +692,7 @@ That means:
 - derivative works that you distribute must also be available under GPL-compatible terms;
 - there is no warranty—see the full licence text for details.
 
-A `LICENSE` file with the full GPL-3.0 text will be added as the repository is formalised. Until that file exists, treat **GPL-3.0** as the declared licensing intent of this project.
+See the [`LICENSE`](LICENSE) file for the full GNU GPL v3.0 text.
 
 ---
 

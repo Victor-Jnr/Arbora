@@ -1,0 +1,32 @@
+# Arbora
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+.env.*
+
+# Local memory / runtime
+.arbora/
+
+# Test / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+.cursor/
+*.swp
+Thumbs.db
+Desktop.ini
+.DS_Store
