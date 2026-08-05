@@ -20,6 +20,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/002-commit-documentation-process.md` | Change doc for documentation process + changelog |
 | `documentation/003-trusted-routines-and-ollama.md` | Change doc for trusted routines and Ollama provider |
 | `documentation/004-encrypted-local-memory.md` | Change doc for encrypted local memory |
+| `documentation/005-harden-windows-adapters.md` | Change doc for Windows adapter hardening |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `apps/README.md` | Placeholder for future desktop shell / UI |
 | `scripts/demo_journeys.py` | Dry-run smoke demo of priority journeys |
@@ -31,7 +32,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/core/planner.py` | Goal → plan via templates and optional local model |
 | `src/arbora/core/routines_store.py` | Serialize/load trusted routines for local memory |
 | `src/arbora/adapters/__init__.py` | Adapter package exports |
-| `src/arbora/adapters/desktop.py` | Windows app list/launch adapter |
+| `src/arbora/adapters/powershell.py` | Shared PowerShell runner with timeout/truncation |
+| `src/arbora/adapters/desktop.py` | Windows app list/launch/focus adapter |
 | `src/arbora/adapters/files.py` | Files/folders listing, write, organise preview |
 | `src/arbora/adapters/terminal.py` | PowerShell execution adapter |
 | `src/arbora/memory/__init__.py` | Memory package exports |
@@ -46,6 +48,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/cli/main.py` | Interactive and one-shot CLI chat shell |
 | `tests/test_broker_and_planner.py` | Broker, planner, trust, and memory regression tests |
 | `tests/test_memory_crypto.py` | Encrypted memory roundtrip, migration, and wipe tests |
+| `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
+
+---
+
+## 005 — Harden Windows adapters (2026-08-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/powershell.py` | Added shared PowerShell runner with timeout and truncation |
+| `src/arbora/adapters/desktop.py` | Added aliases, clearer launch errors, and `focus_window` |
+| `src/arbora/adapters/files.py` | Expanded paths; clearer permission/OS errors |
+| `src/arbora/adapters/terminal.py` | Switched to shared runner; surface timeouts |
+| `src/arbora/adapters/__init__.py` | Exported shared runner helper |
+| `src/arbora/core/planner.py` | Allowed `focus_window`; workday focuses Notepad |
+| `tests/test_adapters_hardening.py` | Added adapter hardening tests |
+| `docs/prototype.md` | Marked adapter hardening done; next spikes updated |
+| `documentation/005-harden-windows-adapters.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 005 |
+| `CHANGELOG.md` | Added file roles and section 005 |
+| `README.md` | Pointed Documentation section at 005 |
 
 ---
 

@@ -53,6 +53,5 @@ Live execution: add `--execute`. Hard-confirmation steps still need `--hard-yes`
 
 ## Next spikes
 
-- Hardening Windows adapters
 - Browser adapter
 - Desktop chat UI (`apps/`)

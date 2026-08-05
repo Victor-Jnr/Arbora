@@ -16,7 +16,7 @@ from arbora.core.types import Plan, Sensitivity, ToolStep, new_id
 from arbora.providers.base import ModelProvider
 
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
-    "desktop": frozenset({"list_running_apps", "launch_app"}),
+    "desktop": frozenset({"list_running_apps", "launch_app", "focus_window"}),
     "files": frozenset({"list_directory", "ensure_directory", "write_text", "preview_organise"}),
     "terminal": frozenset({"run_powershell"}),
 }
@@ -205,6 +205,15 @@ class GoalPlanner:
                     summary="Launch Notepad as a stand-in for your notes app",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("Starts a process",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="focus_window",
+                    args={"title_contains": "Notepad"},
+                    summary="Focus the Notepad window if it is open",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Brings an existing window to the foreground",),
                 ),
                 ToolStep(
                     id=new_id("step_"),

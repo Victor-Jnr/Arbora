@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from typing import Any
 
+from arbora.adapters.powershell import require_windows, run_powershell
 from arbora.core.types import StepResult, new_id
 
 
@@ -36,6 +35,14 @@ class TerminalAdapter:
                 error="run_powershell requires args.command",
                 dry_run=dry_run,
             )
+        if timeout_seconds < 1:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="timeout_seconds must be >= 1",
+                dry_run=dry_run,
+            )
         if dry_run:
             return StepResult(
                 step_id=new_id("res_"),
@@ -43,24 +50,18 @@ class TerminalAdapter:
                 output=f"[dry-run] Would run PowerShell: {command}",
                 dry_run=True,
             )
-        if sys.platform != "win32":
-            # Allow non-Windows CI/dev by falling back to a no-op shell echo.
+        platform_error = require_windows()
+        if platform_error:
             return StepResult(
                 step_id=new_id("res_"),
                 ok=True,
                 output=f"[non-windows stub] Skipped PowerShell: {command}",
             )
-        completed = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", command],
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-            check=False,
-        )
-        ok = completed.returncode == 0
+
+        outcome = run_powershell(command, timeout_seconds=timeout_seconds)
         return StepResult(
             step_id=new_id("res_"),
-            ok=ok,
-            output=(completed.stdout or "").strip(),
-            error=(completed.stderr or "").strip() or (None if ok else f"exit code {completed.returncode}"),
+            ok=outcome.ok,
+            output=outcome.stdout,
+            error=outcome.error,
         )

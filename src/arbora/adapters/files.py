@@ -17,22 +17,28 @@ _EXTENSION_GROUPS = {
 }
 
 
+def resolve_user_path(raw: str) -> Path:
+    """Expand ~ and environment variables, then resolve (non-strict)."""
+    text = str(raw or "").strip() or "."
+    return Path(text).expanduser().resolve(strict=False)
+
+
 class FilesAdapter:
     name = "files"
 
     def execute(self, action: str, args: dict[str, Any], *, dry_run: bool = False) -> StepResult:
         if action == "list_directory":
-            return self._list_directory(Path(str(args.get("path", "."))), dry_run=dry_run)
+            return self._list_directory(resolve_user_path(str(args.get("path", "."))), dry_run=dry_run)
         if action == "ensure_directory":
-            return self._ensure_directory(Path(str(args.get("path", ""))), dry_run=dry_run)
+            return self._ensure_directory(resolve_user_path(str(args.get("path", ""))), dry_run=dry_run)
         if action == "write_text":
             return self._write_text(
-                Path(str(args.get("path", ""))),
+                resolve_user_path(str(args.get("path", ""))),
                 str(args.get("content", "")),
                 dry_run=dry_run,
             )
         if action == "preview_organise":
-            return self._preview_organise(Path(str(args.get("path", ""))), dry_run=dry_run)
+            return self._preview_organise(resolve_user_path(str(args.get("path", ""))), dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -63,13 +69,35 @@ class FilesAdapter:
                 output="",
                 error=f"Not a directory: {path}",
             )
-        entries = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
-        lines = []
+        try:
+            entries = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+        except PermissionError:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Permission denied listing: {path}",
+            )
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to list {path}: {exc}",
+            )
+
+        lines: list[str] = []
+        skipped = 0
         for entry in entries[:100]:
-            kind = "dir" if entry.is_dir() else "file"
-            lines.append(f"[{kind}] {entry.name}")
+            try:
+                kind = "dir" if entry.is_dir() else "file"
+                lines.append(f"[{kind}] {entry.name}")
+            except OSError:
+                skipped += 1
         if len(entries) > 100:
             lines.append(f"... and {len(entries) - 100} more")
+        if skipped:
+            lines.append(f"(skipped {skipped} inaccessible entries)")
         return StepResult(
             step_id=new_id("res_"),
             ok=True,
@@ -92,7 +120,22 @@ class FilesAdapter:
                 output=f"[dry-run] Would ensure directory {path}",
                 dry_run=True,
             )
-        path.mkdir(parents=True, exist_ok=True)
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Permission denied creating directory: {path}",
+            )
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to create directory {path}: {exc}",
+            )
         return StepResult(step_id=new_id("res_"), ok=True, output=f"Directory ready: {path}")
 
     def _write_text(self, path: Path, content: str, *, dry_run: bool) -> StepResult:
@@ -111,12 +154,26 @@ class FilesAdapter:
                 output=f"[dry-run] Would write {len(content)} chars to {path}",
                 dry_run=True,
             )
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+        except PermissionError:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Permission denied writing: {path}",
+            )
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to write {path}: {exc}",
+            )
         return StepResult(step_id=new_id("res_"), ok=True, output=f"Wrote {path}")
 
     def _preview_organise(self, path: Path, *, dry_run: bool) -> StepResult:
-        # Classification is always non-mutating; dry_run only changes the label.
         if not path.exists() or not path.is_dir():
             return StepResult(
                 step_id=new_id("res_"),
@@ -125,9 +182,31 @@ class FilesAdapter:
                 error=f"Cannot preview organise for {path}",
                 dry_run=dry_run,
             )
+        try:
+            entries = list(path.iterdir())
+        except PermissionError:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Permission denied listing: {path}",
+                dry_run=dry_run,
+            )
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to list {path}: {exc}",
+                dry_run=dry_run,
+            )
+
         groups: dict[str, list[str]] = defaultdict(list)
-        for entry in path.iterdir():
-            if not entry.is_file():
+        for entry in entries:
+            try:
+                if not entry.is_file():
+                    continue
+            except OSError:
                 continue
             bucket = "other"
             suffix = entry.suffix.lower()

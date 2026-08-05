@@ -1,12 +1,24 @@
-"""Windows desktop / process adapter (Stage 1)."""
+"""Windows desktop / process adapter."""
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from typing import Any
 
+from arbora.adapters.powershell import ps_quote, require_windows, run_powershell
 from arbora.core.types import StepResult, new_id
+
+# Common friendly names → launch targets (Start-Process / Appx aliases).
+APP_ALIASES: dict[str, str] = {
+    "notepad": "notepad.exe",
+    "calc": "calc.exe",
+    "calculator": "calc.exe",
+    "cmd": "cmd.exe",
+    "powershell": "powershell.exe",
+    "explorer": "explorer.exe",
+    "paint": "mspaint.exe",
+    "mspaint": "mspaint.exe",
+    "wordpad": "wordpad.exe",
+}
 
 
 class DesktopAdapter:
@@ -17,6 +29,11 @@ class DesktopAdapter:
             return self._list_running_apps(dry_run=dry_run)
         if action == "launch_app":
             return self._launch_app(str(args.get("name", "")), dry_run=dry_run)
+        if action == "focus_window":
+            return self._focus_window(
+                str(args.get("title_contains", args.get("name", ""))),
+                dry_run=dry_run,
+            )
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -30,39 +47,32 @@ class DesktopAdapter:
             return StepResult(
                 step_id=new_id("res_"),
                 ok=True,
-                output="[dry-run] Would list running applications",
+                output="[dry-run] Would list running applications with visible windows",
                 dry_run=True,
             )
-        if sys.platform != "win32":
-            return StepResult(
-                step_id=new_id("res_"),
-                ok=False,
-                output="",
-                error="Desktop adapter currently targets Windows",
-            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+
         command = (
-            "Get-Process | Where-Object { $_.MainWindowTitle } | "
-            "Select-Object -First 25 ProcessName, Id, MainWindowTitle | "
-            "Format-Table -AutoSize | Out-String"
+            "Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle } | "
+            "Sort-Object ProcessName | "
+            "Select-Object -First 40 ProcessName, Id, MainWindowTitle | "
+            "Format-Table -AutoSize | Out-String -Width 200"
         )
-        completed = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", command],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-        if completed.returncode != 0:
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
             return StepResult(
                 step_id=new_id("res_"),
                 ok=False,
-                output=completed.stdout.strip(),
-                error=completed.stderr.strip() or f"exit code {completed.returncode}",
+                output=outcome.stdout,
+                error=outcome.error,
             )
-        return StepResult(step_id=new_id("res_"), ok=True, output=completed.stdout.strip())
+        output = outcome.stdout or "(no visible windows found)"
+        return StepResult(step_id=new_id("res_"), ok=True, output=output)
 
     def _launch_app(self, name: str, *, dry_run: bool) -> StepResult:
-        if not name:
+        if not name.strip():
             return StepResult(
                 step_id=new_id("res_"),
                 ok=False,
@@ -70,38 +80,92 @@ class DesktopAdapter:
                 error="launch_app requires args.name",
                 dry_run=dry_run,
             )
+        target = APP_ALIASES.get(name.strip().lower(), name.strip())
         if dry_run:
             return StepResult(
                 step_id=new_id("res_"),
                 ok=True,
-                output=f"[dry-run] Would launch '{name}'",
+                output=f"[dry-run] Would launch '{target}'",
                 dry_run=True,
             )
-        if sys.platform != "win32":
-            return StepResult(
-                step_id=new_id("res_"),
-                ok=False,
-                output="",
-                error="Desktop adapter currently targets Windows",
-            )
-        # Use Start-Process so we don't block on GUI apps.
-        safe_name = name.replace("'", "''")
-        completed = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", f"Start-Process -FilePath '{safe_name}'"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+
+        quoted = ps_quote(target)
+        # Resolve via Get-Command when possible, then Start-Process.
+        command = (
+            f"$target = {quoted}; "
+            "$cmd = Get-Command -Name $target -ErrorAction SilentlyContinue; "
+            "if ($cmd) { $target = $cmd.Source }; "
+            "try { "
+            "  Start-Process -FilePath $target -ErrorAction Stop | Out-Null; "
+            "  Write-Output \"Launched: $target\" "
+            "} catch { "
+            "  Write-Error $_.Exception.Message; exit 1 "
+            "}"
         )
-        if completed.returncode != 0:
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
             return StepResult(
                 step_id=new_id("res_"),
                 ok=False,
-                output=completed.stdout.strip(),
-                error=completed.stderr.strip() or f"Failed to launch '{name}'",
+                output=outcome.stdout,
+                error=outcome.error or f"Failed to launch '{target}'",
             )
         return StepResult(
             step_id=new_id("res_"),
             ok=True,
-            output=f"Launched '{name}'",
+            output=outcome.stdout or f"Launched '{target}'",
         )
+
+    def _focus_window(self, title_contains: str, *, dry_run: bool) -> StepResult:
+        needle = title_contains.strip()
+        if not needle:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="focus_window requires args.title_contains or args.name",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would focus window containing '{needle}'",
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+
+        quoted = ps_quote(needle)
+        command = (
+            "Add-Type -TypeDefinition @'\n"
+            "using System;\n"
+            "using System.Runtime.InteropServices;\n"
+            "public class ArboraWin {\n"
+            "  [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n"
+            "  [DllImport(\"user32.dll\")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);\n"
+            "}\n"
+            "'@ -ErrorAction SilentlyContinue; "
+            f"$needle = {quoted}; "
+            "$proc = Get-Process | Where-Object { "
+            "  $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -and "
+            "  ($_.MainWindowTitle -like ('*' + $needle + '*') -or $_.ProcessName -like ('*' + $needle + '*')) "
+            "} | Select-Object -First 1; "
+            "if (-not $proc) { Write-Error \"No window matched '$needle'\"; exit 1 }; "
+            "[void][ArboraWin]::ShowWindowAsync($proc.MainWindowHandle, 9); "
+            "[void][ArboraWin]::SetForegroundWindow($proc.MainWindowHandle); "
+            "Write-Output (\"Focused: {0} (pid {1}) title={2}\" -f $proc.ProcessName, $proc.Id, $proc.MainWindowTitle)"
+        )
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or f"Failed to focus '{needle}'",
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=outcome.stdout or f"Focused '{needle}'")
