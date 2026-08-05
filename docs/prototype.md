@@ -7,7 +7,7 @@
 - Rule-based goal planner for priority journeys, with local Ollama fallback for unmatched goals
 - Trusted routines: matching plans skip re-approval (hard confirmations still required)
 - Windows adapters: desktop, files, terminal
-- Local memory sketch with persisted trusted routines (`memory/store.py`)
+- Local memory with Fernet encryption at rest (Windows DPAPI-wrapped key)
 - Providers: Ollama (`gpt-oss:20b` by default) and echo stub
 - Interactive CLI chat: plan → approve → execute (`arbora`)
 
@@ -49,10 +49,10 @@ Live execution: add `--execute`. Hard-confirmation steps still need `--hard-yes`
 2. Adapters never run unless the broker authorises the step.
 3. Destructive / credential / financial steps always need hard confirmation — even inside trusted routines.
 4. Dry-run is the default in the CLI.
+5. Personal memory is encrypted at rest locally (`/memory`, `/wipe`).
 
 ## Next spikes
 
-- Encrypted memory (Fernet / OS keychain)
 - Hardening Windows adapters
 - Browser adapter
 - Desktop chat UI (`apps/`)

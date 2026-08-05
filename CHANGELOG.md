@@ -19,6 +19,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/001-stage1-prototype-bootstrap.md` | Change doc for Stage 1 prototype bootstrap |
 | `documentation/002-commit-documentation-process.md` | Change doc for documentation process + changelog |
 | `documentation/003-trusted-routines-and-ollama.md` | Change doc for trusted routines and Ollama provider |
+| `documentation/004-encrypted-local-memory.md` | Change doc for encrypted local memory |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `apps/README.md` | Placeholder for future desktop shell / UI |
 | `scripts/demo_journeys.py` | Dry-run smoke demo of priority journeys |
@@ -34,7 +35,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/adapters/files.py` | Files/folders listing, write, organise preview |
 | `src/arbora/adapters/terminal.py` | PowerShell execution adapter |
 | `src/arbora/memory/__init__.py` | Memory package exports |
-| `src/arbora/memory/store.py` | Local on-device preferences key/value store |
+| `src/arbora/memory/crypto.py` | Fernet encryption and DPAPI/file key wrapping |
+| `src/arbora/memory/store.py` | Encrypted on-device preferences key/value store |
 | `src/arbora/providers/__init__.py` | Provider package exports |
 | `src/arbora/providers/base.py` | Provider-agnostic model protocol |
 | `src/arbora/providers/echo.py` | Local stub provider (no network) |
@@ -43,6 +45,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/cli/session.py` | Runtime wiring and plan formatting helpers |
 | `src/arbora/cli/main.py` | Interactive and one-shot CLI chat shell |
 | `tests/test_broker_and_planner.py` | Broker, planner, trust, and memory regression tests |
+| `tests/test_memory_crypto.py` | Encrypted memory roundtrip, migration, and wipe tests |
+
+---
+
+## 004 — Encrypted local memory (2026-08-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/memory/crypto.py` | Added Fernet + Windows DPAPI / file-key crypto helpers |
+| `src/arbora/memory/store.py` | Store preferences as `preferences.enc`; migrate plaintext JSON |
+| `src/arbora/memory/__init__.py` | Exported crypto symbols |
+| `src/arbora/cli/main.py` | Added `/memory` and `/wipe`; show encryption status at startup |
+| `pyproject.toml` | Added `cryptography` dependency |
+| `tests/test_memory_crypto.py` | Added encryption roundtrip, migration, and wipe tests |
+| `docs/prototype.md` | Documented encrypted memory and wipe |
+| `documentation/004-encrypted-local-memory.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 004 |
+| `CHANGELOG.md` | Added file roles and section 004 |
+| `README.md` | Pointed Documentation section at 004 |
 
 ---
 

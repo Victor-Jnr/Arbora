@@ -28,6 +28,8 @@ Commands:
   /routines   List trusted routines
   /revoke ID  Revoke a trusted routine
   /provider   Show active model provider
+  /memory     Show local memory encryption status
+  /wipe       Wipe local memory (routines/preferences)
   /dry on|off Toggle dry-run mode (default: on)
   /quit       Exit
 
@@ -72,6 +74,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nProvider: {runtime.provider_name}")
     if runtime.provider_name == "ollama":
         print(f"Ollama model default: {DEFAULT_MODEL} (override with ARBORA_OLLAMA_MODEL)")
+    print(
+        f"Memory: encrypted at rest ({runtime.memory.key_backend} key) under {runtime.memory.root}"
+    )
     print(f"Dry-run mode: {'ON' if dry_run else 'OFF (live execution)'}\n")
 
     while True:
@@ -216,6 +221,20 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
         return dry_run, False
     if cmd == "/provider":
         print(f"Active provider: {runtime.provider_name}")
+        return dry_run, False
+    if cmd == "/memory":
+        print(f"Root: {runtime.memory.root}")
+        print(f"Encrypted at rest: {runtime.memory.encrypted_at_rest}")
+        print(f"Key backend: {runtime.memory.key_backend}")
+        print(f"Keys in store: {len(runtime.memory.export())}")
+        return dry_run, False
+    if cmd == "/wipe":
+        if not _confirm("Wipe local memory (preferences + trusted routines)? [y/N] "):
+            print("Cancelled.")
+            return dry_run, False
+        runtime.memory.wipe()
+        runtime.broker.load_routines([])
+        print("Local memory wiped.")
         return dry_run, False
     if cmd == "/audit":
         events = runtime.audit.events()[-20:]

@@ -22,7 +22,9 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Office/Business :: Scheduling",
 ]
-dependencies = []
+dependencies = [
+  "cryptography>=42.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

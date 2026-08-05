@@ -14,6 +14,10 @@ venv/
 
 # Local memory / runtime
 .arbora/
+key.dpapi
+key.bin
+preferences.enc
+preferences.json
 
 # Test / tooling
 .pytest_cache/

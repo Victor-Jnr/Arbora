@@ -1,7 +1,8 @@
-"""Encrypted-at-rest local context store (Stage 1 sketch).
+"""Encrypted-at-rest local context store.
 
-Uses Fernet when cryptography is available; otherwise falls back to a clear
-warning that encryption is not active yet. Preferences stay on-device either way.
+Preferences and trusted-routine metadata are sealed with Fernet. On Windows the
+Fernet key is wrapped with DPAPI. Plaintext `preferences.json` from earlier
+prototypes is migrated automatically into `preferences.enc`.
 """
 
 from __future__ import annotations
@@ -11,15 +12,27 @@ import os
 from pathlib import Path
 from typing import Any
 
+from arbora.memory.crypto import MemoryCrypto
+
 
 class LocalMemoryStore:
-    """Simple key/value preference and routine metadata store."""
+    """Encrypted key/value preference and routine metadata store."""
 
-    def __init__(self, root: Path | None = None) -> None:
+    def __init__(self, root: Path | None = None, *, force_file_key: bool = False) -> None:
         self.root = root or Path.home() / ".arbora" / "memory"
         self.root.mkdir(parents=True, exist_ok=True)
-        self._path = self.root / "preferences.json"
+        self._plain_path = self.root / "preferences.json"
+        self._enc_path = self.root / "preferences.enc"
+        self._crypto = MemoryCrypto(self.root, force_file_key=force_file_key)
         self._data: dict[str, Any] = self._load()
+
+    @property
+    def encrypted_at_rest(self) -> bool:
+        return self._crypto.encrypted_at_rest
+
+    @property
+    def key_backend(self) -> str:
+        return self._crypto.key_backend
 
     def get(self, key: str, default: Any = None) -> Any:
         return self._data.get(key, default)
@@ -29,22 +42,56 @@ class LocalMemoryStore:
         self._save()
 
     def wipe(self) -> None:
+        """Erase stored memory (keeps the application; rotates to a fresh key)."""
+        use_file_key = self._crypto.key_backend == "file"
         self._data = {}
-        if self._path.exists():
-            self._path.unlink()
+        for path in (self._enc_path, self._plain_path):
+            if path.exists():
+                path.unlink()
+        self._crypto.wipe_key()
+        # Recreate crypto/key so subsequent writes work in the same process.
+        self._crypto = MemoryCrypto(self.root, force_file_key=use_file_key)
 
     def export(self) -> dict[str, Any]:
         return dict(self._data)
 
     def _load(self) -> dict[str, Any]:
-        if not self._path.exists():
-            return {}
-        try:
-            return json.loads(self._path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            return {}
+        if self._enc_path.exists():
+            token = self._enc_path.read_bytes()
+            if not token:
+                return {}
+            raw = self._crypto.decrypt(token)
+            try:
+                data = json.loads(raw.decode("utf-8"))
+            except json.JSONDecodeError:
+                return {}
+            return data if isinstance(data, dict) else {}
+
+        if self._plain_path.exists():
+            try:
+                data = json.loads(self._plain_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                data = {}
+            if not isinstance(data, dict):
+                data = {}
+            self._data = data
+            self._save()
+            try:
+                self._plain_path.unlink()
+            except OSError:
+                pass
+            return data
+
+        return {}
 
     def _save(self) -> None:
-        tmp = self._path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(self._data, indent=2, sort_keys=True), encoding="utf-8")
-        os.replace(tmp, self._path)
+        payload = json.dumps(self._data, indent=2, sort_keys=True).encode("utf-8")
+        token = self._crypto.encrypt(payload)
+        tmp = self._enc_path.with_suffix(".tmp")
+        tmp.write_bytes(token)
+        os.replace(tmp, self._enc_path)
+        if self._plain_path.exists():
+            try:
+                self._plain_path.unlink()
+            except OSError:
+                pass

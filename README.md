@@ -624,6 +624,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 004 | [Encrypted local memory](documentation/004-encrypted-local-memory.md) |
 | 003 | [Trusted routines and local Ollama](documentation/003-trusted-routines-and-ollama.md) |
 | 002 | [Commit documentation process](documentation/002-commit-documentation-process.md) |
 | 001 | [Stage 1 prototype bootstrap](documentation/001-stage1-prototype-bootstrap.md) |
