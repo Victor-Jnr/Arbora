@@ -10,6 +10,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 004 | [Encrypted local memory](004-encrypted-local-memory.md) | 2026-08-05 | Fernet at-rest encryption + Windows DPAPI key wrap |
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
+| 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
 
 Design notes and ADRs that are not commit-tied live under [`docs/`](../docs/).
 

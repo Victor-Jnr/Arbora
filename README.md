@@ -624,6 +624,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 007 | [Tkinter desktop chat](documentation/007-tkinter-desktop-chat.md) |
 | 006 | [Browser adapter (Playwright)](documentation/006-browser-adapter-playwright.md) |
 | 005 | [Harden Windows adapters](documentation/005-harden-windows-adapters.md) |
 | 004 | [Encrypted local memory](documentation/004-encrypted-local-memory.md) |

@@ -22,8 +22,13 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/004-encrypted-local-memory.md` | Change doc for encrypted local memory |
 | `documentation/005-harden-windows-adapters.md` | Change doc for Windows adapter hardening |
 | `documentation/006-browser-adapter-playwright.md` | Change doc for Playwright browser adapter |
+| `documentation/007-tkinter-desktop-chat.md` | Change doc for Tkinter desktop chat |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
-| `apps/README.md` | Placeholder for future desktop shell / UI |
+| `apps/README.md` | Desktop chat run instructions |
+| `apps/__init__.py` | Apps package marker |
+| `apps/desktop_chat/__init__.py` | Desktop chat package marker |
+| `apps/desktop_chat/__main__.py` | `python -m apps.desktop_chat` entry |
+| `apps/desktop_chat/app.py` | Tkinter plan→approve→execute chat window |
 | `scripts/demo_journeys.py` | Dry-run smoke demo of priority journeys |
 | `src/arbora/__init__.py` | Package version and top-level identity |
 | `src/arbora/core/__init__.py` | Core exports (broker, planner, audit, types) |
@@ -52,6 +57,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_memory_crypto.py` | Encrypted memory roundtrip, migration, and wipe tests |
 | `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
 | `tests/test_browser_adapter.py` | Browser adapter and research journey tests |
+| `tests/test_desktop_chat.py` | Tkinter desktop chat smoke tests |
+
+---
+
+## 007 — Tkinter desktop chat (2026-08-07)
+
+| File | Change |
+| --- | --- |
+| `apps/desktop_chat/app.py` | Added Tkinter chat UI for plan→approve→execute |
+| `apps/desktop_chat/__main__.py` | Added module entrypoint |
+| `apps/desktop_chat/__init__.py` | Added package marker |
+| `apps/__init__.py` | Added apps package marker |
+| `apps/README.md` | Documented `arbora-ui` usage |
+| `pyproject.toml` | Added `arbora-ui` script and apps package discovery |
+| `tests/test_desktop_chat.py` | Added construction smoke tests |
+| `docs/prototype.md` | Documented desktop UI; updated next spikes |
+| `documentation/007-tkinter-desktop-chat.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 007 |
+| `CHANGELOG.md` | Added file roles and section 007 |
+| `README.md` | Pointed Documentation section at 007 |
 
 ---
 

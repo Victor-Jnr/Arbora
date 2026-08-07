@@ -10,6 +10,7 @@
 - Local memory with Fernet encryption at rest (Windows DPAPI-wrapped key)
 - Providers: Ollama (`gpt-oss:20b` by default) and echo stub
 - Interactive CLI chat: plan → approve → execute (`arbora`)
+- Desktop chat UI: Tkinter (`arbora-ui`)
 
 ## Run
 
@@ -48,6 +49,7 @@ Research dry-run:
 
 ```powershell
 arbora --provider echo --goal "research https://example.com" --yes
+arbora-ui
 ```
 
 ## Design invariants
@@ -61,4 +63,5 @@ arbora --provider echo --goal "research https://example.com" --yes
 
 ## Next spikes
 
-- Desktop chat UI (`apps/`)
+- Packaging for early private testers
+- Richer browser actions (optional click flows) behind the broker
