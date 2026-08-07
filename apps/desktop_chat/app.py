@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import threading
 import tkinter as tk
-from pathlib import Path
 from tkinter import messagebox, ttk
 
 from arbora.cli.session import (
@@ -14,6 +14,7 @@ from arbora.cli.session import (
     persist_routines,
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport, Plan
+from arbora.setup_status import LIGHT_HEX, Light, ServiceStatus, install_playwright_chromium, probe_all
 
 
 # Forest / ink palette — product chrome, not generic AI purple.
@@ -33,8 +34,8 @@ class ArboraChatApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("Arbora")
-        self.root.geometry("920x680")
-        self.root.minsize(720, 520)
+        self.root.geometry("960x700")
+        self.root.minsize(760, 540)
         self.root.configure(bg=COLORS["bg"])
 
         self.provider_var = tk.StringVar(value="echo")
@@ -44,6 +45,9 @@ class ArboraChatApp:
         self._runtime = build_runtime(provider=self.provider_var.get())
         self._plan: Plan | None = None
         self._matched_trusted = False
+        self._status_dots: dict[str, tk.Canvas] = {}
+        self._status_labels: dict[str, tk.StringVar] = {}
+        self._setup_busy = False
 
         self._build_style()
         self._build_ui()
@@ -52,6 +56,7 @@ class ArboraChatApp:
             f"Provider: {self._runtime.provider_name} | "
             f"Memory: {self._runtime.memory.key_backend}\n"
         )
+        self.refresh_status_lights()
 
     def _build_style(self) -> None:
         style = ttk.Style(self.root)
@@ -62,9 +67,10 @@ class ArboraChatApp:
         font_ui = ("Segoe UI Variable", 11)
         font_brand = ("Cascadia Mono", 28, "bold")
         font_mono = ("Cascadia Mono", 10)
-        # Fallbacks if Cascadia missing.
         try:
-            self.root.tk.call("font", "create", "ArboraBrand", "-family", "Cascadia Mono", "-size", 28, "-weight", "bold")
+            self.root.tk.call(
+                "font", "create", "ArboraBrand", "-family", "Cascadia Mono", "-size", 28, "-weight", "bold"
+            )
         except tk.TclError:
             font_brand = ("Consolas", 28, "bold")
             font_mono = ("Consolas", 10)
@@ -91,12 +97,42 @@ class ArboraChatApp:
     def _build_ui(self) -> None:
         header = ttk.Frame(self.root, style="TFrame")
         header.pack(fill="x", padx=24, pady=(20, 8))
-        ttk.Label(header, text="Arbora", style="Brand.TLabel").pack(anchor="w")
+
+        left = ttk.Frame(header, style="TFrame")
+        left.pack(side="left", fill="x", expand=True)
+        ttk.Label(left, text="Arbora", style="Brand.TLabel").pack(anchor="w")
         ttk.Label(
-            header,
+            left,
             text="Personal Windows assistant — plan, approve, execute under your rules.",
             style="Muted.TLabel",
         ).pack(anchor="w", pady=(4, 0))
+
+        # Corner status lights for connected local services.
+        status_corner = tk.Frame(header, bg=COLORS["panel"], padx=12, pady=10)
+        status_corner.pack(side="right", anchor="ne")
+        tk.Label(
+            status_corner,
+            text="Connections",
+            bg=COLORS["panel"],
+            fg=COLORS["muted"],
+            font=("Segoe UI", 9),
+        ).pack(anchor="w")
+        for name in ("Memory", "Ollama", "Playwright"):
+            row = tk.Frame(status_corner, bg=COLORS["panel"])
+            row.pack(anchor="w", pady=2)
+            dot = tk.Canvas(row, width=12, height=12, bg=COLORS["panel"], highlightthickness=0)
+            dot.pack(side="left", padx=(0, 8))
+            dot.create_oval(1, 1, 11, 11, fill=LIGHT_HEX[Light.YELLOW], outline="")
+            label_var = tk.StringVar(value=f"{name}: checking…")
+            tk.Label(
+                row,
+                textvariable=label_var,
+                bg=COLORS["panel"],
+                fg=COLORS["ink"],
+                font=("Segoe UI", 9),
+            ).pack(side="left")
+            self._status_dots[name] = dot
+            self._status_labels[name] = label_var
 
         controls = ttk.Frame(self.root, style="TFrame")
         controls.pack(fill="x", padx=24, pady=8)
@@ -112,6 +148,8 @@ class ArboraChatApp:
         provider.bind("<<ComboboxSelected>>", self._on_provider_change)
         ttk.Checkbutton(controls, text="Dry-run", variable=self.dry_run_var).pack(side="left", padx=(0, 16))
         ttk.Checkbutton(controls, text="Promote after success", variable=self.promote_var).pack(side="left")
+        ttk.Button(controls, text="Refresh status", command=self.refresh_status_lights).pack(side="right", padx=(8, 0))
+        ttk.Button(controls, text="Setup", style="Accent.TButton", command=self.open_setup).pack(side="right")
 
         self.transcript = tk.Text(
             self.root,
@@ -153,11 +191,109 @@ class ArboraChatApp:
         ttk.Button(actions, text="Audit", command=self.show_audit).pack(side="left")
         ttk.Label(actions, textvariable=self.routine_name_var, style="Muted.TLabel").pack(side="right")
 
+    def _set_light(self, status: ServiceStatus) -> None:
+        dot = self._status_dots.get(status.name)
+        label = self._status_labels.get(status.name)
+        if dot is None or label is None:
+            return
+        color = LIGHT_HEX[status.light]
+        dot.delete("all")
+        dot.create_oval(1, 1, 11, 11, fill=color, outline="")
+        label.set(f"{status.name}: {status.detail}")
+
+    def refresh_status_lights(self) -> None:
+        for name in self._status_labels:
+            self._status_labels[name].set(f"{name}: checking…")
+            dot = self._status_dots[name]
+            dot.delete("all")
+            dot.create_oval(1, 1, 11, 11, fill=LIGHT_HEX[Light.YELLOW], outline="")
+
+        def work() -> None:
+            results = probe_all()
+            self.root.after(0, lambda: self._apply_status(results))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _apply_status(self, results: list[ServiceStatus]) -> None:
+        for status in results:
+            self._set_light(status)
+
+    def open_setup(self) -> None:
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Arbora Setup")
+        dialog.configure(bg=COLORS["bg"])
+        dialog.transient(self.root)
+        dialog.geometry("420x280")
+        dialog.grab_set()
+
+        ttk.Label(dialog, text="Local setup", style="Brand.TLabel").pack(anchor="w", padx=16, pady=(16, 4))
+        ttk.Label(
+            dialog,
+            text="Install optional runtimes Arbora uses for browser research and local models.",
+            style="Muted.TLabel",
+            wraplength=380,
+        ).pack(anchor="w", padx=16, pady=(0, 12))
+
+        status_var = tk.StringVar(value="Ready.")
+        ttk.Label(dialog, textvariable=status_var, style="Muted.TLabel").pack(anchor="w", padx=16)
+
+        def install_chromium() -> None:
+            if self._setup_busy:
+                return
+            self._setup_busy = True
+            status_var.set("Installing Chromium… (this can take a minute)")
+            self._set_light(ServiceStatus("Playwright", Light.YELLOW, "installing…"))
+
+            def work() -> None:
+                ok, detail = install_playwright_chromium()
+                def done() -> None:
+                    self._setup_busy = False
+                    if ok:
+                        status_var.set("Chromium installed.")
+                        self._log("Setup: Playwright Chromium installed.\n")
+                        messagebox.showinfo("Arbora Setup", "Chromium is ready for browser actions.")
+                    else:
+                        status_var.set("Install failed.")
+                        self._log(f"Setup failed:\n{detail}\n")
+                        messagebox.showerror("Arbora Setup", detail[:1000] or "Install failed")
+                    self.refresh_status_lights()
+
+                self.root.after(0, done)
+
+            threading.Thread(target=work, daemon=True).start()
+
+        def refresh() -> None:
+            status_var.set("Refreshing connection lights…")
+            self.refresh_status_lights()
+
+        btn_row = ttk.Frame(dialog, style="TFrame")
+        btn_row.pack(fill="x", padx=16, pady=16)
+        ttk.Button(btn_row, text="Install Chromium", style="Accent.TButton", command=install_chromium).pack(
+            anchor="w", pady=4
+        )
+        ttk.Button(btn_row, text="Refresh lights", command=refresh).pack(anchor="w", pady=4)
+        ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(anchor="w", pady=8)
+
+        tip = (
+            "Ollama: start the Ollama app and pull your model, e.g.\n"
+            "  ollama pull gpt-oss:20b\n"
+            "Green = ready, yellow = partial, red = unavailable."
+        )
+        tk.Label(
+            dialog,
+            text=tip,
+            bg=COLORS["bg"],
+            fg=COLORS["muted"],
+            justify="left",
+            font=("Segoe UI", 9),
+        ).pack(anchor="w", padx=16, pady=(0, 16))
+
     def _on_provider_change(self, _event=None) -> None:
         self._runtime = build_runtime(provider=self.provider_var.get())
         self._plan = None
         self._matched_trusted = False
         self._log(f"Switched provider to {self._runtime.provider_name}\n")
+        self.refresh_status_lights()
 
     def _log(self, text: str) -> None:
         self.transcript.configure(state="normal")

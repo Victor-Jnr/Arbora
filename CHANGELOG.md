@@ -23,6 +23,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/005-harden-windows-adapters.md` | Change doc for Windows adapter hardening |
 | `documentation/006-browser-adapter-playwright.md` | Change doc for Playwright browser adapter |
 | `documentation/007-tkinter-desktop-chat.md` | Change doc for Tkinter desktop chat |
+| `documentation/008-setup-and-status-lights.md` | Change doc for Setup button and status lights |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `apps/README.md` | Desktop chat run instructions |
 | `apps/__init__.py` | Apps package marker |
@@ -31,6 +32,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `apps/desktop_chat/app.py` | Tkinter plan→approve→execute chat window |
 | `scripts/demo_journeys.py` | Dry-run smoke demo of priority journeys |
 | `src/arbora/__init__.py` | Package version and top-level identity |
+| `src/arbora/setup_status.py` | Probe Memory/Ollama/Playwright and install Chromium |
 | `src/arbora/core/__init__.py` | Core exports (broker, planner, audit, types) |
 | `src/arbora/core/types.py` | Shared plan, step, scope, trust, and audit types |
 | `src/arbora/core/audit.py` | Append-only in-memory audit log |
@@ -58,6 +60,22 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
 | `tests/test_browser_adapter.py` | Browser adapter and research journey tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat smoke tests |
+| `tests/test_setup_status.py` | Status probe regression tests |
+
+---
+
+## 008 — Setup button and connection status lights (2026-08-07)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/setup_status.py` | Added service probes and Chromium install helper |
+| `apps/desktop_chat/app.py` | Added Connections lights, Setup dialog, Refresh status |
+| `apps/README.md` | Documented Setup and status lights |
+| `tests/test_setup_status.py` | Added probe tests |
+| `documentation/008-setup-and-status-lights.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 008 |
+| `CHANGELOG.md` | Added file roles and section 008 |
+| `README.md` | Pointed Documentation section at 008 |
 
 ---
 

@@ -17,4 +17,4 @@ Or:
 python -m apps.desktop_chat
 ```
 
-Uses forest/ink chrome, provider selector (echo/ollama), dry-run toggle, trusted-routine awareness, and hard-confirmation dialogs for sensitive steps.
+Uses forest/ink chrome, provider selector (echo/ollama), dry-run toggle, trusted-routine awareness, hard-confirmation dialogs, a **Connections** corner with red/yellow/green lights (Memory / Ollama / Playwright), and **Setup** to install Chromium.
