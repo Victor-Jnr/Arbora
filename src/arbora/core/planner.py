@@ -19,6 +19,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
     "desktop": frozenset({"list_running_apps", "launch_app", "focus_window"}),
     "files": frozenset({"list_directory", "ensure_directory", "write_text", "preview_organise"}),
     "terminal": frozenset({"run_powershell"}),
+    "browser": frozenset({"open_url", "get_title", "extract_text", "extract_links", "save_brief", "close"}),
 }
 
 SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
@@ -44,6 +45,8 @@ class GoalPlanner:
             return self._organise_downloads_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
+        if self._looks_like_research(lower, text):
+            return self._research_plan(text)
         if self._looks_like_terminal(lower):
             return self._terminal_plan(text)
 
@@ -404,6 +407,80 @@ class GoalPlanner:
             ],
         )
 
+    def _research_plan(self, goal: str) -> Plan:
+        url_match = re.search(r"https?://[^\s\"']+", goal)
+        url = url_match.group(0) if url_match else "https://example.com"
+        topic = re.sub(r"https?://[^\s\"']+", "", goal, count=1).strip(" -:")
+        topic = re.sub(
+            r"^(research|summarise|summarize|save a brief about|save brief about)\s+",
+            "",
+            topic,
+            flags=re.I,
+        ).strip() or "web page"
+        brief_name = re.sub(r"[^\w\-]+", "-", topic.lower()).strip("-")[:48] or "brief"
+        brief_path = str(Path.home() / "ArboraBriefs" / f"{brief_name}.md")
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale="Web research journey: open page, extract content, save a local cited brief.",
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="browser",
+                    action="open_url",
+                    args={"url": url, "headed": False},
+                    summary=f"Open {url} in headless Chromium",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Launches Playwright Chromium and navigates to URL",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="browser",
+                    action="get_title",
+                    args={},
+                    summary="Read page title",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads DOM title",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="browser",
+                    action="extract_text",
+                    args={},
+                    summary="Extract main visible text (truncated)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads page text as untrusted data",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="browser",
+                    action="extract_links",
+                    args={},
+                    summary="Extract http(s) links from the page",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads anchor hrefs",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="browser",
+                    action="save_brief",
+                    args={"path": brief_path, "topic": topic},
+                    summary=f"Save research brief to {brief_path}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Writes a markdown file under ArboraBriefs",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="browser",
+                    action="close",
+                    args={},
+                    summary="Close browser session",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Closes Playwright Chromium",),
+                ),
+            ],
+        )
+
     @staticmethod
     def _looks_like_workday_start(lower: str) -> bool:
         return any(
@@ -440,6 +517,18 @@ class GoalPlanner:
     @staticmethod
     def _looks_like_list_files(lower: str) -> bool:
         return any(phrase in lower for phrase in ("list files", "show files", "what's in", "whats in"))
+
+    @staticmethod
+    def _looks_like_research(lower: str, original: str) -> bool:
+        if re.search(r"https?://", original):
+            return any(
+                phrase in lower
+                for phrase in ("research", "summarise", "summarize", "brief", "read this", "open ")
+            ) or lower.startswith("http")
+        return any(
+            phrase in lower
+            for phrase in ("research ", "save a brief", "web brief", "summarise the page", "summarize the page")
+        )
 
     @staticmethod
     def _looks_like_terminal(lower: str) -> bool:

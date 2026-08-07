@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from arbora.adapters import DesktopAdapter, FilesAdapter, TerminalAdapter
+from arbora.adapters import BrowserAdapter, DesktopAdapter, FilesAdapter, TerminalAdapter
 from arbora.core.audit import AuditLog
 from arbora.core.broker import PermissionBroker
 from arbora.core.planner import GoalPlanner
@@ -48,6 +48,7 @@ def build_runtime(memory_root: Path | None = None, provider: str | None = None) 
     broker.register_adapter(DesktopAdapter())
     broker.register_adapter(FilesAdapter())
     broker.register_adapter(TerminalAdapter())
+    broker.register_adapter(BrowserAdapter())
     memory = LocalMemoryStore(root=memory_root)
     broker.load_routines(routines_from_dicts(memory.get("trusted_routines")))
     model = select_provider(provider)

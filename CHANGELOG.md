@@ -21,6 +21,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/003-trusted-routines-and-ollama.md` | Change doc for trusted routines and Ollama provider |
 | `documentation/004-encrypted-local-memory.md` | Change doc for encrypted local memory |
 | `documentation/005-harden-windows-adapters.md` | Change doc for Windows adapter hardening |
+| `documentation/006-browser-adapter-playwright.md` | Change doc for Playwright browser adapter |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `apps/README.md` | Placeholder for future desktop shell / UI |
 | `scripts/demo_journeys.py` | Dry-run smoke demo of priority journeys |
@@ -36,6 +37,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/adapters/desktop.py` | Windows app list/launch/focus adapter |
 | `src/arbora/adapters/files.py` | Files/folders listing, write, organise preview |
 | `src/arbora/adapters/terminal.py` | PowerShell execution adapter |
+| `src/arbora/adapters/browser.py` | Playwright browser navigate/extract/brief adapter |
 | `src/arbora/memory/__init__.py` | Memory package exports |
 | `src/arbora/memory/crypto.py` | Fernet encryption and DPAPI/file key wrapping |
 | `src/arbora/memory/store.py` | Encrypted on-device preferences key/value store |
@@ -49,6 +51,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_broker_and_planner.py` | Broker, planner, trust, and memory regression tests |
 | `tests/test_memory_crypto.py` | Encrypted memory roundtrip, migration, and wipe tests |
 | `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
+| `tests/test_browser_adapter.py` | Browser adapter and research journey tests |
+
+---
+
+## 006 — Browser adapter Playwright (2026-08-07)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/browser.py` | Added Playwright open/extract/save-brief/close actions |
+| `src/arbora/adapters/__init__.py` | Exported `BrowserAdapter` |
+| `src/arbora/cli/session.py` | Registered browser adapter in runtime |
+| `src/arbora/core/planner.py` | Added research journey and browser allow-list |
+| `pyproject.toml` | Added `playwright` dependency |
+| `tests/test_browser_adapter.py` | Added URL validation, dry-run, and mocked browser tests |
+| `docs/prototype.md` | Documented Chromium install and research demo |
+| `documentation/006-browser-adapter-playwright.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 006 |
+| `CHANGELOG.md` | Added file roles and section 006 |
+| `README.md` | Pointed Documentation section at 006 |
 
 ---
 

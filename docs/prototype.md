@@ -6,7 +6,7 @@
 - Permission broker (`core/broker.py`) as the only path to tool side effects
 - Rule-based goal planner for priority journeys, with local Ollama fallback for unmatched goals
 - Trusted routines: matching plans skip re-approval (hard confirmations still required)
-- Windows adapters: desktop, files, terminal
+- Windows adapters: desktop, files, terminal, browser (Playwright)
 - Local memory with Fernet encryption at rest (Windows DPAPI-wrapped key)
 - Providers: Ollama (`gpt-oss:20b` by default) and echo stub
 - Interactive CLI chat: plan → approve → execute (`arbora`)
@@ -15,6 +15,7 @@
 
 ```powershell
 pip install -e ".[dev]"
+playwright install chromium
 arbora
 ```
 
@@ -43,6 +44,12 @@ The third call should match the trusted routine and run without `--yes`.
 
 Live execution: add `--execute`. Hard-confirmation steps still need `--hard-yes`.
 
+Research dry-run:
+
+```powershell
+arbora --provider echo --goal "research https://example.com" --yes
+```
+
 ## Design invariants
 
 1. Models propose; the broker disposes.
@@ -50,8 +57,8 @@ Live execution: add `--execute`. Hard-confirmation steps still need `--hard-yes`
 3. Destructive / credential / financial steps always need hard confirmation — even inside trusted routines.
 4. Dry-run is the default in the CLI.
 5. Personal memory is encrypted at rest locally (`/memory`, `/wipe`).
+6. Browser page text is untrusted data and is never auto-executed as tools.
 
 ## Next spikes
 
-- Browser adapter
 - Desktop chat UI (`apps/`)
