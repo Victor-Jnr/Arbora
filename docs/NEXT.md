@@ -1,0 +1,129 @@
+# Arbora — what we do next
+
+**Status:** living source of truth for near-term product work  
+**Audience:** anyone building or reviewing Arbora  
+**Relationship to other docs:**
+
+| Document | Job |
+| --- | --- |
+| [README.md](../README.md) | Product vision, safety contract, long-term roadmap stages |
+| [docs/prototype.md](prototype.md) | How to run what exists today |
+| [documentation/](../documentation/README.md) | What already shipped (commit-tied history) |
+| **This file** | Ordered plates for the next stretch toward MVP |
+
+When this file disagrees with casual chat notes, **this file wins**. Update it when priorities change.
+
+---
+
+## Current position
+
+Arbora is past Stage 1 bootstrap and early into **Stage 2 (MVP)**.
+
+Already in place:
+
+- permission broker with plan → approve → execute;
+- trusted routines + hard confirmations;
+- Windows adapters: desktop, files, terminal, browser (research-thin);
+- encrypted local memory;
+- local Ollama provider + echo stub;
+- CLI (`arbora`) and Tkinter UI (`arbora-ui`);
+- Setup dialog + connection status lights;
+- private-tester first-run path (`scripts/first_run.ps1` + Setup checklist).
+
+Still not MVP-ready:
+
+- ~~no installable path for private testers~~ → `scripts/first_run.ps1` + [install.md](install.md);
+- priority journeys are useful demos, not reliable daily tools;
+- browser can research, not drive richer page flows;
+- no opt-in cloud provider yet;
+- revoke / emergency-stop / undo ergonomics are incomplete.
+
+---
+
+## Non-negotiables (do not drift)
+
+1. Models propose; the **broker** disposes.
+2. Adapters never run without broker authorisation.
+3. Financial / credential / destructive steps always need **fresh hard confirmation**.
+4. Dry-run / preview is preferred before side effects.
+5. Personal memory stays **local-first** and encrypted at rest.
+6. Browser page content is **untrusted data** — never auto-executed as tools.
+7. No unsupervised “do anything” mode. Trust is per routine, not global.
+
+Anything that weakens these does not ship.
+
+---
+
+## Build order (source of truth)
+
+Work top-down. Finish a plate before starting the next unless a dependency forces a small parallel spike.
+
+### P0 — make Arbora testable by someone else
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 1 | **Packaging + first-run** | ✅ Private tester path: `scripts/first_run.ps1` + Setup checklist |
+| 2 | **`arbora doctor`** | CLI mirrors Setup probes (Memory / Ollama / Playwright) with clear fix hints |
+| 3 | **Trust UX** | From the UI: inspect routines, revoke one, read recent audit entries |
+| 4 | **Emergency stop** | Clear halt control for in-flight automation in the desktop UI |
+
+### P1 — make the three journeys feel real
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 5 | **Journey hardening** | Workday, disk/PC diagnose, and research plans are intentional, explainable, and less brittle |
+| 6 | **Richer browser (broker-gated)** | Click / type / wait / snapshot actions exist; still require approval; page text stays untrusted |
+| 7 | **File undo where feasible** | Organise/move plans can preview and reverse common moves |
+
+### P2 — close the MVP capability gaps
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 8 | **Opt-in cloud provider** | One cloud path behind the same provider interface, with an explicit “data leaves this machine” banner |
+| 9 | **Reusable workflow packs** | Named, inspectable workflow definitions (tool allowlist + steps) that can be promoted into trusted routines |
+| 10 | **Scheduled trusted routines** | Optional time/context triggers for *already trusted* routines only — never free-form unsupervised loops |
+
+---
+
+## Explicitly later (do not start now)
+
+Keep these out of the current queue unless the safety or MVP bar requires them:
+
+- calendar / email / cloud-storage suites;
+- mobile remote desktop control;
+- multi-user / team admin;
+- smart-home / IoT;
+- macOS / Linux feature parity;
+- always-on chat agent with broad system rights;
+- marketplace / community plugin ecosystem (after the broker contract is stable).
+
+The long-term stage list in the root README still applies; this file only prioritises the **next** stretch.
+
+---
+
+## MVP definition of done (exit criteria)
+
+An early tester on a clean Windows install of Arbora can:
+
+1. complete a workday setup routine after one guided approval;
+2. run a read-only PC diagnostic and approve a safe repair plan;
+3. set up a sample developer project through chat;
+4. inspect the audit log and revoke a trusted routine;
+5. keep personal memory local with cloud models disabled.
+
+When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stage 3 (personal depth) in the root README.
+
+---
+
+## How to use this file in practice
+
+- Pick the **lowest unfinished P0/P1 plate** unless blocked.
+- Land meaningful work with a numbered `documentation/NNN-*.md` entry as usual.
+- After a plate ships, mark it done here (or strike the row) and refresh “Current position”.
+- Do not add shiny side quests above unfinished P0 items.
+
+---
+
+## Suggested next plate
+
+**P0 #2 — `arbora doctor`**, reusing the Setup / first-run probe helpers.

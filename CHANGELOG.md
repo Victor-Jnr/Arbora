@@ -24,7 +24,11 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/006-browser-adapter-playwright.md` | Change doc for Playwright browser adapter |
 | `documentation/007-tkinter-desktop-chat.md` | Change doc for Tkinter desktop chat |
 | `documentation/008-setup-and-status-lights.md` | Change doc for Setup button and status lights |
+| `documentation/009-packaging-and-first-run.md` | Change doc for packaging and first-run |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
+| `docs/NEXT.md` | Source of truth for near-term MVP build order |
+| `docs/install.md` | Private-tester Windows install guide |
+| `scripts/first_run.ps1` | One-shot venv + editable install for Windows testers |
 | `apps/README.md` | Desktop chat run instructions |
 | `apps/__init__.py` | Apps package marker |
 | `apps/desktop_chat/__init__.py` | Desktop chat package marker |
@@ -60,7 +64,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
 | `tests/test_browser_adapter.py` | Browser adapter and research journey tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat smoke tests |
-| `tests/test_setup_status.py` | Status probe regression tests |
+| `tests/test_setup_status.py` | Status probe and first-run checklist regression tests |
+
+---
+
+## 009 — Packaging and first-run for private testers (2026-08-08)
+
+| File | Change |
+| --- | --- |
+| `scripts/first_run.ps1` | Added Windows one-shot venv + install script |
+| `docs/install.md` | Added private-tester install guide |
+| `src/arbora/setup_status.py` | Added fix hints and first-run checklist helpers |
+| `apps/desktop_chat/app.py` | Setup dialog shows first-run checklist |
+| `apps/README.md` | Pointed testers at first_run.ps1 |
+| `CONTRIBUTING.md` | Documented preferred first-run setup |
+| `docs/prototype.md` | Linked install path; noted P0#1 done |
+| `docs/NEXT.md` | Marked packaging plate done |
+| `tests/test_setup_status.py` | Added checklist / fix-hint tests |
+| `documentation/009-packaging-and-first-run.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 009 |
+| `CHANGELOG.md` | Added file roles and section 009 |
+| `README.md` | Linked install docs and Documentation 009 |
 
 ---
 

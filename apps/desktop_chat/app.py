@@ -14,7 +14,14 @@ from arbora.cli.session import (
     persist_routines,
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport, Plan
-from arbora.setup_status import LIGHT_HEX, Light, ServiceStatus, install_playwright_chromium, probe_all
+from arbora.setup_status import (
+    LIGHT_HEX,
+    Light,
+    ServiceStatus,
+    first_run_checklist,
+    install_playwright_chromium,
+    probe_all,
+)
 
 
 # Forest / ink palette — product chrome, not generic AI purple.
@@ -223,19 +230,53 @@ class ArboraChatApp:
         dialog.title("Arbora Setup")
         dialog.configure(bg=COLORS["bg"])
         dialog.transient(self.root)
-        dialog.geometry("420x280")
+        dialog.geometry("480x420")
         dialog.grab_set()
 
-        ttk.Label(dialog, text="Local setup", style="Brand.TLabel").pack(anchor="w", padx=16, pady=(16, 4))
+        ttk.Label(dialog, text="First-run checklist", style="Brand.TLabel").pack(
+            anchor="w", padx=16, pady=(16, 4)
+        )
         ttk.Label(
             dialog,
-            text="Install optional runtimes Arbora uses for browser research and local models.",
+            text="Private-tester path: run scripts/first_run.ps1 once, then use this checklist.",
             style="Muted.TLabel",
-            wraplength=380,
-        ).pack(anchor="w", padx=16, pady=(0, 12))
+            wraplength=440,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        checklist_box = tk.Text(
+            dialog,
+            wrap="word",
+            height=10,
+            bg=COLORS["panel"],
+            fg=COLORS["ink"],
+            relief="flat",
+            font=self.font_mono,
+            padx=10,
+            pady=8,
+        )
+        checklist_box.pack(fill="both", expand=True, padx=16, pady=4)
+        checklist_box.configure(state="disabled")
 
         status_var = tk.StringVar(value="Ready.")
         ttk.Label(dialog, textvariable=status_var, style="Muted.TLabel").pack(anchor="w", padx=16)
+
+        def render_checklist() -> None:
+            steps = first_run_checklist()
+            lines: list[str] = []
+            for step in steps:
+                mark = {"green": "[ok]", "yellow": "[..]", "red": "[!!]"}[step.status.light.value]
+                req = "required" if step.required else "optional"
+                lines.append(f"{mark} {step.title} ({req})")
+                lines.append(f"    {step.status.detail}")
+                if step.status.light != Light.GREEN:
+                    lines.append(f"    fix: {step.status.fix_hint}")
+                lines.append("")
+            checklist_box.configure(state="normal")
+            checklist_box.delete("1.0", "end")
+            checklist_box.insert("1.0", "\n".join(lines).rstrip() + "\n")
+            checklist_box.configure(state="disabled")
+            for step in steps:
+                self._set_light(step.status)
 
         def install_chromium() -> None:
             if self._setup_busy:
@@ -246,6 +287,7 @@ class ArboraChatApp:
 
             def work() -> None:
                 ok, detail = install_playwright_chromium()
+
                 def done() -> None:
                     self._setup_busy = False
                     if ok:
@@ -256,6 +298,7 @@ class ArboraChatApp:
                         status_var.set("Install failed.")
                         self._log(f"Setup failed:\n{detail}\n")
                         messagebox.showerror("Arbora Setup", detail[:1000] or "Install failed")
+                    render_checklist()
                     self.refresh_status_lights()
 
                 self.root.after(0, done)
@@ -263,21 +306,22 @@ class ArboraChatApp:
             threading.Thread(target=work, daemon=True).start()
 
         def refresh() -> None:
-            status_var.set("Refreshing connection lights…")
+            status_var.set("Refreshing checklist…")
+            render_checklist()
             self.refresh_status_lights()
+            status_var.set("Checklist updated.")
 
         btn_row = ttk.Frame(dialog, style="TFrame")
-        btn_row.pack(fill="x", padx=16, pady=16)
+        btn_row.pack(fill="x", padx=16, pady=12)
         ttk.Button(btn_row, text="Install Chromium", style="Accent.TButton", command=install_chromium).pack(
             anchor="w", pady=4
         )
-        ttk.Button(btn_row, text="Refresh lights", command=refresh).pack(anchor="w", pady=4)
+        ttk.Button(btn_row, text="Refresh checklist", command=refresh).pack(anchor="w", pady=4)
         ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(anchor="w", pady=8)
 
         tip = (
-            "Ollama: start the Ollama app and pull your model, e.g.\n"
-            "  ollama pull gpt-oss:20b\n"
-            "Green = ready, yellow = partial, red = unavailable."
+            "Green = ready, yellow = partial, red = blocked.\n"
+            "Full install guide: docs/install.md"
         )
         tk.Label(
             dialog,
@@ -287,6 +331,8 @@ class ArboraChatApp:
             justify="left",
             font=("Segoe UI", 9),
         ).pack(anchor="w", padx=16, pady=(0, 16))
+
+        render_checklist()
 
     def _on_provider_change(self, _event=None) -> None:
         self._runtime = build_runtime(provider=self.provider_var.get())

@@ -14,6 +14,16 @@
 
 ## Run
 
+Private testers (recommended):
+
+```powershell
+.\scripts\first_run.ps1
+.\.venv\Scripts\Activate.ps1
+arbora-ui
+```
+
+See [install.md](install.md) for details. Manual path:
+
 ```powershell
 pip install -e ".[dev]"
 playwright install chromium
@@ -63,5 +73,8 @@ arbora-ui
 
 ## Next spikes
 
-- Packaging for early private testers
-- Richer browser actions (optional click flows) behind the broker
+Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Current top plates:
+
+- ~~Packaging + first-run for private testers~~ (done — see `scripts/first_run.ps1`)
+- `arbora doctor` + trust UX (revoke / audit / emergency stop)
+- Journey hardening and richer broker-gated browser actions

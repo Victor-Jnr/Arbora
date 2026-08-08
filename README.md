@@ -64,7 +64,8 @@ The name *Arbora* (Latin for “tree”) reflects a living system that grows wit
 | --- | --- |
 | Product | Vision + Stage 1 prototype |
 | Runnable application | CLI prototype (`arbora`) — not a packaged product |
-| Install / setup docs | See [docs/prototype.md](docs/prototype.md) and [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Install / setup docs | See [docs/install.md](docs/install.md), [docs/prototype.md](docs/prototype.md), and [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Near-term build order | [docs/NEXT.md](docs/NEXT.md) (source of truth for what we do next) |
 | Public API | Not defined |
 | License | [GPL-3.0](LICENSE) |
 | Collaboration model | Open source |
@@ -620,10 +621,11 @@ Exact language and package boundaries continue to evolve in Stage 1. What must n
 
 ## Documentation
 
-Commit-tied change history lives in [`documentation/`](documentation/README.md). Each meaningful commit adds the next numbered file (`001-…`, `002-…`, …) and updates that index. Per-file roles and one-line change summaries live in [`CHANGELOG.md`](CHANGELOG.md). Design notes that are not commit-tied stay under [`docs/`](docs/).
+Commit-tied change history lives in [`documentation/`](documentation/README.md). Each meaningful commit adds the next numbered file (`001-…`, `002-…`, …) and updates that index. Per-file roles and one-line change summaries live in [`CHANGELOG.md`](CHANGELOG.md). Design notes that are not commit-tied stay under [`docs/`](docs/). Near-term build order (what we do next) is **[docs/NEXT.md](docs/NEXT.md)**. Private-tester install: **[docs/install.md](docs/install.md)**.
 
 | Latest | Document |
 | --- | --- |
+| 009 | [Packaging and first-run](documentation/009-packaging-and-first-run.md) |
 | 008 | [Setup and status lights](documentation/008-setup-and-status-lights.md) |
 | 007 | [Tkinter desktop chat](documentation/007-tkinter-desktop-chat.md) |
 | 006 | [Browser adapter (Playwright)](documentation/006-browser-adapter-playwright.md) |

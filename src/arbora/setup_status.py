@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from arbora.providers.ollama import DEFAULT_MODEL
+
 
 class Light(str, Enum):
     GREEN = "green"
@@ -27,6 +29,24 @@ class ServiceStatus:
     name: str
     light: Light
     detail: str
+
+    @property
+    def fix_hint(self) -> str:
+        return fix_hint_for(self)
+
+
+@dataclass(frozen=True)
+class FirstRunStep:
+    """One checklist row for private-tester first-run / Setup."""
+
+    id: str
+    title: str
+    status: ServiceStatus
+    required: bool = True
+
+    @property
+    def ready(self) -> bool:
+        return self.status.light == Light.GREEN
 
 
 def probe_ollama() -> ServiceStatus:
@@ -92,6 +112,42 @@ def probe_memory() -> ServiceStatus:
 
 def probe_all() -> list[ServiceStatus]:
     return [probe_memory(), probe_ollama(), probe_playwright()]
+
+
+def fix_hint_for(status: ServiceStatus) -> str:
+    """Human-readable next action for a probe result."""
+    if status.light == Light.GREEN:
+        return "Ready."
+    if status.name == "Memory":
+        return "Reinstall Arbora (`pip install -e .`) and check cryptography / DPAPI access."
+    if status.name == "Ollama":
+        if status.light == Light.RED:
+            return "Install/start Ollama, then run: ollama serve"
+        return f"Pull the model: ollama pull {DEFAULT_MODEL}"
+    if status.name == "Playwright":
+        if "package" in status.detail.lower():
+            return "Install the package: pip install playwright"
+        return "Install Chromium: python -m playwright install chromium  (or Setup → Install Chromium)"
+    return "See docs/install.md"
+
+
+def first_run_checklist() -> list[FirstRunStep]:
+    """Ordered first-run steps derived from live probes."""
+    memory, ollama, playwright = probe_all()
+    return [
+        FirstRunStep("memory", "Encrypted local memory", memory, required=True),
+        FirstRunStep("ollama", "Local model (Ollama)", ollama, required=False),
+        FirstRunStep("playwright", "Browser runtime (Playwright)", playwright, required=False),
+    ]
+
+
+def checklist_summary(steps: list[FirstRunStep] | None = None) -> tuple[int, int, int]:
+    """Return (ready, partial, blocked) counts for checklist rows."""
+    rows = steps if steps is not None else first_run_checklist()
+    ready = sum(1 for row in rows if row.status.light == Light.GREEN)
+    partial = sum(1 for row in rows if row.status.light == Light.YELLOW)
+    blocked = sum(1 for row in rows if row.status.light == Light.RED)
+    return ready, partial, blocked
 
 
 def install_playwright_chromium() -> tuple[bool, str]:

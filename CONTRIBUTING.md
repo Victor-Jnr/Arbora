@@ -11,6 +11,20 @@ Thanks for your interest. Arbora is early (Stage 1 prototype). The [README](READ
 
 ## Development setup
 
+Preferred private-tester path on Windows:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\first_run.ps1
+.\.venv\Scripts\Activate.ps1
+pytest
+arbora --help
+```
+
+Full guide: [docs/install.md](docs/install.md).
+
+Manual equivalent:
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
