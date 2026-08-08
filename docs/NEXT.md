@@ -29,15 +29,15 @@ Already in place:
 - CLI (`arbora`) and Tkinter UI (`arbora-ui`);
 - Setup dialog + connection status lights;
 - private-tester first-run path (`scripts/first_run.ps1` + Setup checklist);
-- `arbora doctor` health checks.
+- `arbora doctor` health checks;
+- desktop Trust UX (routines revoke + audit dialogs).
 
 Still not MVP-ready:
 
-- ~~no installable path for private testers~~ → `scripts/first_run.ps1` + [install.md](install.md);
 - priority journeys are useful demos, not reliable daily tools;
 - browser can research, not drive richer page flows;
 - no opt-in cloud provider yet;
-- revoke / emergency-stop / undo ergonomics are incomplete.
+- emergency-stop / undo ergonomics are incomplete.
 
 ---
 
@@ -65,7 +65,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 | --- | --- | --- |
 | 1 | **Packaging + first-run** | ✅ Private tester path: `scripts/first_run.ps1` + Setup checklist |
 | 2 | **`arbora doctor`** | ✅ `arbora doctor` (+ `--json`) with shared probe fix hints |
-| 3 | **Trust UX** | From the UI: inspect routines, revoke one, read recent audit entries |
+| 3 | **Trust UX** | ✅ UI dialogs: inspect/revoke routines + session audit |
 | 4 | **Emergency stop** | Clear halt control for in-flight automation in the desktop UI |
 
 ### P1 — make the three journeys feel real
@@ -127,4 +127,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P0 #3 — Trust UX** (inspect / revoke routines + audit in the desktop UI).
+**P0 #4 — Emergency stop** for in-flight automation in the desktop UI.

@@ -26,6 +26,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/008-setup-and-status-lights.md` | Change doc for Setup button and status lights |
 | `documentation/009-packaging-and-first-run.md` | Change doc for packaging and first-run |
 | `documentation/010-arbora-doctor.md` | Change doc for arbora doctor CLI |
+| `documentation/011-trust-ux-routines-audit.md` | Change doc for Trust UX routines/audit dialogs |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `docs/NEXT.md` | Source of truth for near-term MVP build order |
 | `docs/install.md` | Private-tester Windows install guide |
@@ -65,9 +66,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_memory_crypto.py` | Encrypted memory roundtrip, migration, and wipe tests |
 | `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
 | `tests/test_browser_adapter.py` | Browser adapter and research journey tests |
-| `tests/test_desktop_chat.py` | Tkinter desktop chat smoke tests |
 | `tests/test_setup_status.py` | Status probe and first-run checklist regression tests |
 | `tests/test_doctor.py` | arbora doctor CLI regression tests |
+| `tests/test_desktop_chat.py` | Tkinter desktop chat and Trust UX dialog smoke tests |
+
+---
+
+## 011 — Trust UX for routines and audit (2026-08-08)
+
+| File | Change |
+| --- | --- |
+| `apps/desktop_chat/app.py` | Added Routines revoke dialog and Audit dialog |
+| `apps/README.md` | Documented Trust UX dialogs |
+| `tests/test_desktop_chat.py` | Added dialog smoke tests |
+| `docs/NEXT.md` | Marked P0#3 done |
+| `docs/prototype.md` | Noted Trust UX done |
+| `documentation/011-trust-ux-routines-audit.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 011 |
+| `CHANGELOG.md` | Added file roles and section 011 |
+| `README.md` | Pointed Documentation section at 011 |
 
 ---
 

@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 011 | [Trust UX routines/audit](documentation/011-trust-ux-routines-audit.md) |
 | 010 | [arbora doctor](documentation/010-arbora-doctor.md) |
 | 009 | [Packaging and first-run](documentation/009-packaging-and-first-run.md) |
 | 008 | [Setup and status lights](documentation/008-setup-and-status-lights.md) |

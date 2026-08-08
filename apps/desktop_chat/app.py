@@ -13,7 +13,7 @@ from arbora.cli.session import (
     hard_confirm_ids_for,
     persist_routines,
 )
-from arbora.core.types import ApprovalDecision, ExecutionReport, Plan
+from arbora.core.types import ApprovalDecision, AuditEvent, ExecutionReport, Plan, TrustedRoutine
 from arbora.setup_status import (
     LIGHT_HEX,
     Light,
@@ -35,6 +35,38 @@ COLORS = {
     "danger": "#E76F51",
     "input_bg": "#1B3A2F",
 }
+
+
+def format_routine_rows(routines: list[TrustedRoutine]) -> list[str]:
+    """One listbox row per trusted routine."""
+    return [f"{routine.name}  ({routine.id[:8]}…)" for routine in routines]
+
+
+def format_routine_detail(routine: TrustedRoutine) -> str:
+    goal = routine.goal_norm or "(no goal norm)"
+    return (
+        f"{routine.name}\n"
+        f"id={routine.id}\n"
+        f"fingerprint={routine.plan_fingerprint}  v{routine.version}\n"
+        f"goal={goal}"
+    )
+
+
+def format_audit_events(events: list[AuditEvent]) -> str:
+    """Human-readable session audit for the Trust UX dialog."""
+    if not events:
+        return "(audit log empty for this session)\n"
+    lines: list[str] = []
+    for event in events:
+        stamp = event.created_at.isoformat(timespec="seconds")
+        lines.append(f"[{stamp}] {event.kind}")
+        lines.append(f"  {event.message}")
+        extras = {k: v for k, v in (event.payload or {}).items() if v is not None}
+        if extras:
+            kv = ", ".join(f"{k}={v}" for k, v in extras.items())
+            lines.append(f"  {kv}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 class ArboraChatApp:
@@ -469,24 +501,139 @@ class ArboraChatApp:
         self._log("\n".join(lines))
 
     def show_routines(self) -> None:
-        routines = self._runtime.broker.list_routines()
-        if not routines:
-            self._log("(no trusted routines)\n")
-            return
-        lines = ["Trusted routines:"]
-        for routine in routines:
-            lines.append(f"  {routine.id}  {routine.name}  fp={routine.plan_fingerprint}")
-        self._log("\n".join(lines) + "\n")
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Trusted routines")
+        dialog.configure(bg=COLORS["bg"])
+        dialog.transient(self.root)
+        dialog.geometry("560x360")
+        dialog.grab_set()
+
+        ttk.Label(dialog, text="Trusted routines", style="Brand.TLabel").pack(
+            anchor="w", padx=16, pady=(16, 4)
+        )
+        ttk.Label(
+            dialog,
+            text="Inspect and revoke routines. Hard-confirmation classes still apply after trust.",
+            style="Muted.TLabel",
+            wraplength=520,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        list_frame = ttk.Frame(dialog, style="TFrame")
+        list_frame.pack(fill="both", expand=True, padx=16, pady=4)
+        listbox = tk.Listbox(
+            list_frame,
+            bg=COLORS["panel"],
+            fg=COLORS["ink"],
+            selectbackground=COLORS["accent_dim"],
+            relief="flat",
+            font=self.font_mono,
+            activestyle="none",
+        )
+        listbox.pack(side="left", fill="both", expand=True)
+        scroll = ttk.Scrollbar(list_frame, orient="vertical", command=listbox.yview)
+        scroll.pack(side="right", fill="y")
+        listbox.configure(yscrollcommand=scroll.set)
+
+        detail_var = tk.StringVar(value="Select a routine.")
+        ttk.Label(dialog, textvariable=detail_var, style="Muted.TLabel", wraplength=520).pack(
+            anchor="w", padx=16, pady=4
+        )
+
+        routines_by_index: list = []
+
+        def refresh() -> None:
+            routines_by_index.clear()
+            listbox.delete(0, "end")
+            routines = self._runtime.broker.list_routines()
+            if not routines:
+                detail_var.set("No trusted routines yet. Promote a successful plan to create one.")
+                return
+            for routine in routines:
+                routines_by_index.append(routine)
+                listbox.insert("end", format_routine_rows([routine])[0])
+            detail_var.set(f"{len(routines)} trusted routine(s). Select one to inspect or revoke.")
+
+        def on_select(_event=None) -> None:
+            sel = listbox.curselection()
+            if not sel:
+                return
+            routine = routines_by_index[sel[0]]
+            detail_var.set(format_routine_detail(routine))
+
+        def revoke_selected() -> None:
+            sel = listbox.curselection()
+            if not sel:
+                messagebox.showinfo("Trusted routines", "Select a routine to revoke.", parent=dialog)
+                return
+            routine = routines_by_index[sel[0]]
+            ok = messagebox.askyesno(
+                "Revoke routine",
+                f"Revoke trusted routine '{routine.name}'?\n\nFuture matching plans will need approval again.",
+                parent=dialog,
+            )
+            if not ok:
+                return
+            if self._runtime.broker.revoke_routine(routine.id):
+                persist_routines(self._runtime)
+                self._log(f"Revoked trusted routine: {routine.name} ({routine.id})\n")
+                refresh()
+            else:
+                messagebox.showerror("Trusted routines", "Routine not found.", parent=dialog)
+
+        listbox.bind("<<ListboxSelect>>", on_select)
+
+        btn_row = ttk.Frame(dialog, style="TFrame")
+        btn_row.pack(fill="x", padx=16, pady=12)
+        ttk.Button(btn_row, text="Revoke selected", style="Accent.TButton", command=revoke_selected).pack(
+            side="left", padx=(0, 8)
+        )
+        ttk.Button(btn_row, text="Refresh", command=refresh).pack(side="left", padx=(0, 8))
+        ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
+
+        refresh()
 
     def show_audit(self) -> None:
-        events = self._runtime.audit.events()[-15:]
-        if not events:
-            self._log("(audit log empty)\n")
-            return
-        lines = ["Recent audit:"]
-        for event in events:
-            lines.append(f"  [{event.kind}] {event.message}")
-        self._log("\n".join(lines) + "\n")
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Audit log")
+        dialog.configure(bg=COLORS["bg"])
+        dialog.transient(self.root)
+        dialog.geometry("640x420")
+        dialog.grab_set()
+
+        ttk.Label(dialog, text="Audit log", style="Brand.TLabel").pack(anchor="w", padx=16, pady=(16, 4))
+        ttk.Label(
+            dialog,
+            text="Recent approvals, tool outcomes, and trust changes in this session.",
+            style="Muted.TLabel",
+            wraplength=600,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        text = tk.Text(
+            dialog,
+            wrap="word",
+            bg=COLORS["panel"],
+            fg=COLORS["ink"],
+            relief="flat",
+            font=self.font_mono,
+            padx=10,
+            pady=8,
+        )
+        text.pack(fill="both", expand=True, padx=16, pady=4)
+
+        def refresh() -> None:
+            events = self._runtime.audit.events()[-40:]
+            text.configure(state="normal")
+            text.delete("1.0", "end")
+            text.insert("1.0", format_audit_events(events))
+            text.configure(state="disabled")
+            text.see("end")
+
+        btn_row = ttk.Frame(dialog, style="TFrame")
+        btn_row.pack(fill="x", padx=16, pady=12)
+        ttk.Button(btn_row, text="Refresh", command=refresh).pack(side="left", padx=(0, 8))
+        ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
+
+        refresh()
 
 
 def main() -> int:

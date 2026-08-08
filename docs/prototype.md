@@ -77,5 +77,6 @@ Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Current
 
 - ~~Packaging + first-run for private testers~~ (done — see `scripts/first_run.ps1`)
 - ~~`arbora doctor`~~ (done)
-- Trust UX (revoke / audit / emergency stop)
+- ~~Trust UX (revoke / audit)~~ (done)
+- Emergency stop
 - Journey hardening and richer broker-gated browser actions
