@@ -71,6 +71,14 @@ pytest
 
 Connection lights in `arbora-ui` should show Memory green. Ollama and Playwright may be yellow/red until you complete those optional steps.
 
+CLI equivalent:
+
+```powershell
+arbora doctor
+```
+
+Exit codes: `0` all green, `2` optional warnings/failures, `1` required check failed.
+
 ## What this is not
 
 - Not a Microsoft Store / MSI product yet

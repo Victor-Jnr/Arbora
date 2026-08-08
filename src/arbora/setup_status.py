@@ -127,7 +127,7 @@ def fix_hint_for(status: ServiceStatus) -> str:
     if status.name == "Playwright":
         if "package" in status.detail.lower():
             return "Install the package: pip install playwright"
-        return "Install Chromium: python -m playwright install chromium  (or Setup → Install Chromium)"
+        return "Install Chromium: python -m playwright install chromium  (or Setup > Install Chromium)"
     return "See docs/install.md"
 
 

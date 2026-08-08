@@ -28,7 +28,8 @@ Already in place:
 - local Ollama provider + echo stub;
 - CLI (`arbora`) and Tkinter UI (`arbora-ui`);
 - Setup dialog + connection status lights;
-- private-tester first-run path (`scripts/first_run.ps1` + Setup checklist).
+- private-tester first-run path (`scripts/first_run.ps1` + Setup checklist);
+- `arbora doctor` health checks.
 
 Still not MVP-ready:
 
@@ -63,7 +64,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 | # | Plate | Done when |
 | --- | --- | --- |
 | 1 | **Packaging + first-run** | ✅ Private tester path: `scripts/first_run.ps1` + Setup checklist |
-| 2 | **`arbora doctor`** | CLI mirrors Setup probes (Memory / Ollama / Playwright) with clear fix hints |
+| 2 | **`arbora doctor`** | ✅ `arbora doctor` (+ `--json`) with shared probe fix hints |
 | 3 | **Trust UX** | From the UI: inspect routines, revoke one, read recent audit entries |
 | 4 | **Emergency stop** | Clear halt control for in-flight automation in the desktop UI |
 
@@ -126,4 +127,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P0 #2 — `arbora doctor`**, reusing the Setup / first-run probe helpers.
+**P0 #3 — Trust UX** (inspect / revoke routines + audit in the desktop UI).

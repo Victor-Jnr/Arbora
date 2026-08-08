@@ -25,6 +25,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/007-tkinter-desktop-chat.md` | Change doc for Tkinter desktop chat |
 | `documentation/008-setup-and-status-lights.md` | Change doc for Setup button and status lights |
 | `documentation/009-packaging-and-first-run.md` | Change doc for packaging and first-run |
+| `documentation/010-arbora-doctor.md` | Change doc for arbora doctor CLI |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `docs/NEXT.md` | Source of truth for near-term MVP build order |
 | `docs/install.md` | Private-tester Windows install guide |
@@ -58,13 +59,32 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/providers/ollama.py` | Local Ollama HTTP provider (`gpt-oss:20b` default) |
 | `src/arbora/cli/__init__.py` | CLI package marker |
 | `src/arbora/cli/session.py` | Runtime wiring and plan formatting helpers |
-| `src/arbora/cli/main.py` | Interactive and one-shot CLI chat shell |
+| `src/arbora/cli/main.py` | Interactive and one-shot CLI chat shell (+ doctor dispatch) |
+| `src/arbora/cli/doctor.py` | `arbora doctor` health probes and fix hints |
 | `tests/test_broker_and_planner.py` | Broker, planner, trust, and memory regression tests |
 | `tests/test_memory_crypto.py` | Encrypted memory roundtrip, migration, and wipe tests |
 | `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
 | `tests/test_browser_adapter.py` | Browser adapter and research journey tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat smoke tests |
 | `tests/test_setup_status.py` | Status probe and first-run checklist regression tests |
+| `tests/test_doctor.py` | arbora doctor CLI regression tests |
+
+---
+
+## 010 — arbora doctor health checks (2026-08-08)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/cli/doctor.py` | Added doctor probes with text/JSON output and exit codes |
+| `src/arbora/cli/main.py` | Dispatch `arbora doctor`; mention in banner |
+| `tests/test_doctor.py` | Added doctor tests |
+| `docs/install.md` | Documented doctor verify step |
+| `docs/prototype.md` | Noted doctor plate done |
+| `docs/NEXT.md` | Marked P0#2 done |
+| `documentation/010-arbora-doctor.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 010 |
+| `CHANGELOG.md` | Added file roles and section 010 |
+| `README.md` | Pointed Documentation section at 010 |
 
 ---
 

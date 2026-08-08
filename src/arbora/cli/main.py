@@ -23,15 +23,16 @@ Arbora v{__version__} — Stage 1 prototype
 Models propose; the permission broker disposes.
 
 Commands:
-  /help       Show help
-  /audit      Show recent audit events
-  /routines   List trusted routines
-  /revoke ID  Revoke a trusted routine
-  /provider   Show active model provider
-  /memory     Show local memory encryption status
-  /wipe       Wipe local memory (routines/preferences)
-  /dry on|off Toggle dry-run mode (default: on)
-  /quit       Exit
+  arbora doctor   Probe Memory / Ollama / Playwright (fix hints)
+  /help           Show help
+  /audit          Show recent audit events
+  /routines       List trusted routines
+  /revoke ID      Revoke a trusted routine
+  /provider       Show active model provider
+  /memory         Show local memory encryption status
+  /wipe           Wipe local memory (routines/preferences)
+  /dry on|off     Toggle dry-run mode (default: on)
+  /quit           Exit
 
 Try goals like:
   start my workday
@@ -43,6 +44,12 @@ Try goals like:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "doctor":
+        from arbora.cli.doctor import run_doctor
+
+        return run_doctor(argv[1:])
+
     parser = argparse.ArgumentParser(description="Arbora personal assistant (prototype)")
     parser.add_argument("--goal", help="Run a single goal non-interactively")
     parser.add_argument("--yes", action="store_true", help="Auto-approve non-sensitive steps")
