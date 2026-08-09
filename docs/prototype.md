@@ -79,4 +79,6 @@ Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Current
 - ~~`arbora doctor`~~ (done)
 - ~~Trust UX (revoke / audit)~~ (done)
 - ~~Emergency stop~~ (done)
-- Journey hardening and richer broker-gated browser actions
+- ~~Journey hardening~~ (done)
+- Richer broker-gated browser actions
+- File undo where feasible

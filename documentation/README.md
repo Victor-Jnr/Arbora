@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 013 | [Journey hardening](013-journey-hardening.md) | 2026-08-09 | Stronger workday/diagnose/research plans and matchers |
 | 012 | [Emergency stop](012-emergency-stop.md) | 2026-08-09 | Halt in-flight plans between steps from the desktop UI |
 | 011 | [Trust UX routines/audit](011-trust-ux-routines-audit.md) | 2026-08-08 | Desktop dialogs to inspect/revoke routines and read audit |
 | 010 | [arbora doctor](010-arbora-doctor.md) | 2026-08-08 | CLI health probes with fix hints |

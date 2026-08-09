@@ -49,6 +49,14 @@ def test_research_plan_shape():
     assert any(s.adapter == "browser" and s.action == "open_url" for s in plan.steps)
     assert any(s.action == "save_brief" for s in plan.steps)
     assert any(s.action == "extract_text" for s in plan.steps)
+    assert any(s.adapter == "files" and s.action == "ensure_directory" for s in plan.steps)
+    assert "untrusted" in plan.rationale.lower()
+
+
+def test_research_look_up_phrasing():
+    runtime = build_runtime(memory_root=Path("."), provider="echo")
+    plan = runtime.planner.plan("look up https://example.org")
+    assert any(s.action == "open_url" for s in plan.steps)
 
 
 def test_research_plan_dry_run_execute(tmp_path: Path):

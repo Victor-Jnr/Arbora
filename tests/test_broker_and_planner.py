@@ -25,6 +25,14 @@ def test_workday_plan_shape():
     plan = runtime.planner.plan("start my workday")
     assert plan.steps
     assert any(step.adapter == "desktop" for step in plan.steps)
+    assert any(step.action == "write_text" for step in plan.steps)
+    assert "workday" in plan.rationale.lower()
+    assert "read" in plan.rationale.lower()
+
+
+def test_workday_alt_phrasing():
+    runtime = _runtime()
+    plan = runtime.planner.plan("morning setup please")
     assert "workday" in plan.rationale.lower()
 
 
@@ -32,6 +40,14 @@ def test_diagnostic_is_read_only():
     runtime = _runtime()
     plan = runtime.planner.plan("diagnose disk space on this PC")
     assert plan.steps
+    assert all(step.sensitivity == Sensitivity.READ for step in plan.steps)
+    assert any("network" in step.summary.lower() for step in plan.steps)
+    assert "read-only" in plan.rationale.lower()
+
+
+def test_diagnostic_alt_phrasing():
+    runtime = _runtime()
+    plan = runtime.planner.plan("why is my pc slow and low disk")
     assert all(step.sensitivity == Sensitivity.READ for step in plan.steps)
 
 

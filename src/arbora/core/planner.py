@@ -186,10 +186,16 @@ class GoalPlanner:
         )
 
     def _workday_start_plan(self, goal: str) -> Plan:
+        work_root = Path.home() / "ArboraWorkday"
+        briefing = work_root / "morning-briefing.txt"
         return Plan(
             id=new_id("plan_"),
             goal=goal,
-            rationale="Workday setup journey: restore a focused desktop environment.",
+            rationale=(
+                "Workday setup journey (read → prepare → launch). "
+                "1) Observe running apps. 2) Ensure work folder + morning note. "
+                "3) Launch and focus a notes stand-in. No apps are closed."
+            ),
             steps=[
                 ToolStep(
                     id=new_id("step_"),
@@ -199,6 +205,33 @@ class GoalPlanner:
                     summary="Inspect which apps are already running",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Observes process list",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(work_root)},
+                    summary="Ensure ArboraWorkday folder exists",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory under your home folder",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="write_text",
+                    args={
+                        "path": str(briefing),
+                        "content": (
+                            "Morning briefing\n"
+                            "================\n"
+                            "- Review calendar and unread mail (manual).\n"
+                            "- Open priority docs from yesterday's resume note.\n"
+                            "- Keep dry-run on until this routine is trusted.\n"
+                        ),
+                    },
+                    summary=f"Write morning briefing stub to {briefing.name}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Creates or overwrites a text file",),
                 ),
                 ToolStep(
                     id=new_id("step_"),
@@ -218,15 +251,6 @@ class GoalPlanner:
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("Brings an existing window to the foreground",),
                 ),
-                ToolStep(
-                    id=new_id("step_"),
-                    adapter="files",
-                    action="ensure_directory",
-                    args={"path": str(Path.home() / "ArboraWorkday")},
-                    summary="Ensure today's work folder exists",
-                    sensitivity=Sensitivity.MUTATE,
-                    side_effects=("May create a directory under your home folder",),
-                ),
             ],
         )
 
@@ -235,17 +259,35 @@ class GoalPlanner:
         return Plan(
             id=new_id("plan_"),
             goal=goal,
-            rationale="Workday shutdown journey: park context and close non-essential apps.",
+            rationale=(
+                "Workday shutdown journey. "
+                "1) Park a resume note. 2) List running apps for a manual close pass. "
+                "Arbora does not force-quit apps in this journey."
+            ),
             steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(Path.home() / "ArboraWorkday")},
+                    summary="Ensure ArboraWorkday folder exists",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory under your home folder",),
+                ),
                 ToolStep(
                     id=new_id("step_"),
                     adapter="files",
                     action="write_text",
                     args={
                         "path": str(note_path),
-                        "content": "Resume tomorrow: review open tasks and continue where you left off.\n",
+                        "content": (
+                            "Resume tomorrow\n"
+                            "==============\n"
+                            "- Continue open tasks from today.\n"
+                            "- Re-run 'start my workday' after approving the plan once.\n"
+                        ),
                     },
-                    summary=f"Write resume note to {note_path}",
+                    summary=f"Write resume note to {note_path.name}",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("Creates or overwrites a text file",),
                 ),
@@ -265,19 +307,63 @@ class GoalPlanner:
         return Plan(
             id=new_id("plan_"),
             goal=goal,
-            rationale="Troubleshooting journey: read-only diagnostics first, no silent repairs.",
+            rationale=(
+                "PC troubleshooting journey — read-only diagnostics only. "
+                "Reports disk, memory, and basic network reachability. "
+                "No repairs, deletes, or registry changes; approve a separate plan for fixes."
+            ),
             steps=[
                 ToolStep(
                     id=new_id("step_"),
                     adapter="terminal",
                     action="run_powershell",
                     args={
-                        "command": "Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free | Format-Table | Out-String",
+                        "command": (
+                            "Get-PSDrive -PSProvider FileSystem | "
+                            "Select-Object Name, "
+                            "@{N='UsedGB';E={[math]::Round(($_.Used/1GB),2)}}, "
+                            "@{N='FreeGB';E={[math]::Round(($_.Free/1GB),2)}} | "
+                            "Format-Table | Out-String"
+                        ),
                         "timeout_seconds": 30,
                     },
-                    summary="Read-only: report free disk space per drive",
+                    summary="Read-only: free disk space per drive (GB)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Runs a read-only PowerShell query",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="terminal",
+                    action="run_powershell",
+                    args={
+                        "command": (
+                            "Get-Process | Sort-Object WorkingSet64 -Descending | "
+                            "Select-Object -First 10 Name, Id, "
+                            "@{N='MB';E={[math]::Round($_.WorkingSet64/1MB,1)}} | "
+                            "Format-Table | Out-String"
+                        ),
+                        "timeout_seconds": 30,
+                    },
+                    summary="Read-only: top processes by memory",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Runs a read-only PowerShell query",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="terminal",
+                    action="run_powershell",
+                    args={
+                        "command": (
+                            "try { "
+                            "$r = Test-Connection -ComputerName 1.1.1.1 -Count 1 -Quiet -ErrorAction Stop; "
+                            "if ($r) { 'Network: ping 1.1.1.1 OK' } else { 'Network: ping 1.1.1.1 failed' } "
+                            "} catch { \"Network: probe error — $($_.Exception.Message)\" }"
+                        ),
+                        "timeout_seconds": 20,
+                    },
+                    summary="Read-only: basic network reachability probe",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Sends one ICMP echo request to 1.1.1.1",),
                 ),
                 ToolStep(
                     id=new_id("step_"),
@@ -288,33 +374,32 @@ class GoalPlanner:
                     sensitivity=Sensitivity.READ,
                     side_effects=("Observes process list",),
                 ),
-                ToolStep(
-                    id=new_id("step_"),
-                    adapter="terminal",
-                    action="run_powershell",
-                    args={
-                        "command": "Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 10 Name, Id, @{N='MB';E={[math]::Round($_.WorkingSet64/1MB,1)}} | Format-Table | Out-String",
-                        "timeout_seconds": 30,
-                    },
-                    summary="Read-only: top processes by memory",
-                    sensitivity=Sensitivity.READ,
-                    side_effects=("Runs a read-only PowerShell query",),
-                ),
             ],
         )
 
     def _dev_setup_plan(self, goal: str) -> Plan:
+        project_root = Path.cwd()
         return Plan(
             id=new_id("plan_"),
             goal=goal,
-            rationale="Developer assistance journey: inspect toolchain, then run approved setup commands.",
+            rationale=(
+                "Developer setup journey — inspect first. "
+                "1) Toolchain versions. 2) Current directory listing. "
+                "Install/clone/venv commands are not auto-run here; ask explicitly to run them."
+            ),
             steps=[
                 ToolStep(
                     id=new_id("step_"),
                     adapter="terminal",
                     action="run_powershell",
                     args={
-                        "command": "python --version; git --version; node --version 2>$null; Write-Output 'toolchain check complete'",
+                        "command": (
+                            "@('python','git','node') | ForEach-Object { "
+                            "$cmd = $_; "
+                            "try { & $cmd --version 2>$null | ForEach-Object { \"$cmd $_\" } } "
+                            "catch { \"$cmd not found\" } "
+                            "}; Write-Output 'toolchain check complete'"
+                        ),
                         "timeout_seconds": 30,
                     },
                     summary="Check local toolchain versions (python/git/node)",
@@ -325,10 +410,19 @@ class GoalPlanner:
                     id=new_id("step_"),
                     adapter="files",
                     action="list_directory",
-                    args={"path": str(Path.cwd())},
-                    summary="List files in the current working directory",
+                    args={"path": str(project_root)},
+                    summary=f"List files in {project_root}",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads directory listing",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(Path.home() / "ArboraProjects")},
+                    summary="Ensure ArboraProjects folder exists for future clones",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory under your home folder",),
                 ),
             ],
         )
@@ -412,7 +506,7 @@ class GoalPlanner:
         url = url_match.group(0) if url_match else "https://example.com"
         topic = re.sub(r"https?://[^\s\"']+", "", goal, count=1).strip(" -:")
         topic = re.sub(
-            r"^(research|summarise|summarize|save a brief about|save brief about)\s+",
+            r"^(research|look up|lookup|summarise|summarize|save a brief about|save brief about|read)\s+",
             "",
             topic,
             flags=re.I,
@@ -422,8 +516,20 @@ class GoalPlanner:
         return Plan(
             id=new_id("plan_"),
             goal=goal,
-            rationale="Web research journey: open page, extract content, save a local cited brief.",
+            rationale=(
+                "Web research journey — page text is untrusted data and is never executed as tools. "
+                "1) Open URL. 2) Title + excerpt + links. 3) Save a local cited brief. 4) Close browser."
+            ),
             steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(Path.home() / "ArboraBriefs")},
+                    summary="Ensure ArboraBriefs folder exists",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory under your home folder",),
+                ),
                 ToolStep(
                     id=new_id("step_"),
                     adapter="browser",
@@ -447,7 +553,7 @@ class GoalPlanner:
                     adapter="browser",
                     action="extract_text",
                     args={},
-                    summary="Extract main visible text (truncated)",
+                    summary="Extract main visible text (truncated, untrusted)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads page text as untrusted data",),
                 ),
@@ -485,28 +591,73 @@ class GoalPlanner:
     def _looks_like_workday_start(lower: str) -> bool:
         return any(
             phrase in lower
-            for phrase in ("start my workday", "start workday", "begin my day", "open my work setup")
+            for phrase in (
+                "start my workday",
+                "start workday",
+                "begin my day",
+                "begin workday",
+                "open my work setup",
+                "morning setup",
+                "kick off my day",
+                "start my day",
+            )
         )
 
     @staticmethod
     def _looks_like_workday_shutdown(lower: str) -> bool:
         return any(
             phrase in lower
-            for phrase in ("end my workday", "shutdown workday", "finish my day", "wrap up work")
+            for phrase in (
+                "end my workday",
+                "shutdown workday",
+                "finish my day",
+                "wrap up work",
+                "end of day",
+                "close out my day",
+                "shut down for the day",
+            )
         )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
         return any(
             phrase in lower
-            for phrase in ("diagnos", "troubleshoot", "disk space", "why won't", "why wont", "pc issue")
+            for phrase in (
+                "diagnos",
+                "troubleshoot",
+                "disk space",
+                "low disk",
+                "why won't",
+                "why wont",
+                "pc issue",
+                "computer problem",
+                "network feels",
+                "wifi broken",
+                "wifi won't",
+                "memory usage",
+                "what's using",
+                "whats using",
+                "slow pc",
+                "slow computer",
+            )
         )
 
     @staticmethod
     def _looks_like_dev_setup(lower: str) -> bool:
         return any(
             phrase in lower
-            for phrase in ("set up a project", "setup project", "dev setup", "toolchain", "clone this repo")
+            for phrase in (
+                "set up a project",
+                "setup project",
+                "set up the project",
+                "dev setup",
+                "toolchain",
+                "clone this repo",
+                "create a venv",
+                "install dependencies",
+                "install deps",
+                "project setup",
+            )
         )
 
     @staticmethod
@@ -514,6 +665,7 @@ class GoalPlanner:
         return "download" in lower and any(
             w in lower for w in ("organis", "organiz", "sort my", "sort the", "filing")
         )
+
     @staticmethod
     def _looks_like_list_files(lower: str) -> bool:
         return any(phrase in lower for phrase in ("list files", "show files", "what's in", "whats in"))
@@ -523,11 +675,27 @@ class GoalPlanner:
         if re.search(r"https?://", original):
             return any(
                 phrase in lower
-                for phrase in ("research", "summarise", "summarize", "brief", "read this", "open ")
+                for phrase in (
+                    "research",
+                    "look up",
+                    "lookup",
+                    "summarise",
+                    "summarize",
+                    "brief",
+                    "read this",
+                    "open ",
+                )
             ) or lower.startswith("http")
         return any(
             phrase in lower
-            for phrase in ("research ", "save a brief", "web brief", "summarise the page", "summarize the page")
+            for phrase in (
+                "research ",
+                "look up ",
+                "save a brief",
+                "web brief",
+                "summarise the page",
+                "summarize the page",
+            )
         )
 
     @staticmethod

@@ -28,6 +28,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/010-arbora-doctor.md` | Change doc for arbora doctor CLI |
 | `documentation/011-trust-ux-routines-audit.md` | Change doc for Trust UX routines/audit dialogs |
 | `documentation/012-emergency-stop.md` | Change doc for emergency stop |
+| `documentation/013-journey-hardening.md` | Change doc for priority journey hardening |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `docs/NEXT.md` | Source of truth for near-term MVP build order |
 | `docs/install.md` | Private-tester Windows install guide |
@@ -71,6 +72,22 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_doctor.py` | arbora doctor CLI regression tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat and Trust UX dialog smoke tests |
 | `tests/test_emergency_stop.py` | Broker emergency-stop skip and no-promote tests |
+
+---
+
+## 013 — Journey hardening for priority plans (2026-08-09)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Hardened workday/diagnose/research/dev templates and matchers |
+| `tests/test_broker_and_planner.py` | Added phrasing and network-step assertions |
+| `tests/test_browser_adapter.py` | Assert research ensure_directory + look-up phrasing |
+| `docs/NEXT.md` | Marked P1#5 done |
+| `docs/prototype.md` | Noted journey hardening done |
+| `documentation/013-journey-hardening.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 013 |
+| `CHANGELOG.md` | Added file roles and section 013 |
+| `README.md` | Pointed Documentation section at 013 |
 
 ---
 

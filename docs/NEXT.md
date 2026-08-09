@@ -31,11 +31,11 @@ Already in place:
 - private-tester first-run path (`scripts/first_run.ps1` + Setup checklist);
 - `arbora doctor` health checks;
 - desktop Trust UX (routines revoke + audit dialogs);
-- emergency stop for in-flight plans (broker + desktop Stop).
+- emergency stop for in-flight plans (broker + desktop Stop);
+- hardened priority journey templates (workday / diagnose / research).
 
 Still not MVP-ready:
 
-- priority journeys are useful demos, not reliable daily tools;
 - browser can research, not drive richer page flows;
 - no opt-in cloud provider yet;
 - undo ergonomics are incomplete.
@@ -73,7 +73,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 
 | # | Plate | Done when |
 | --- | --- | --- |
-| 5 | **Journey hardening** | Workday, disk/PC diagnose, and research plans are intentional, explainable, and less brittle |
+| 5 | **Journey hardening** | ✅ Clearer workday / diagnose / research templates + broader matchers |
 | 6 | **Richer browser (broker-gated)** | Click / type / wait / snapshot actions exist; still require approval; page text stays untrusted |
 | 7 | **File undo where feasible** | Organise/move plans can preview and reverse common moves |
 
@@ -128,4 +128,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P1 #5 — Journey hardening** (workday, diagnose, research plans).
+**P1 #6 — Richer browser** (click / type / wait / snapshot behind the broker).
