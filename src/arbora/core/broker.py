@@ -53,6 +53,27 @@ class PermissionBroker:
         self._adapters: dict[str, ToolAdapter] = {}
         self._grants: list[ScopeGrant] = []
         self._routines: dict[str, TrustedRoutine] = {}
+        self._stop_requested = False
+        self._executing = False
+
+    @property
+    def stop_requested(self) -> bool:
+        return self._stop_requested
+
+    @property
+    def is_executing(self) -> bool:
+        return self._executing
+
+    def request_stop(self) -> None:
+        """Request an emergency halt of the current plan (checked between steps)."""
+        self._stop_requested = True
+        self._audit.record(
+            "emergency_stop_requested",
+            "Emergency stop requested — remaining steps will be skipped",
+        )
+
+    def clear_stop(self) -> None:
+        self._stop_requested = False
 
     def register_adapter(self, adapter: ToolAdapter) -> None:
         self._adapters[adapter.name] = adapter
@@ -151,7 +172,31 @@ class PermissionBroker:
     ) -> list[StepResult]:
         hard_confirmed_step_ids = hard_confirmed_step_ids or frozenset()
         results: list[StepResult] = []
+        self.clear_stop()
+        self._executing = True
 
+        try:
+            return self._execute_plan_body(
+                plan,
+                decision,
+                dry_run=dry_run,
+                hard_confirmed_step_ids=hard_confirmed_step_ids,
+                use_trusted_match=use_trusted_match,
+                results=results,
+            )
+        finally:
+            self._executing = False
+
+    def _execute_plan_body(
+        self,
+        plan: Plan,
+        decision: ApprovalDecision,
+        *,
+        dry_run: bool,
+        hard_confirmed_step_ids: frozenset[str],
+        use_trusted_match: bool,
+        results: list[StepResult],
+    ) -> list[StepResult]:
         trusted = self.find_matching_routine(plan) if use_trusted_match else None
         fingerprint = self.fingerprint_plan(plan)
         if trusted is not None:
@@ -163,7 +208,27 @@ class PermissionBroker:
                 fingerprint=fingerprint,
             )
 
-        for step in plan.steps:
+        stopped = False
+        for index, step in enumerate(plan.steps):
+            if self._stop_requested:
+                stopped = True
+                for skipped in plan.steps[index:]:
+                    result = StepResult(
+                        step_id=skipped.id,
+                        ok=False,
+                        output="",
+                        error="Emergency stop — step skipped",
+                        dry_run=dry_run,
+                    )
+                    results.append(result)
+                    self._audit.record(
+                        "step_skipped_stop",
+                        f"Skipped after emergency stop: {skipped.summary}",
+                        plan_id=plan.id,
+                        step_id=skipped.id,
+                    )
+                break
+
             if trusted is not None and not step.requires_hard_confirmation():
                 approved = True
             else:
@@ -212,7 +277,13 @@ class PermissionBroker:
                 error=result.error,
             )
 
-        if decision.promote_to_trusted and decision.trusted_name:
+        if stopped:
+            self._audit.record(
+                "plan_stopped",
+                f"Plan {plan.id} halted by emergency stop",
+                plan_id=plan.id,
+            )
+        elif decision.promote_to_trusted and decision.trusted_name:
             self._promote(plan, decision.trusted_name, fingerprint)
 
         return results

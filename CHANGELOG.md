@@ -27,6 +27,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/009-packaging-and-first-run.md` | Change doc for packaging and first-run |
 | `documentation/010-arbora-doctor.md` | Change doc for arbora doctor CLI |
 | `documentation/011-trust-ux-routines-audit.md` | Change doc for Trust UX routines/audit dialogs |
+| `documentation/012-emergency-stop.md` | Change doc for emergency stop |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `docs/NEXT.md` | Source of truth for near-term MVP build order |
 | `docs/install.md` | Private-tester Windows install guide |
@@ -69,6 +70,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_setup_status.py` | Status probe and first-run checklist regression tests |
 | `tests/test_doctor.py` | arbora doctor CLI regression tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat and Trust UX dialog smoke tests |
+| `tests/test_emergency_stop.py` | Broker emergency-stop skip and no-promote tests |
+
+---
+
+## 012 — Emergency stop for in-flight plans (2026-08-09)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/broker.py` | Added stop flag; skip remaining steps and audit halt |
+| `apps/desktop_chat/app.py` | Background Approve & run + Stop button |
+| `apps/README.md` | Documented emergency Stop |
+| `tests/test_emergency_stop.py` | Added stop regression tests |
+| `docs/NEXT.md` | Marked P0#4 done |
+| `docs/prototype.md` | Noted emergency stop done |
+| `documentation/012-emergency-stop.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 012 |
+| `CHANGELOG.md` | Added file roles and section 012 |
+| `README.md` | Pointed Documentation section at 012 |
 
 ---
 

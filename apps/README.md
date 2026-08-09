@@ -17,6 +17,6 @@ Or:
 python -m apps.desktop_chat
 ```
 
-Uses forest/ink chrome, provider selector (echo/ollama), dry-run toggle, trusted-routine awareness, hard-confirmation dialogs, a **Connections** corner with red/yellow/green lights (Memory / Ollama / Playwright), **Setup** with a first-run checklist, plus **Routines** / **Audit** dialogs for inspect-and-revoke trust UX.
+Uses forest/ink chrome, provider selector (echo/ollama), dry-run toggle, trusted-routine awareness, hard-confirmation dialogs, a **Connections** corner with red/yellow/green lights (Memory / Ollama / Playwright), **Setup** with a first-run checklist, **Routines** / **Audit** dialogs, and an emergency **Stop** control during plan execution.
 
 Private testers: run `.\scripts\first_run.ps1` then `arbora-ui` (see [docs/install.md](../docs/install.md)).

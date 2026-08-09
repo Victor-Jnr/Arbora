@@ -87,6 +87,8 @@ class ArboraChatApp:
         self._status_dots: dict[str, tk.Canvas] = {}
         self._status_labels: dict[str, tk.StringVar] = {}
         self._setup_busy = False
+        self._run_busy = False
+        self._stop_var = tk.StringVar(value="")
 
         self._build_style()
         self._build_ui()
@@ -129,7 +131,14 @@ class ArboraChatApp:
             font=font_ui,
             padding=8,
         )
-        style.map("Accent.TButton", background=[("active", COLORS["accent"])])
+        style.configure(
+            "Danger.TButton",
+            background=COLORS["danger"],
+            foreground=COLORS["ink"],
+            font=font_ui,
+            padding=8,
+        )
+        style.map("Danger.TButton", background=[("active", "#C45B3E")])
         style.configure("TCheckbutton", background=COLORS["bg"], foreground=COLORS["ink"], font=font_ui)
         style.configure("TCombobox", fieldbackground=COLORS["input_bg"], foreground=COLORS["ink"])
 
@@ -222,13 +231,19 @@ class ArboraChatApp:
 
         actions = ttk.Frame(self.root, style="TFrame")
         actions.pack(fill="x", padx=24, pady=(0, 20))
-        ttk.Button(actions, text="Approve & run", style="Accent.TButton", command=self.approve_run).pack(
-            side="left", padx=(0, 8)
+        self._approve_btn = ttk.Button(
+            actions, text="Approve & run", style="Accent.TButton", command=self.approve_run
         )
+        self._approve_btn.pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Reject", command=self.reject_plan).pack(side="left", padx=(0, 8))
+        self._stop_btn = ttk.Button(
+            actions, text="Stop", style="Danger.TButton", command=self.emergency_stop, state="disabled"
+        )
+        self._stop_btn.pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Routines", command=self.show_routines).pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Audit", command=self.show_audit).pack(side="left")
         ttk.Label(actions, textvariable=self.routine_name_var, style="Muted.TLabel").pack(side="right")
+        ttk.Label(actions, textvariable=self._stop_var, style="Muted.TLabel").pack(side="right", padx=(0, 12))
 
     def _set_light(self, status: ServiceStatus) -> None:
         dot = self._status_dots.get(status.name)
@@ -406,10 +421,20 @@ class ArboraChatApp:
         self._matched_trusted = False
         self.routine_name_var.set("")
 
+    def emergency_stop(self) -> None:
+        if not self._run_busy:
+            return
+        self._runtime.broker.request_stop()
+        self._stop_var.set("Stopping…")
+        self._log("Emergency stop requested — remaining steps will be skipped.\n")
+
     def approve_run(self) -> None:
         plan = self._plan
         if plan is None:
             messagebox.showinfo("Arbora", "Create a plan first.")
+            return
+        if self._run_busy:
+            messagebox.showinfo("Arbora", "A plan is already running. Use Stop to halt it.")
             return
 
         hard_ids = frozenset()
@@ -428,13 +453,7 @@ class ArboraChatApp:
                     approved_step_ids=frozenset(s.id for s in plan.steps if s.id not in hard_step_ids),
                     rejected_step_ids=frozenset(hard_step_ids),
                 )
-                results = self._runtime.broker.execute_plan(
-                    plan,
-                    decision,
-                    dry_run=self.dry_run_var.get(),
-                    hard_confirmed_step_ids=frozenset(),
-                )
-                self._print_report(ExecutionReport(plan_id=plan.id, results=results))
+                self._start_execution(plan, decision, hard_ids=frozenset(), promote=False, promote_name=None)
                 return
 
         promote = self.promote_var.get() and not self._matched_trusted
@@ -443,21 +462,64 @@ class ArboraChatApp:
             promote_name = self._ask_routine_name() or "unnamed-routine"
 
         decision = approve_all(plan, promote_to_trusted=promote, trusted_name=promote_name)
-        results = self._runtime.broker.execute_plan(
-            plan,
-            decision,
-            dry_run=self.dry_run_var.get(),
-            hard_confirmed_step_ids=hard_ids,
-        )
-        report = ExecutionReport(plan_id=plan.id, results=results)
-        if promote:
-            persist_routines(self._runtime)
-        self._runtime.memory.set("last_goal", plan.goal)
-        self._runtime.memory.set("last_plan_id", plan.id)
+        self._start_execution(plan, decision, hard_ids=hard_ids, promote=promote, promote_name=promote_name)
+
+    def _start_execution(
+        self,
+        plan: Plan,
+        decision: ApprovalDecision,
+        *,
+        hard_ids: frozenset[str],
+        promote: bool,
+        promote_name: str | None,
+    ) -> None:
+        self._run_busy = True
+        self._stop_var.set("Running…")
+        self._approve_btn.configure(state="disabled")
+        self._stop_btn.configure(state="normal")
+        dry_run = self.dry_run_var.get()
+
+        def work() -> None:
+            try:
+                results = self._runtime.broker.execute_plan(
+                    plan,
+                    decision,
+                    dry_run=dry_run,
+                    hard_confirmed_step_ids=hard_ids,
+                )
+                report = ExecutionReport(plan_id=plan.id, results=results)
+                if promote and not self._runtime.broker.stop_requested:
+                    persist_routines(self._runtime)
+                self._runtime.memory.set("last_goal", plan.goal)
+                self._runtime.memory.set("last_plan_id", plan.id)
+                stopped = any(
+                    (r.error or "").startswith("Emergency stop") for r in results
+                )
+                self.root.after(0, lambda: self._finish_execution(report, stopped=stopped))
+            except Exception as exc:
+                self.root.after(0, lambda: self._finish_execution_error(str(exc)))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _finish_execution(self, report: ExecutionReport, *, stopped: bool) -> None:
+        self._run_busy = False
+        self._approve_btn.configure(state="normal")
+        self._stop_btn.configure(state="disabled")
+        self._stop_var.set("Stopped." if stopped else "")
         self._print_report(report)
+        if stopped:
+            self._log("Plan halted by emergency stop.\n")
         self._plan = None
         self._matched_trusted = False
         self.routine_name_var.set("")
+
+    def _finish_execution_error(self, message: str) -> None:
+        self._run_busy = False
+        self._approve_btn.configure(state="normal")
+        self._stop_btn.configure(state="disabled")
+        self._stop_var.set("")
+        self._log(f"Execution error: {message}\n")
+        messagebox.showerror("Arbora", message)
 
     def _ask_routine_name(self) -> str | None:
         dialog = tk.Toplevel(self.root)
