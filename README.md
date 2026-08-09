@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 014 | [Richer browser actions](documentation/014-richer-browser-actions.md) |
 | 013 | [Journey hardening](documentation/013-journey-hardening.md) |
 | 012 | [Emergency stop](documentation/012-emergency-stop.md) |
 | 011 | [Trust UX routines/audit](documentation/011-trust-ux-routines-audit.md) |

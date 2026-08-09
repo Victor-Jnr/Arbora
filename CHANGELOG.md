@@ -29,6 +29,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/011-trust-ux-routines-audit.md` | Change doc for Trust UX routines/audit dialogs |
 | `documentation/012-emergency-stop.md` | Change doc for emergency stop |
 | `documentation/013-journey-hardening.md` | Change doc for priority journey hardening |
+| `documentation/014-richer-browser-actions.md` | Change doc for richer browser actions |
 | `docs/prototype.md` | How to run and extend the Stage 1 prototype |
 | `docs/NEXT.md` | Source of truth for near-term MVP build order |
 | `docs/install.md` | Private-tester Windows install guide |
@@ -72,6 +73,22 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_doctor.py` | arbora doctor CLI regression tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat and Trust UX dialog smoke tests |
 | `tests/test_emergency_stop.py` | Broker emergency-stop skip and no-promote tests |
+
+---
+
+## 014 — Richer broker-gated browser actions (2026-08-09)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/browser.py` | Added click, type_text, wait_for, snapshot |
+| `src/arbora/core/planner.py` | Allowed new browser actions in provider plans |
+| `tests/test_browser_adapter.py` | Added interaction/snapshot tests |
+| `docs/NEXT.md` | Marked P1#6 done |
+| `docs/prototype.md` | Noted richer browser done |
+| `documentation/014-richer-browser-actions.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 014 |
+| `CHANGELOG.md` | Added file roles and section 014 |
+| `README.md` | Pointed Documentation section at 014 |
 
 ---
 

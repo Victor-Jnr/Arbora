@@ -34,6 +34,56 @@ def test_browser_dry_run_actions():
         dry_run=True,
     )
     assert brief.ok and brief.dry_run
+    clicked = adapter.execute("click", {"selector": "button#go"}, dry_run=True)
+    assert clicked.ok and "button#go" in clicked.output
+    typed = adapter.execute("type_text", {"selector": "input#q", "text": "arbora"}, dry_run=True)
+    assert typed.ok and "arbora" in typed.output
+    waited = adapter.execute("wait_for", {"selector": "#ready", "state": "visible"}, dry_run=True)
+    assert waited.ok
+    snap = adapter.execute("snapshot", {"path": str(Path.home() / "ArboraBriefs" / "s.png")}, dry_run=True)
+    assert snap.ok and snap.dry_run
+
+
+def test_browser_interaction_requires_selector():
+    adapter = BrowserAdapter()
+    assert adapter.execute("click", {}, dry_run=True).ok is False
+    assert adapter.execute("type_text", {"text": "x"}, dry_run=True).ok is False
+    assert adapter.execute("wait_for", {}, dry_run=True).ok is False
+
+
+def test_browser_click_type_wait_with_mock():
+    adapter = BrowserAdapter()
+    fake_locator = MagicMock()
+    fake_page = MagicMock()
+    fake_page.locator.return_value.first = fake_locator
+    adapter._page = fake_page
+
+    clicked = adapter.execute("click", {"selector": "#btn", "button": "left"}, dry_run=False)
+    assert clicked.ok
+    fake_page.click.assert_called()
+
+    typed = adapter.execute(
+        "type_text",
+        {"selector": "input#q", "text": "hello", "clear_first": True},
+        dry_run=False,
+    )
+    assert typed.ok
+    fake_locator.fill.assert_called_with("hello")
+
+    waited = adapter.execute("wait_for", {"selector": "#done", "state": "visible"}, dry_run=False)
+    assert waited.ok
+    fake_locator.wait_for.assert_called()
+
+
+def test_browser_snapshot_with_mock(tmp_path: Path):
+    adapter = BrowserAdapter()
+    fake_page = MagicMock()
+    adapter._page = fake_page
+    out = tmp_path / "shot.png"
+    result = adapter.execute("snapshot", {"path": str(out), "full_page": True}, dry_run=False)
+    assert result.ok
+    fake_page.screenshot.assert_called()
+    assert "shot.png" in result.output
 
 
 def test_open_url_rejects_non_http():

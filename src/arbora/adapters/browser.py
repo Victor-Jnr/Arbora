@@ -71,6 +71,34 @@ class BrowserAdapter:
                 topic=str(args.get("topic", "")),
                 dry_run=dry_run,
             )
+        if action == "click":
+            return self._click(
+                str(args.get("selector", "")),
+                button=str(args.get("button", "left")),
+                timeout_ms=int(args.get("timeout_ms", 10_000)),
+                dry_run=dry_run,
+            )
+        if action == "type_text":
+            return self._type_text(
+                str(args.get("selector", "")),
+                text=str(args.get("text", "")),
+                clear_first=bool(args.get("clear_first", True)),
+                timeout_ms=int(args.get("timeout_ms", 10_000)),
+                dry_run=dry_run,
+            )
+        if action == "wait_for":
+            return self._wait_for(
+                selector=str(args.get("selector", "")),
+                state=str(args.get("state", "visible")),
+                timeout_ms=int(args.get("timeout_ms", 10_000)),
+                dry_run=dry_run,
+            )
+        if action == "snapshot":
+            return self._snapshot(
+                str(args.get("path", "")),
+                full_page=bool(args.get("full_page", True)),
+                dry_run=dry_run,
+            )
         if action == "close":
             return self._close(dry_run=dry_run)
         return StepResult(
@@ -280,6 +308,184 @@ class BrowserAdapter:
                 error=f"Failed to write brief: {exc}",
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=f"Saved brief: {out}")
+
+    def _require_page(self, *, dry_run: bool) -> StepResult | None:
+        if dry_run:
+            return None
+        if self._page is None:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="No page open. Call open_url first.",
+            )
+        return None
+
+    @staticmethod
+    def _require_selector(selector: str) -> str | None:
+        sel = (selector or "").strip()
+        if not sel:
+            return "CSS selector is required"
+        if len(sel) > 500:
+            return "Selector too long"
+        return None
+
+    def _click(
+        self,
+        selector: str,
+        *,
+        button: str,
+        timeout_ms: int,
+        dry_run: bool,
+    ) -> StepResult:
+        err = self._require_selector(selector)
+        if err:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=err, dry_run=dry_run)
+        btn = button if button in {"left", "right", "middle"} else "left"
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would click ({btn}): {selector}",
+                dry_run=True,
+            )
+        missing = self._require_page(dry_run=False)
+        if missing:
+            return missing
+        try:
+            assert self._page is not None
+            self._page.click(selector, button=btn, timeout=max(1_000, timeout_ms))
+        except Exception as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Click failed: {exc}",
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=f"Clicked ({btn}): {selector}")
+
+    def _type_text(
+        self,
+        selector: str,
+        *,
+        text: str,
+        clear_first: bool,
+        timeout_ms: int,
+        dry_run: bool,
+    ) -> StepResult:
+        err = self._require_selector(selector)
+        if err:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=err, dry_run=dry_run)
+        if dry_run:
+            preview = text if len(text) <= 80 else text[:80] + "…"
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would type into {selector}: {preview!r}",
+                dry_run=True,
+            )
+        missing = self._require_page(dry_run=False)
+        if missing:
+            return missing
+        try:
+            assert self._page is not None
+            locator = self._page.locator(selector).first
+            locator.wait_for(state="visible", timeout=max(1_000, timeout_ms))
+            if clear_first:
+                locator.fill(text)
+            else:
+                locator.type(text)
+        except Exception as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Type failed: {exc}",
+            )
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=f"Typed {len(text)} chars into {selector}",
+        )
+
+    def _wait_for(
+        self,
+        *,
+        selector: str,
+        state: str,
+        timeout_ms: int,
+        dry_run: bool,
+    ) -> StepResult:
+        err = self._require_selector(selector)
+        if err:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=err, dry_run=dry_run)
+        wait_state = state if state in {"attached", "detached", "visible", "hidden"} else "visible"
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would wait for {selector} state={wait_state}",
+                dry_run=True,
+            )
+        missing = self._require_page(dry_run=False)
+        if missing:
+            return missing
+        try:
+            assert self._page is not None
+            self._page.locator(selector).first.wait_for(
+                state=wait_state,
+                timeout=max(1_000, timeout_ms),
+            )
+        except Exception as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Wait failed: {exc}",
+            )
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=f"Wait satisfied: {selector} ({wait_state})",
+        )
+
+    def _snapshot(self, path: str, *, full_page: bool, dry_run: bool) -> StepResult:
+        if not path.strip():
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+            path = str(resolve_user_path("~/ArboraBriefs") / f"snapshot-{stamp}.png")
+        else:
+            path = str(resolve_user_path(path))
+        if not path.lower().endswith((".png", ".jpg", ".jpeg")):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Snapshot path must end with .png or .jpg",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would save screenshot to {path}",
+                dry_run=True,
+            )
+        missing = self._require_page(dry_run=False)
+        if missing:
+            return missing
+        try:
+            assert self._page is not None
+            out = resolve_user_path(path)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            self._page.screenshot(path=str(out), full_page=full_page)
+        except Exception as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Snapshot failed: {exc}",
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=f"Saved snapshot: {out}")
 
     def _close(self, *, dry_run: bool) -> StepResult:
         if dry_run:

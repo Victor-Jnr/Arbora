@@ -80,5 +80,6 @@ Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Current
 - ~~Trust UX (revoke / audit)~~ (done)
 - ~~Emergency stop~~ (done)
 - ~~Journey hardening~~ (done)
-- Richer broker-gated browser actions
+- ~~Richer broker-gated browser actions~~ (done)
 - File undo where feasible
+- Opt-in cloud provider (P2)
