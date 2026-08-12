@@ -12,37 +12,10 @@ import re
 from pathlib import Path
 from typing import Any
 
+from arbora.core.tool_catalog import ALLOWED_ACTIONS
 from arbora.core.types import Plan, Sensitivity, ToolStep, new_id
 from arbora.providers.base import ModelProvider
-
-ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
-    "desktop": frozenset({"list_running_apps", "launch_app", "focus_window"}),
-    "files": frozenset(
-        {
-            "list_directory",
-            "ensure_directory",
-            "write_text",
-            "preview_organise",
-            "apply_organise",
-            "undo_last_organise",
-        }
-    ),
-    "terminal": frozenset({"run_powershell"}),
-    "browser": frozenset(
-        {
-            "open_url",
-            "get_title",
-            "extract_text",
-            "extract_links",
-            "save_brief",
-            "click",
-            "type_text",
-            "wait_for",
-            "snapshot",
-            "close",
-        }
-    ),
-}
+from arbora.workflows.packs import match_workflow_pack
 
 SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
 
@@ -73,6 +46,12 @@ class GoalPlanner:
             return self._research_plan(text)
         if self._looks_like_terminal(lower):
             return self._terminal_plan(text)
+
+        pack = match_workflow_pack(text)
+        if pack is not None:
+            plan = pack.to_plan(text)
+            if plan is not None:
+                return plan
 
         model_plan = self._plan_with_provider(text)
         if model_plan is not None:

@@ -1,0 +1,53 @@
+{
+  "id": "research-example",
+  "name": "Research example.com",
+  "description": "Open example.com, extract content, and save a brief.",
+  "goal_phrases": [
+    "research example pack",
+    "brief example.com",
+    "save brief from example.com"
+  ],
+  "rationale": "Workflow pack: research journey for example.com with local brief output.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "ensure_directory",
+      "args": { "path": "~/ArboraBriefs" },
+      "summary": "Ensure ArboraBriefs folder exists",
+      "sensitivity": "mutate",
+      "side_effects": ["May create a directory under your home folder"]
+    },
+    {
+      "adapter": "browser",
+      "action": "open_url",
+      "args": { "url": "https://example.com", "headed": false },
+      "summary": "Open https://example.com in headless Chromium",
+      "sensitivity": "mutate",
+      "side_effects": ["Launches Playwright Chromium and navigates to URL"]
+    },
+    {
+      "adapter": "browser",
+      "action": "extract_text",
+      "args": {},
+      "summary": "Extract main visible text (untrusted)",
+      "sensitivity": "read",
+      "side_effects": ["Reads page text as untrusted data"]
+    },
+    {
+      "adapter": "browser",
+      "action": "save_brief",
+      "args": { "path": "~/ArboraBriefs/example-pack.md", "topic": "example.com" },
+      "summary": "Save research brief locally",
+      "sensitivity": "mutate",
+      "side_effects": ["Writes a markdown file under ArboraBriefs"]
+    },
+    {
+      "adapter": "browser",
+      "action": "close",
+      "args": {},
+      "summary": "Close browser session",
+      "sensitivity": "mutate",
+      "side_effects": ["Closes Playwright Chromium"]
+    }
+  ]
+}

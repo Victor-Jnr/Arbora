@@ -35,7 +35,8 @@ Already in place:
 - hardened priority journey templates (workday / diagnose / research);
 - richer browser actions (click / type / wait / snapshot);
 - file undo for organise moves (apply + reverse last batch);
-- opt-in OpenAI-compatible cloud provider with privacy banner.
+- opt-in OpenAI-compatible cloud provider with privacy banner;
+- reusable workflow packs (bundled JSON + user overrides).
 
 Still not MVP-ready:
 
@@ -83,7 +84,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 | # | Plate | Done when |
 | --- | --- | --- |
 | 8 | **Opt-in cloud provider** | ✅ OpenAI-compatible provider + privacy banner when selected |
-| 9 | **Reusable workflow packs** | Named, inspectable workflow definitions (tool allowlist + steps) that can be promoted into trusted routines |
+| 9 | **Reusable workflow packs** | ✅ JSON packs in `workflows/` + `~/.arbora/workflows/` |
 | 10 | **Scheduled trusted routines** | Optional time/context triggers for *already trusted* routines only — never free-form unsupervised loops |
 
 ---
@@ -129,4 +130,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P2 #9 — Reusable workflow packs** (named inspectable workflows promotable to trusted routines).
+**P2 #10 — Scheduled trusted routines** (time/context triggers for already-trusted routines only).

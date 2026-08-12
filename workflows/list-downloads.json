@@ -1,0 +1,22 @@
+{
+  "id": "list-downloads",
+  "name": "List Downloads",
+  "description": "Read-only listing of files in the Downloads folder.",
+  "goal_phrases": [
+    "list downloads",
+    "show downloads",
+    "what is in downloads",
+    "what's in downloads"
+  ],
+  "rationale": "Workflow pack: inspect Downloads without moving or deleting files.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "list_directory",
+      "args": { "path": "~/Downloads" },
+      "summary": "List files in Downloads",
+      "sensitivity": "read",
+      "side_effects": ["Reads directory listing"]
+    }
+  ]
+}

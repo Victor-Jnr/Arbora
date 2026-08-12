@@ -47,6 +47,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/core/audit.py` | Append-only in-memory audit log |
 | `src/arbora/core/broker.py` | Permission broker — sole gate to tool side effects |
 | `src/arbora/core/planner.py` | Goal → plan via templates and optional local model |
+| `src/arbora/core/tool_catalog.py` | Shared allowed adapter/action catalog |
 | `src/arbora/core/routines_store.py` | Serialize/load trusted routines for local memory |
 | `src/arbora/adapters/__init__.py` | Adapter package exports |
 | `src/arbora/adapters/powershell.py` | Shared PowerShell runner with timeout/truncation |
@@ -77,6 +78,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_emergency_stop.py` | Broker emergency-stop skip and no-promote tests |
 | `tests/test_file_undo.py` | Organise apply/undo roundtrip regression tests |
 | `tests/test_openai_provider.py` | Opt-in cloud provider regression tests |
+| `tests/test_workflow_packs.py` | Workflow pack load/match/plan tests |
+
+---
+
+## 017 — Reusable workflow packs (2026-08-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/workflows/packs.py` | Added workflow pack loader and matcher |
+| `src/arbora/workflows/__init__.py` | Workflows package marker |
+| `src/arbora/core/tool_catalog.py` | Shared allowed adapter/action catalog |
+| `workflows/*.json` | Bundled example workflow packs |
+| `workflows/README.md` | Documented pack format |
+| `src/arbora/core/planner.py` | Match workflow packs before provider fallback |
+| `src/arbora/cli/main.py` | Added `/workflows` command |
+| `tests/test_workflow_packs.py` | Added workflow pack tests |
+| `docs/NEXT.md` | Marked P2#9 done |
+| `docs/prototype.md` | Linked workflow packs |
+| `documentation/017-workflow-packs.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 017 |
+| `CHANGELOG.md` | Added file roles and section 017 |
+| `README.md` | Pointed Documentation section at 017 |
 
 ---
 

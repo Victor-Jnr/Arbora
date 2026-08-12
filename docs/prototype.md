@@ -83,3 +83,4 @@ Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Current
 - ~~Richer broker-gated browser actions~~ (done)
 - ~~File undo where feasible~~ (done)
 - Opt-in cloud provider (P2) — set `ARBORA_OPENAI_API_KEY` for `openai`
+- Workflow packs — see `workflows/README.md` and `/workflows`

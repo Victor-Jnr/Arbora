@@ -17,6 +17,7 @@ from arbora.cli.session import (
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport
 from arbora.providers.ollama import DEFAULT_MODEL
+from arbora.workflows.packs import load_workflow_packs, workflow_pack_rows
 
 
 BANNER = f"""
@@ -32,6 +33,7 @@ Commands:
   /provider       Show active model provider
   /memory         Show local memory encryption status
   /wipe           Wipe local memory (routines/preferences)
+  /workflows      List reusable workflow packs
   /undo           Undo the last organise move batch (shortcut plan)
   /dry on|off     Toggle dry-run mode (default: on)
   /quit           Exit
@@ -42,7 +44,8 @@ Try goals like:
   set up a project
   organise my downloads
   undo last organise
-  list files in ~/Downloads
+  list downloads
+  disk diagnose pack
 """.strip()
 
 
@@ -275,6 +278,15 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
         if ok:
             persist_routines(runtime)
         print("Revoked." if ok else "Routine not found.")
+        return dry_run, False
+    if cmd == "/workflows":
+        rows = workflow_pack_rows(load_workflow_packs())
+        if not rows:
+            print("(no workflow packs found)")
+        else:
+            print("Workflow packs:")
+            for row in rows:
+                print(f"  {row}")
         return dry_run, False
     if cmd == "/undo":
         plan = runtime.planner.plan("undo last organise")

@@ -1,0 +1,35 @@
+{
+  "id": "disk-diagnose",
+  "name": "Disk diagnose",
+  "description": "Read-only disk and memory diagnostics.",
+  "goal_phrases": [
+    "quick disk check",
+    "disk diagnose pack",
+    "check disk and memory"
+  ],
+  "rationale": "Workflow pack: read-only disk/memory probes suitable for promotion to a trusted routine.",
+  "steps": [
+    {
+      "adapter": "terminal",
+      "action": "run_powershell",
+      "args": {
+        "command": "Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free | Format-Table | Out-String",
+        "timeout_seconds": 30
+      },
+      "summary": "Read-only: report free disk space per drive",
+      "sensitivity": "read",
+      "side_effects": ["Runs a read-only PowerShell query"]
+    },
+    {
+      "adapter": "terminal",
+      "action": "run_powershell",
+      "args": {
+        "command": "Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 5 Name, Id | Format-Table | Out-String",
+        "timeout_seconds": 30
+      },
+      "summary": "Read-only: top processes by memory",
+      "sensitivity": "read",
+      "side_effects": ["Runs a read-only PowerShell query"]
+    }
+  ]
+}
