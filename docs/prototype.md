@@ -82,4 +82,4 @@ Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Current
 - ~~Journey hardening~~ (done)
 - ~~Richer broker-gated browser actions~~ (done)
 - ~~File undo where feasible~~ (done)
-- Opt-in cloud provider (P2)
+- Opt-in cloud provider (P2) — set `ARBORA_OPENAI_API_KEY` for `openai`

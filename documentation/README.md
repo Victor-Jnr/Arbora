@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 016 | [Opt-in cloud provider](016-opt-in-cloud-provider.md) | 2026-08-12 | OpenAI-compatible provider + privacy banner |
 | 015 | [File undo for organise moves](015-file-undo-organise.md) | 2026-08-12 | apply_organise + undo_last_organise with local journal |
 | 014 | [Richer browser actions](014-richer-browser-actions.md) | 2026-08-09 | Click/type/wait/snapshot behind the browser broker gate |
 | 013 | [Journey hardening](013-journey-hardening.md) | 2026-08-09 | Stronger workday/diagnose/research plans and matchers |

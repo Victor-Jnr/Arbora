@@ -11,7 +11,9 @@ from arbora.cli.session import (
     build_runtime,
     format_plan,
     hard_confirm_ids_for,
+    list_provider_choices,
     persist_routines,
+    provider_privacy_notice,
 )
 from arbora.core.types import ApprovalDecision, AuditEvent, ExecutionReport, Plan, TrustedRoutine
 from arbora.setup_status import (
@@ -89,6 +91,7 @@ class ArboraChatApp:
         self._setup_busy = False
         self._run_busy = False
         self._stop_var = tk.StringVar(value="")
+        self._privacy_var = tk.StringVar(value="")
 
         self._build_style()
         self._build_ui()
@@ -97,6 +100,7 @@ class ArboraChatApp:
             f"Provider: {self._runtime.provider_name} | "
             f"Memory: {self._runtime.memory.key_backend}\n"
         )
+        self._refresh_privacy_banner()
         self.refresh_status_lights()
 
     def _build_style(self) -> None:
@@ -185,19 +189,34 @@ class ArboraChatApp:
         controls = ttk.Frame(self.root, style="TFrame")
         controls.pack(fill="x", padx=24, pady=8)
         ttk.Label(controls, text="Provider").pack(side="left")
-        provider = ttk.Combobox(
+        self._provider_combo = ttk.Combobox(
             controls,
             textvariable=self.provider_var,
-            values=("echo", "ollama"),
+            values=tuple(list_provider_choices()),
             width=10,
             state="readonly",
         )
-        provider.pack(side="left", padx=(8, 16))
-        provider.bind("<<ComboboxSelected>>", self._on_provider_change)
+        self._provider_combo.pack(side="left", padx=(8, 16))
+        self._provider_combo.bind("<<ComboboxSelected>>", self._on_provider_change)
         ttk.Checkbutton(controls, text="Dry-run", variable=self.dry_run_var).pack(side="left", padx=(0, 16))
         ttk.Checkbutton(controls, text="Promote after success", variable=self.promote_var).pack(side="left")
         ttk.Button(controls, text="Refresh status", command=self.refresh_status_lights).pack(side="right", padx=(8, 0))
         ttk.Button(controls, text="Setup", style="Accent.TButton", command=self.open_setup).pack(side="right")
+
+        privacy_row = ttk.Frame(self.root, style="TFrame")
+        privacy_row.pack(fill="x", padx=24, pady=(0, 4))
+        self._privacy_label = tk.Label(
+            privacy_row,
+            textvariable=self._privacy_var,
+            bg=COLORS["danger"],
+            fg=COLORS["ink"],
+            font=("Segoe UI", 9, "bold"),
+            anchor="w",
+            padx=10,
+            pady=6,
+        )
+        self._privacy_label.pack(fill="x")
+        self._privacy_label.pack_forget()
 
         self.transcript = tk.Text(
             self.root,
@@ -381,11 +400,27 @@ class ArboraChatApp:
 
         render_checklist()
 
+    def _refresh_privacy_banner(self) -> None:
+        notice = provider_privacy_notice(self._runtime.planner._provider)  # noqa: SLF001
+        if notice:
+            self._privacy_var.set(notice)
+            self._privacy_label.pack(fill="x")
+        else:
+            self._privacy_var.set("")
+            self._privacy_label.pack_forget()
+
     def _on_provider_change(self, _event=None) -> None:
-        self._runtime = build_runtime(provider=self.provider_var.get())
+        choice = self.provider_var.get()
+        try:
+            self._runtime = build_runtime(provider=choice)
+        except ValueError as exc:
+            messagebox.showerror("Provider", str(exc))
+            self.provider_var.set(self._runtime.provider_name)
+            return
         self._plan = None
         self._matched_trusted = False
         self._log(f"Switched provider to {self._runtime.provider_name}\n")
+        self._refresh_privacy_banner()
         self.refresh_status_lights()
 
     def _log(self, text: str) -> None:

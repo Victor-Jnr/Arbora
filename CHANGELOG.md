@@ -62,6 +62,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/providers/base.py` | Provider-agnostic model protocol |
 | `src/arbora/providers/echo.py` | Local stub provider (no network) |
 | `src/arbora/providers/ollama.py` | Local Ollama HTTP provider (`gpt-oss:20b` default) |
+| `src/arbora/providers/openai_compatible.py` | Opt-in OpenAI-compatible cloud provider |
 | `src/arbora/cli/__init__.py` | CLI package marker |
 | `src/arbora/cli/session.py` | Runtime wiring and plan formatting helpers |
 | `src/arbora/cli/main.py` | Interactive and one-shot CLI chat shell (+ doctor dispatch) |
@@ -75,6 +76,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_desktop_chat.py` | Tkinter desktop chat and Trust UX dialog smoke tests |
 | `tests/test_emergency_stop.py` | Broker emergency-stop skip and no-promote tests |
 | `tests/test_file_undo.py` | Organise apply/undo roundtrip regression tests |
+| `tests/test_openai_provider.py` | Opt-in cloud provider regression tests |
+
+---
+
+## 016 — Opt-in OpenAI-compatible cloud provider (2026-08-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/providers/openai_compatible.py` | Added OpenAI-compatible cloud provider |
+| `src/arbora/providers/__init__.py` | Exported cloud provider helpers |
+| `src/arbora/cli/session.py` | Provider selection, privacy notice, choice list |
+| `src/arbora/cli/main.py` | Cloud privacy notice in banner and `/provider` |
+| `apps/desktop_chat/app.py` | Cloud provider option + privacy banner |
+| `tests/test_openai_provider.py` | Added mocked cloud provider tests |
+| `docs/NEXT.md` | Marked P2#8 done |
+| `documentation/016-opt-in-cloud-provider.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 016 |
+| `CHANGELOG.md` | Added file roles and section 016 |
+| `README.md` | Pointed Documentation section at 016 |
 
 ---
 

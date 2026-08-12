@@ -34,11 +34,12 @@ Already in place:
 - emergency stop for in-flight plans (broker + desktop Stop);
 - hardened priority journey templates (workday / diagnose / research);
 - richer browser actions (click / type / wait / snapshot);
-- file undo for organise moves (apply + reverse last batch).
+- file undo for organise moves (apply + reverse last batch);
+- opt-in OpenAI-compatible cloud provider with privacy banner.
 
 Still not MVP-ready:
 
-- no opt-in cloud provider yet.
+- scheduled trusted routines not implemented yet.
 
 ---
 
@@ -81,7 +82,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 
 | # | Plate | Done when |
 | --- | --- | --- |
-| 8 | **Opt-in cloud provider** | One cloud path behind the same provider interface, with an explicit “data leaves this machine” banner |
+| 8 | **Opt-in cloud provider** | ✅ OpenAI-compatible provider + privacy banner when selected |
 | 9 | **Reusable workflow packs** | Named, inspectable workflow definitions (tool allowlist + steps) that can be promoted into trusted routines |
 | 10 | **Scheduled trusted routines** | Optional time/context triggers for *already trusted* routines only — never free-form unsupervised loops |
 
@@ -128,4 +129,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P2 #8 — Opt-in cloud provider** with an explicit data-leaves-machine banner.
+**P2 #9 — Reusable workflow packs** (named inspectable workflows promotable to trusted routines).

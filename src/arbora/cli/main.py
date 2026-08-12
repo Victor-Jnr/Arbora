@@ -13,6 +13,7 @@ from arbora.cli.session import (
     format_plan,
     hard_confirm_ids_for,
     persist_routines,
+    provider_privacy_notice,
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport
 from arbora.providers.ollama import DEFAULT_MODEL
@@ -62,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--provider",
         default=None,
-        help="Model provider: ollama (default) or echo",
+        help="Model provider: ollama (default), echo, or openai (requires ARBORA_OPENAI_API_KEY)",
     )
     args = parser.parse_args(argv)
 
@@ -81,6 +82,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print(BANNER)
     print(f"\nProvider: {runtime.provider_name}")
+    notice = provider_privacy_notice(runtime.planner._provider)  # noqa: SLF001
+    if notice:
+        print(f"Privacy: {notice}")
     if runtime.provider_name == "ollama":
         print(f"Ollama model default: {DEFAULT_MODEL} (override with ARBORA_OLLAMA_MODEL)")
     print(
@@ -230,6 +234,9 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
         return dry_run, False
     if cmd == "/provider":
         print(f"Active provider: {runtime.provider_name}")
+        notice = provider_privacy_notice(runtime.planner._provider)  # noqa: SLF001
+        if notice:
+            print(f"Privacy: {notice}")
         return dry_run, False
     if cmd == "/memory":
         print(f"Root: {runtime.memory.root}")

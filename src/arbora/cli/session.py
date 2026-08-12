@@ -20,7 +20,7 @@ from arbora.core.types import (
     new_id,
 )
 from arbora.memory import LocalMemoryStore
-from arbora.providers import EchoProvider, OllamaProvider
+from arbora.providers import EchoProvider, OllamaProvider, OpenAICompatibleProvider, cloud_provider_configured
 from arbora.providers.base import ModelProvider
 
 
@@ -39,7 +39,31 @@ def select_provider(name: str | None = None) -> ModelProvider:
         return EchoProvider()
     if choice == "ollama":
         return OllamaProvider()
-    raise ValueError(f"Unknown provider '{choice}'. Use ollama or echo.")
+    if choice in {"openai", "cloud"}:
+        provider = OpenAICompatibleProvider()
+        if not provider.available():
+            raise ValueError(
+                "OpenAI-compatible provider requires ARBORA_OPENAI_API_KEY. "
+                "Use ollama or echo instead."
+            )
+        return provider
+    raise ValueError(f"Unknown provider '{choice}'. Use ollama, echo, or openai.")
+
+
+def provider_privacy_notice(provider: ModelProvider) -> str | None:
+    notice = getattr(provider, "privacy_notice", None)
+    if callable(notice):
+        return str(notice())
+    if getattr(provider, "data_leaves_machine", False):
+        return "Cloud provider active — prompt data leaves this machine."
+    return None
+
+
+def list_provider_choices() -> list[str]:
+    choices = ["echo", "ollama"]
+    if cloud_provider_configured():
+        choices.append("openai")
+    return choices
 
 
 def build_runtime(memory_root: Path | None = None, provider: str | None = None) -> Runtime:
@@ -200,6 +224,8 @@ __all__ = [
     "persist_routines",
     "run_goal",
     "select_provider",
+    "list_provider_choices",
+    "provider_privacy_notice",
     "sensitivity_badge",
     "new_id",
 ]
