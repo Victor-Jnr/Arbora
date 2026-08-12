@@ -51,7 +51,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/adapters/__init__.py` | Adapter package exports |
 | `src/arbora/adapters/powershell.py` | Shared PowerShell runner with timeout/truncation |
 | `src/arbora/adapters/desktop.py` | Windows app list/launch/focus adapter |
-| `src/arbora/adapters/files.py` | Files/folders listing, write, organise preview |
+| `src/arbora/adapters/file_undo.py` | Undo journal types for organise move batches |
+| `src/arbora/adapters/files.py` | Files listing, organise apply/undo, write helpers |
 | `src/arbora/adapters/terminal.py` | PowerShell execution adapter |
 | `src/arbora/adapters/browser.py` | Playwright browser navigate/extract/brief adapter |
 | `src/arbora/memory/__init__.py` | Memory package exports |
@@ -73,6 +74,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_doctor.py` | arbora doctor CLI regression tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat and Trust UX dialog smoke tests |
 | `tests/test_emergency_stop.py` | Broker emergency-stop skip and no-promote tests |
+| `tests/test_file_undo.py` | Organise apply/undo roundtrip regression tests |
+
+---
+
+## 015 — File undo for organise moves (2026-08-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/file_undo.py` | Added undo batch journal helpers |
+| `src/arbora/adapters/files.py` | Added apply_organise and undo_last_organise |
+| `src/arbora/cli/session.py` | Wired undo journal to encrypted local memory |
+| `src/arbora/cli/main.py` | Added `/undo` shortcut and banner help |
+| `src/arbora/core/planner.py` | Organise apply step + undo journey matcher |
+| `tests/test_file_undo.py` | Added apply/undo tests |
+| `docs/NEXT.md` | Marked P1#7 done |
+| `documentation/015-file-undo-organise.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 015 |
+| `CHANGELOG.md` | Added file roles and section 015 |
+| `README.md` | Pointed Documentation section at 015 |
 
 ---
 

@@ -17,7 +17,16 @@ from arbora.providers.base import ModelProvider
 
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
     "desktop": frozenset({"list_running_apps", "launch_app", "focus_window"}),
-    "files": frozenset({"list_directory", "ensure_directory", "write_text", "preview_organise"}),
+    "files": frozenset(
+        {
+            "list_directory",
+            "ensure_directory",
+            "write_text",
+            "preview_organise",
+            "apply_organise",
+            "undo_last_organise",
+        }
+    ),
     "terminal": frozenset({"run_powershell"}),
     "browser": frozenset(
         {
@@ -56,6 +65,8 @@ class GoalPlanner:
             return self._dev_setup_plan(text)
         if self._looks_like_organise_downloads(lower):
             return self._organise_downloads_plan(text)
+        if self._looks_like_undo_organise(lower):
+            return self._undo_organise_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -445,7 +456,10 @@ class GoalPlanner:
         return Plan(
             id=new_id("plan_"),
             goal=goal,
-            rationale="File organisation journey: preview first; mutating moves need approval.",
+            rationale=(
+                "File organisation journey — preview first, then apply moves. "
+                "An undo batch is recorded so you can reverse with 'undo last organise'."
+            ),
             steps=[
                 ToolStep(
                     id=new_id("step_"),
@@ -464,6 +478,33 @@ class GoalPlanner:
                     summary="Preview filing groups for Downloads (dry classification)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Classifies filenames in memory; no moves yet",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="apply_organise",
+                    args={"path": str(downloads)},
+                    summary="Move Downloads files into extension folders (records undo batch)",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Moves files into subfolders; undo batch stored locally",),
+                ),
+            ],
+        )
+
+    def _undo_organise_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale="Reverse the most recent organise move batch recorded in local memory.",
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="undo_last_organise",
+                    args={},
+                    summary="Undo the last organise move batch",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Moves files back to their prior locations",),
                 ),
             ],
         )
@@ -676,7 +717,20 @@ class GoalPlanner:
     @staticmethod
     def _looks_like_organise_downloads(lower: str) -> bool:
         return "download" in lower and any(
-            w in lower for w in ("organis", "organiz", "sort my", "sort the", "filing")
+            w in lower for w in ("organis", "organiz", "sort my", "sort the", "filing", "file my")
+        )
+
+    @staticmethod
+    def _looks_like_undo_organise(lower: str) -> bool:
+        return any(
+            phrase in lower
+            for phrase in (
+                "undo last organise",
+                "undo organise",
+                "reverse organise",
+                "undo file moves",
+                "undo last file",
+            )
         )
 
     @staticmethod

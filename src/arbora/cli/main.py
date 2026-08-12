@@ -31,6 +31,7 @@ Commands:
   /provider       Show active model provider
   /memory         Show local memory encryption status
   /wipe           Wipe local memory (routines/preferences)
+  /undo           Undo the last organise move batch (shortcut plan)
   /dry on|off     Toggle dry-run mode (default: on)
   /quit           Exit
 
@@ -39,6 +40,7 @@ Try goals like:
   diagnose disk space
   set up a project
   organise my downloads
+  undo last organise
   list files in ~/Downloads
 """.strip()
 
@@ -266,6 +268,19 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
         if ok:
             persist_routines(runtime)
         print("Revoked." if ok else "Routine not found.")
+        return dry_run, False
+    if cmd == "/undo":
+        plan = runtime.planner.plan("undo last organise")
+        runtime.audit.record("plan_created", plan.rationale or plan.goal, plan_id=plan.id, goal="undo last organise")
+        print()
+        print(format_plan(plan))
+        print()
+        if not _confirm("Approve undo plan? [y/N] "):
+            print("Undo cancelled.\n")
+            return dry_run, False
+        decision = approve_all(plan)
+        results = runtime.broker.execute_plan(plan, decision, dry_run=dry_run)
+        _print_report(ExecutionReport(plan_id=plan.id, results=results))
         return dry_run, False
     if cmd == "/dry":
         if arg.lower() == "on":

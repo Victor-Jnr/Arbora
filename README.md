@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 015 | [File undo for organise moves](documentation/015-file-undo-organise.md) |
 | 014 | [Richer browser actions](documentation/014-richer-browser-actions.md) |
 | 013 | [Journey hardening](documentation/013-journey-hardening.md) |
 | 012 | [Emergency stop](documentation/012-emergency-stop.md) |

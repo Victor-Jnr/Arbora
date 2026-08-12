@@ -2,10 +2,20 @@
 
 from __future__ import annotations
 
+import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from arbora.adapters.file_undo import (
+    FileMoveRecord,
+    UndoBatch,
+    UndoJournalLoader,
+    UndoJournalStore,
+    append_batch,
+    pop_last_batch,
+    utc_now_iso,
+)
 from arbora.core.types import StepResult, new_id
 
 _EXTENSION_GROUPS = {
@@ -23,8 +33,48 @@ def resolve_user_path(raw: str) -> Path:
     return Path(text).expanduser().resolve(strict=False)
 
 
+def classify_bucket(path: Path) -> str:
+    suffix = path.suffix.lower()
+    for name, extensions in _EXTENSION_GROUPS.items():
+        if suffix in extensions:
+            return name
+    return "other"
+
+
+def plan_organise_moves(root: Path) -> list[tuple[str, Path, Path]]:
+    """Return (bucket, source, destination) moves for files directly under root."""
+    if not root.exists() or not root.is_dir():
+        return []
+    moves: list[tuple[str, Path, Path]] = []
+    try:
+        entries = list(root.iterdir())
+    except (PermissionError, OSError):
+        return []
+    for entry in entries:
+        try:
+            if not entry.is_file():
+                continue
+        except OSError:
+            continue
+        bucket = classify_bucket(entry)
+        destination = root / bucket / entry.name
+        if destination.resolve(strict=False) == entry.resolve(strict=False):
+            continue
+        moves.append((bucket, entry, destination))
+    return moves
+
+
 class FilesAdapter:
     name = "files"
+
+    def __init__(
+        self,
+        *,
+        undo_loader: UndoJournalLoader | None = None,
+        undo_store: UndoJournalStore | None = None,
+    ) -> None:
+        self._undo_loader = undo_loader
+        self._undo_store = undo_store
 
     def execute(self, action: str, args: dict[str, Any], *, dry_run: bool = False) -> StepResult:
         if action == "list_directory":
@@ -39,6 +89,10 @@ class FilesAdapter:
             )
         if action == "preview_organise":
             return self._preview_organise(resolve_user_path(str(args.get("path", ""))), dry_run=dry_run)
+        if action == "apply_organise":
+            return self._apply_organise(resolve_user_path(str(args.get("path", ""))), dry_run=dry_run)
+        if action == "undo_last_organise":
+            return self._undo_last_organise(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -174,6 +228,7 @@ class FilesAdapter:
         return StepResult(step_id=new_id("res_"), ok=True, output=f"Wrote {path}")
 
     def _preview_organise(self, path: Path, *, dry_run: bool) -> StepResult:
+        moves = plan_organise_moves(path)
         if not path.exists() or not path.is_dir():
             return StepResult(
                 step_id=new_id("res_"),
@@ -182,39 +237,10 @@ class FilesAdapter:
                 error=f"Cannot preview organise for {path}",
                 dry_run=dry_run,
             )
-        try:
-            entries = list(path.iterdir())
-        except PermissionError:
-            return StepResult(
-                step_id=new_id("res_"),
-                ok=False,
-                output="",
-                error=f"Permission denied listing: {path}",
-                dry_run=dry_run,
-            )
-        except OSError as exc:
-            return StepResult(
-                step_id=new_id("res_"),
-                ok=False,
-                output="",
-                error=f"Failed to list {path}: {exc}",
-                dry_run=dry_run,
-            )
 
         groups: dict[str, list[str]] = defaultdict(list)
-        for entry in entries:
-            try:
-                if not entry.is_file():
-                    continue
-            except OSError:
-                continue
-            bucket = "other"
-            suffix = entry.suffix.lower()
-            for name, extensions in _EXTENSION_GROUPS.items():
-                if suffix in extensions:
-                    bucket = name
-                    break
-            groups[bucket].append(entry.name)
+        for bucket, source, _destination in moves:
+            groups[bucket].append(source.name)
 
         lines = [f"Organisation preview for {path}"]
         if dry_run:
@@ -227,4 +253,118 @@ class FilesAdapter:
                 lines.append(f"    ... +{len(groups[bucket]) - 8} more")
         if len(lines) == 1:
             lines.append("  (no files to classify)")
+        lines.append("")
+        lines.append("Use apply_organise to move files, then undo_last_organise to reverse.")
         return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines), dry_run=dry_run)
+
+    def _apply_organise(self, path: Path, *, dry_run: bool) -> StepResult:
+        if not path.exists() or not path.is_dir():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Cannot organise {path}",
+                dry_run=dry_run,
+            )
+        moves = plan_organise_moves(path)
+        if not moves:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"No files to organise under {path}",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            lines = [f"[dry-run] Would move {len(moves)} file(s) under {path}:"]
+            for bucket, source, destination in moves[:20]:
+                lines.append(f"  {source.name} -> {bucket}/{source.name}")
+            if len(moves) > 20:
+                lines.append(f"  ... +{len(moves) - 20} more")
+            return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines), dry_run=True)
+
+        applied: list[FileMoveRecord] = []
+        lines = [f"Moved {len(moves)} file(s) under {path}:"]
+        for bucket, source, destination in moves:
+            try:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                if destination.exists():
+                    return StepResult(
+                        step_id=new_id("res_"),
+                        ok=False,
+                        output="\n".join(lines),
+                        error=f"Destination already exists: {destination}",
+                    )
+                shutil.move(str(source), str(destination))
+                applied.append(FileMoveRecord(source=str(source), destination=str(destination)))
+                lines.append(f"  {source.name} -> {bucket}/{source.name}")
+            except PermissionError:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="\n".join(lines),
+                    error=f"Permission denied moving {source}",
+                )
+            except OSError as exc:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="\n".join(lines),
+                    error=f"Failed moving {source}: {exc}",
+                )
+
+        batch = UndoBatch(
+            batch_id=new_id("undo_"),
+            root=str(path),
+            moves=tuple(applied),
+            created_at=utc_now_iso(),
+        )
+        append_batch(self._undo_loader, self._undo_store, batch)
+        lines.append(f"Undo batch recorded: {batch.batch_id}")
+        return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))
+
+    def _undo_last_organise(self, *, dry_run: bool) -> StepResult:
+        batch = pop_last_batch(self._undo_loader, self._undo_store)
+        if batch is None:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="No organise undo batch is available",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            lines = [f"[dry-run] Would undo batch {batch.batch_id} ({len(batch.moves)} moves):"]
+            for move in batch.moves[:20]:
+                lines.append(f"  {move.destination} -> {move.source}")
+            return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines), dry_run=True)
+
+        lines = [f"Undoing batch {batch.batch_id}:"]
+        for move in batch.moves:
+            src = Path(move.destination)
+            dst = Path(move.source)
+            try:
+                if not src.exists():
+                    return StepResult(
+                        step_id=new_id("res_"),
+                        ok=False,
+                        output="\n".join(lines),
+                        error=f"Missing moved file: {src}",
+                    )
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                if dst.exists():
+                    return StepResult(
+                        step_id=new_id("res_"),
+                        ok=False,
+                        output="\n".join(lines),
+                        error=f"Cannot restore; destination exists: {dst}",
+                    )
+                shutil.move(str(src), str(dst))
+                lines.append(f"  {src.name} -> {dst.parent}")
+            except (PermissionError, OSError) as exc:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="\n".join(lines),
+                    error=f"Failed undoing {src}: {exc}",
+                )
+        return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))

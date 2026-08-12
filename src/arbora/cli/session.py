@@ -45,11 +45,21 @@ def select_provider(name: str | None = None) -> ModelProvider:
 def build_runtime(memory_root: Path | None = None, provider: str | None = None) -> Runtime:
     audit = AuditLog()
     broker = PermissionBroker(audit)
+    memory = LocalMemoryStore(root=memory_root)
+
+    def _load_undo_batches() -> list[dict]:
+        rows = memory.get("file_undo_batches")
+        return rows if isinstance(rows, list) else []
+
+    def _store_undo_batches(rows: list[dict]) -> None:
+        memory.set("file_undo_batches", rows)
+
+    broker.register_adapter(
+        FilesAdapter(undo_loader=_load_undo_batches, undo_store=_store_undo_batches)
+    )
     broker.register_adapter(DesktopAdapter())
-    broker.register_adapter(FilesAdapter())
     broker.register_adapter(TerminalAdapter())
     broker.register_adapter(BrowserAdapter())
-    memory = LocalMemoryStore(root=memory_root)
     broker.load_routines(routines_from_dicts(memory.get("trusted_routines")))
     model = select_provider(provider)
     planner = GoalPlanner(provider=model)

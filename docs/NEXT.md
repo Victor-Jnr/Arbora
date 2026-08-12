@@ -33,12 +33,12 @@ Already in place:
 - desktop Trust UX (routines revoke + audit dialogs);
 - emergency stop for in-flight plans (broker + desktop Stop);
 - hardened priority journey templates (workday / diagnose / research);
-- richer browser actions (click / type / wait / snapshot).
+- richer browser actions (click / type / wait / snapshot);
+- file undo for organise moves (apply + reverse last batch).
 
 Still not MVP-ready:
 
-- no opt-in cloud provider yet;
-- undo ergonomics are incomplete.
+- no opt-in cloud provider yet.
 
 ---
 
@@ -75,7 +75,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 | --- | --- | --- |
 | 5 | **Journey hardening** | ✅ Clearer workday / diagnose / research templates + broader matchers |
 | 6 | **Richer browser (broker-gated)** | ✅ `click` / `type_text` / `wait_for` / `snapshot` behind the broker |
-| 7 | **File undo where feasible** | Organise/move plans can preview and reverse common moves |
+| 7 | **File undo where feasible** | ✅ `apply_organise` + `undo_last_organise` with local journal |
 
 ### P2 — close the MVP capability gaps
 
@@ -128,4 +128,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P1 #7 — File undo where feasible** (preview + reverse common organise/move plans).
+**P2 #8 — Opt-in cloud provider** with an explicit data-leaves-machine banner.
