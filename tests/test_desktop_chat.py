@@ -53,7 +53,7 @@ def test_format_audit_events():
     assert "plan_created" in body
     assert "test plan" in body
     assert "plan_id=p1" in body
-    assert format_audit_events([]) == "(audit log empty for this session)\n"
+    assert format_audit_events([]) == "(audit log empty)\n"
 
 
 def test_format_schedule_list(tmp_path: Path):

@@ -70,7 +70,7 @@ def format_routine_detail(routine: TrustedRoutine) -> str:
 def format_audit_events(events: list[AuditEvent]) -> str:
     """Human-readable session audit for the Trust UX dialog."""
     if not events:
-        return "(audit log empty for this session)\n"
+        return "(audit log empty)\n"
     lines: list[str] = []
     for event in events:
         stamp = event.created_at.isoformat(timespec="seconds")
@@ -893,7 +893,7 @@ class ArboraChatApp:
         ttk.Label(dialog, text="Audit log", style="Brand.TLabel").pack(anchor="w", padx=16, pady=(16, 4))
         ttk.Label(
             dialog,
-            text="Recent approvals, tool outcomes, and trust changes in this session.",
+            text="Recent approvals, tool outcomes, and trust changes (persisted locally).",
             style="Muted.TLabel",
             wraplength=600,
         ).pack(anchor="w", padx=16, pady=(0, 8))

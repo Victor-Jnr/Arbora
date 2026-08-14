@@ -38,11 +38,10 @@ Already in place:
 - opt-in OpenAI-compatible cloud provider with privacy banner;
 - reusable workflow packs (bundled JSON + user overrides);
 - scheduled trusted routines (`arbora schedule` + `/schedules`);
-- desktop schedule management in `arbora-ui`.
+- desktop schedule management in `arbora-ui`;
+- persistent audit log across sessions (encrypted local memory).
 
-Still not MVP-ready:
-
-- audit log is session-only (not yet persisted across restarts).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Revisit Stage 3 personal depth in this README when early testers finish the five MVP exit checks.
 
 ---
 
@@ -93,7 +92,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 
 | # | Plate | Done when |
 | --- | --- | --- |
-| 11 | **Persistent audit log** | Audit events survive restarts in encrypted local memory |
+| 11 | **Persistent audit log** | ✅ Audit events survive restarts in encrypted local memory |
 | 12 | **Desktop schedule UX** | ✅ Manage trusted-routine schedules from `arbora-ui` |
 
 ---
@@ -139,4 +138,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P3 #11 — Persistent audit log** (encrypted local memory, inspectable across sessions).
+Stage 2 MVP plates are complete. Pick the next item from **Stage 3 (personal depth)** in the root README, or run early-tester validation against the [MVP definition of done](#mvp-definition-of-done-exit-criteria) below.

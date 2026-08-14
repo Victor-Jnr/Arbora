@@ -84,6 +84,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/schedules/__init__.py` | Schedules package exports |
 | `src/arbora/cli/schedule.py` | `arbora schedule` CLI for trusted-routine triggers |
 | `tests/test_schedules.py` | Schedule store/run/CLI regression tests |
+| `src/arbora/core/audit_store.py` | Serialize and cap persisted audit events in memory |
+| `tests/test_audit_persistence.py` | Audit persistence across sessions regression tests |
+
+---
+
+## 020 — Persistent audit log (2026-08-13)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/audit_store.py` | Added audit event load/persist helpers |
+| `src/arbora/core/audit.py` | Added preload + on_record persistence hook |
+| `src/arbora/cli/session.py` | Wire audit persistence in `build_runtime` |
+| `apps/desktop_chat/app.py` | Updated audit dialog copy for persisted log |
+| `tests/test_audit_persistence.py` | Added persistence/trim/wipe tests |
+| `tests/test_desktop_chat.py` | Updated empty audit message |
+| `docs/NEXT.md` | Marked P3#11 done; MVP plates complete |
+| `documentation/020-persistent-audit-log.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 020 |
+| `README.md` | Linked document 020 |
+| `CHANGELOG.md` | Added file roles and 020 section |
 
 ---
 

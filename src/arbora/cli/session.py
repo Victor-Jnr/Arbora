@@ -8,6 +8,7 @@ from pathlib import Path
 
 from arbora.adapters import BrowserAdapter, DesktopAdapter, FilesAdapter, TerminalAdapter
 from arbora.core.audit import AuditLog
+from arbora.core.audit_store import load_audit_events, persist_audit_events
 from arbora.core.broker import PermissionBroker
 from arbora.core.planner import GoalPlanner
 from arbora.core.routines_store import routines_from_dicts, routines_to_dicts
@@ -67,9 +68,14 @@ def list_provider_choices() -> list[str]:
 
 
 def build_runtime(memory_root: Path | None = None, provider: str | None = None) -> Runtime:
-    audit = AuditLog()
-    broker = PermissionBroker(audit)
     memory = LocalMemoryStore(root=memory_root)
+    persisted = load_audit_events(memory)
+
+    def _persist_audit(events: list) -> None:
+        persist_audit_events(memory, events)
+
+    audit = AuditLog(initial_events=persisted, on_record=_persist_audit)
+    broker = PermissionBroker(audit)
 
     def _load_undo_batches() -> list[dict]:
         rows = memory.get("file_undo_batches")
