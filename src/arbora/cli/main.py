@@ -17,6 +17,7 @@ from arbora.cli.session import (
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport
 from arbora.providers.ollama import DEFAULT_MODEL
+from arbora.schedules.store import load_schedules, schedule_rows
 from arbora.workflows.packs import load_workflow_packs, workflow_pack_rows
 
 
@@ -34,6 +35,7 @@ Commands:
   /memory         Show local memory encryption status
   /wipe           Wipe local memory (routines/preferences)
   /workflows      List reusable workflow packs
+  /schedules      List trusted-routine schedules
   /undo           Undo the last organise move batch (shortcut plan)
   /dry on|off     Toggle dry-run mode (default: on)
   /quit           Exit
@@ -55,6 +57,10 @@ def main(argv: list[str] | None = None) -> int:
         from arbora.cli.doctor import run_doctor
 
         return run_doctor(argv[1:])
+    if argv and argv[0] == "schedule":
+        from arbora.cli.schedule import run_schedule_cli
+
+        return run_schedule_cli(argv[1:])
 
     parser = argparse.ArgumentParser(description="Arbora personal assistant (prototype)")
     parser.add_argument("--goal", help="Run a single goal non-interactively")
@@ -287,6 +293,16 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
             print("Workflow packs:")
             for row in rows:
                 print(f"  {row}")
+        return dry_run, False
+    if cmd == "/schedules":
+        schedules = load_schedules(runtime.memory)
+        if not schedules:
+            print("(no schedules — use `arbora schedule add`)")
+            return dry_run, False
+        names = {routine.id: routine.name for routine in runtime.broker.list_routines()}
+        print("Trusted-routine schedules:")
+        for row in schedule_rows(schedules, routine_names=names):
+            print(f"  {row}")
         return dry_run, False
     if cmd == "/undo":
         plan = runtime.planner.plan("undo last organise")

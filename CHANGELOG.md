@@ -79,6 +79,31 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_file_undo.py` | Organise apply/undo roundtrip regression tests |
 | `tests/test_openai_provider.py` | Opt-in cloud provider regression tests |
 | `tests/test_workflow_packs.py` | Workflow pack load/match/plan tests |
+| `src/arbora/schedules/store.py` | Serialize routine schedules in encrypted memory |
+| `src/arbora/schedules/runner.py` | Due-time checks and trusted-only schedule execution |
+| `src/arbora/schedules/__init__.py` | Schedules package exports |
+| `src/arbora/cli/schedule.py` | `arbora schedule` CLI for trusted-routine triggers |
+| `tests/test_schedules.py` | Schedule store/run/CLI regression tests |
+
+---
+
+## 018 — Scheduled trusted routines (2026-08-13)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/types.py` | Added `goal_text` on trusted routines for stable replans |
+| `src/arbora/core/broker.py` | Store original goal text when promoting routines |
+| `src/arbora/core/routines_store.py` | Serialize `goal_text` for trusted routines |
+| `src/arbora/schedules/runner.py` | Added due checks and trusted-only runner |
+| `src/arbora/schedules/__init__.py` | Schedules package marker |
+| `src/arbora/cli/schedule.py` | Added `arbora schedule` subcommands |
+| `src/arbora/cli/main.py` | Dispatch schedule CLI + `/schedules` command |
+| `tests/test_schedules.py` | Added schedule regression tests |
+| `docs/NEXT.md` | Marked P2#10 done; added P3 plates |
+| `documentation/018-scheduled-trusted-routines.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 018 |
+| `README.md` | Linked document 018 |
+| `CHANGELOG.md` | Added file roles and 018 section |
 
 ---
 

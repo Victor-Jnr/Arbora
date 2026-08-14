@@ -36,11 +36,13 @@ Already in place:
 - richer browser actions (click / type / wait / snapshot);
 - file undo for organise moves (apply + reverse last batch);
 - opt-in OpenAI-compatible cloud provider with privacy banner;
-- reusable workflow packs (bundled JSON + user overrides).
+- reusable workflow packs (bundled JSON + user overrides);
+- scheduled trusted routines (`arbora schedule` + `/schedules`).
 
 Still not MVP-ready:
 
-- scheduled trusted routines not implemented yet.
+- audit log is session-only (not yet persisted across restarts);
+- desktop schedule management UI not yet available.
 
 ---
 
@@ -85,7 +87,14 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 | --- | --- | --- |
 | 8 | **Opt-in cloud provider** | ✅ OpenAI-compatible provider + privacy banner when selected |
 | 9 | **Reusable workflow packs** | ✅ JSON packs in `workflows/` + `~/.arbora/workflows/` |
-| 10 | **Scheduled trusted routines** | Optional time/context triggers for *already trusted* routines only — never free-form unsupervised loops |
+| 10 | **Scheduled trusted routines** | ✅ Optional daily time triggers for *already trusted* routines only — never free-form unsupervised loops |
+
+### P3 — MVP polish (after P2)
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 11 | **Persistent audit log** | Audit events survive restarts in encrypted local memory |
+| 12 | **Desktop schedule UX** | Manage trusted-routine schedules from `arbora-ui` |
 
 ---
 
@@ -130,4 +139,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P2 #10 — Scheduled trusted routines** (time/context triggers for already-trusted routines only).
+**P3 #11 — Persistent audit log** (encrypted local memory, inspectable across sessions).

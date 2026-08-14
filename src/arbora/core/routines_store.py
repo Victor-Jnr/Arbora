@@ -18,6 +18,7 @@ def routines_to_dicts(routines: list[TrustedRoutine]) -> list[dict[str, Any]]:
                 "version": routine.version,
                 "enabled": routine.enabled,
                 "goal_norm": routine.goal_norm,
+                "goal_text": routine.goal_text,
                 "scopes": [
                     {
                         "id": grant.id,
@@ -59,6 +60,7 @@ def routines_from_dicts(rows: list[dict[str, Any]] | None) -> list[TrustedRoutin
                 version=int(row.get("version", 1)),
                 enabled=bool(row.get("enabled", True)),
                 goal_norm=str(row.get("goal_norm", "")),
+                goal_text=str(row.get("goal_text", "")),
             )
         )
     return routines

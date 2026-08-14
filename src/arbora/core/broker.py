@@ -309,6 +309,7 @@ class PermissionBroker:
             plan_fingerprint=fingerprint,
             scopes=scopes,
             goal_norm=normalize_goal(plan.goal),
+            goal_text=plan.goal,
         )
         self._routines[routine.id] = routine
         self._audit.record(

@@ -100,6 +100,7 @@ class TrustedRoutine:
     version: int = 1
     enabled: bool = True
     goal_norm: str = ""
+    goal_text: str = ""
 
 
 @dataclass
