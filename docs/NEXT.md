@@ -37,12 +37,12 @@ Already in place:
 - file undo for organise moves (apply + reverse last batch);
 - opt-in OpenAI-compatible cloud provider with privacy banner;
 - reusable workflow packs (bundled JSON + user overrides);
-- scheduled trusted routines (`arbora schedule` + `/schedules`).
+- scheduled trusted routines (`arbora schedule` + `/schedules`);
+- desktop schedule management in `arbora-ui`.
 
 Still not MVP-ready:
 
-- audit log is session-only (not yet persisted across restarts);
-- desktop schedule management UI not yet available.
+- audit log is session-only (not yet persisted across restarts).
 
 ---
 
@@ -94,7 +94,7 @@ Work top-down. Finish a plate before starting the next unless a dependency force
 | # | Plate | Done when |
 | --- | --- | --- |
 | 11 | **Persistent audit log** | Audit events survive restarts in encrypted local memory |
-| 12 | **Desktop schedule UX** | Manage trusted-routine schedules from `arbora-ui` |
+| 12 | **Desktop schedule UX** | ✅ Manage trusted-routine schedules from `arbora-ui` |
 
 ---
 

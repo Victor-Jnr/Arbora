@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 019 | [Desktop schedule UX](documentation/019-desktop-schedule-ux.md) |
 | 018 | [Scheduled trusted routines](documentation/018-scheduled-trusted-routines.md) |
 | 017 | [Workflow packs](documentation/017-workflow-packs.md) |
 | 016 | [Opt-in cloud provider](documentation/016-opt-in-cloud-provider.md) |

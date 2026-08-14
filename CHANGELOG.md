@@ -87,6 +87,20 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 
 ---
 
+## 019 — Desktop schedule UX (2026-08-13)
+
+| File | Change |
+| --- | --- |
+| `apps/desktop_chat/app.py` | Added Schedules dialog (add/remove/toggle) |
+| `tests/test_desktop_chat.py` | Added schedule list helper and dialog smoke tests |
+| `docs/NEXT.md` | Marked P3#12 done |
+| `documentation/019-desktop-schedule-ux.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 019 |
+| `README.md` | Linked document 019 |
+| `CHANGELOG.md` | Added file roles and 019 section |
+
+---
+
 ## 018 — Scheduled trusted routines (2026-08-13)
 
 | File | Change |

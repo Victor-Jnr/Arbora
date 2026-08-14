@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import tkinter as tk
+from dataclasses import replace
 from tkinter import messagebox, ttk
 
 from arbora.cli.session import (
@@ -16,6 +17,13 @@ from arbora.cli.session import (
     provider_privacy_notice,
 )
 from arbora.core.types import ApprovalDecision, AuditEvent, ExecutionReport, Plan, TrustedRoutine
+from arbora.schedules.store import (
+    add_schedule,
+    load_schedules,
+    persist_schedules,
+    remove_schedule,
+    schedule_rows,
+)
 from arbora.setup_status import (
     LIGHT_HEX,
     Light,
@@ -37,6 +45,11 @@ COLORS = {
     "danger": "#E76F51",
     "input_bg": "#1B3A2F",
 }
+
+
+def format_schedule_list(memory, routines: list[TrustedRoutine]) -> list[str]:
+    names = {routine.id: routine.name for routine in routines}
+    return schedule_rows(load_schedules(memory), routine_names=names)
 
 
 def format_routine_rows(routines: list[TrustedRoutine]) -> list[str]:
@@ -260,6 +273,7 @@ class ArboraChatApp:
         )
         self._stop_btn.pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Routines", command=self.show_routines).pack(side="left", padx=(0, 8))
+        ttk.Button(actions, text="Schedules", command=self.show_schedules).pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Audit", command=self.show_audit).pack(side="left")
         ttk.Label(actions, textvariable=self.routine_name_var, style="Muted.TLabel").pack(side="right")
         ttk.Label(actions, textvariable=self._stop_var, style="Muted.TLabel").pack(side="right", padx=(0, 12))
@@ -684,6 +698,185 @@ class ArboraChatApp:
         ttk.Button(btn_row, text="Revoke selected", style="Accent.TButton", command=revoke_selected).pack(
             side="left", padx=(0, 8)
         )
+        ttk.Button(btn_row, text="Refresh", command=refresh).pack(side="left", padx=(0, 8))
+        ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
+
+        refresh()
+
+    def show_schedules(self) -> None:
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Routine schedules")
+        dialog.configure(bg=COLORS["bg"])
+        dialog.transient(self.root)
+        dialog.geometry("680x400")
+        dialog.grab_set()
+
+        ttk.Label(dialog, text="Routine schedules", style="Brand.TLabel").pack(
+            anchor="w", padx=16, pady=(16, 4)
+        )
+        ttk.Label(
+            dialog,
+            text="Time triggers for already-trusted routines only. Defaults to dry-run.",
+            style="Muted.TLabel",
+            wraplength=640,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        list_frame = ttk.Frame(dialog, style="TFrame")
+        list_frame.pack(fill="both", expand=True, padx=16, pady=4)
+        listbox = tk.Listbox(
+            list_frame,
+            bg=COLORS["panel"],
+            fg=COLORS["ink"],
+            selectbackground=COLORS["accent_dim"],
+            relief="flat",
+            font=self.font_mono,
+            activestyle="none",
+        )
+        listbox.pack(side="left", fill="both", expand=True)
+        scroll = ttk.Scrollbar(list_frame, orient="vertical", command=listbox.yview)
+        scroll.pack(side="right", fill="y")
+        listbox.configure(yscrollcommand=scroll.set)
+
+        detail_var = tk.StringVar(value="Select a schedule.")
+        ttk.Label(dialog, textvariable=detail_var, style="Muted.TLabel", wraplength=640).pack(
+            anchor="w", padx=16, pady=4
+        )
+
+        schedules_by_index: list = []
+
+        def refresh() -> None:
+            schedules_by_index.clear()
+            listbox.delete(0, "end")
+            schedules = load_schedules(self._runtime.memory)
+            if not schedules:
+                detail_var.set("No schedules yet. Add one for a trusted routine.")
+                return
+            routines = self._runtime.broker.list_routines()
+            rows = format_schedule_list(self._runtime.memory, routines)
+            for index, schedule in enumerate(schedules):
+                schedules_by_index.append(schedule)
+                listbox.insert("end", rows[index])
+            detail_var.set(f"{len(schedules)} schedule(s). Select one to remove or toggle.")
+
+        def on_select(_event=None) -> None:
+            sel = listbox.curselection()
+            if not sel:
+                return
+            schedule = schedules_by_index[sel[0]]
+            state = "enabled" if schedule.enabled else "disabled"
+            mode = "dry-run" if schedule.dry_run else "live"
+            detail_var.set(f"{schedule.id}  routine={schedule.routine_id}  {state}  {mode}")
+
+        def add_schedule_dialog() -> None:
+            routines = self._runtime.broker.list_routines()
+            if not routines:
+                messagebox.showinfo(
+                    "Routine schedules",
+                    "Promote a trusted routine first (Routines dialog).",
+                    parent=dialog,
+                )
+                return
+
+            sub = tk.Toplevel(dialog)
+            sub.title("Add schedule")
+            sub.configure(bg=COLORS["bg"])
+            sub.transient(dialog)
+            sub.grab_set()
+
+            ttk.Label(sub, text="Trusted routine").pack(anchor="w", padx=16, pady=(16, 4))
+            routine_var = tk.StringVar(value=routines[0].id)
+            routine_menu = ttk.Combobox(
+                sub,
+                textvariable=routine_var,
+                values=[f"{routine.name} ({routine.id})" for routine in routines],
+                state="readonly",
+            )
+            routine_menu.current(0)
+            routine_menu.pack(fill="x", padx=16, pady=4)
+
+            ttk.Label(sub, text="Time (HH:MM, 24-hour)").pack(anchor="w", padx=16, pady=(8, 4))
+            time_var = tk.StringVar(value="08:00")
+            tk.Entry(sub, textvariable=time_var, bg=COLORS["input_bg"], fg=COLORS["ink"], relief="flat").pack(
+                fill="x", padx=16, pady=4
+            )
+
+            ttk.Label(sub, text="Weekdays (optional, e.g. mon,fri)").pack(anchor="w", padx=16, pady=(8, 4))
+            days_var = tk.StringVar(value="")
+            tk.Entry(sub, textvariable=days_var, bg=COLORS["input_bg"], fg=COLORS["ink"], relief="flat").pack(
+                fill="x", padx=16, pady=4
+            )
+
+            live_var = tk.BooleanVar(value=False)
+            ttk.Checkbutton(sub, text="Run live (not dry-run)", variable=live_var).pack(anchor="w", padx=16, pady=8)
+
+            def save() -> None:
+                selected = routine_menu.current()
+                if selected < 0:
+                    messagebox.showerror("Routine schedules", "Select a routine.", parent=sub)
+                    return
+                routine = routines[selected]
+                try:
+                    schedule = add_schedule(
+                        self._runtime.memory,
+                        routine_id=routine.id,
+                        time_hhmm=time_var.get().strip(),
+                        days=days_var.get().strip() or None,
+                        dry_run=not live_var.get(),
+                    )
+                except ValueError as exc:
+                    messagebox.showerror("Routine schedules", str(exc), parent=sub)
+                    return
+                self._log(f"Added schedule {schedule.id} for routine {routine.name}\n")
+                sub.destroy()
+                refresh()
+
+            row = ttk.Frame(sub, style="TFrame")
+            row.pack(pady=12)
+            ttk.Button(row, text="Save", style="Accent.TButton", command=save).pack(side="left", padx=4)
+            ttk.Button(row, text="Cancel", command=sub.destroy).pack(side="left", padx=4)
+
+        def remove_selected() -> None:
+            sel = listbox.curselection()
+            if not sel:
+                messagebox.showinfo("Routine schedules", "Select a schedule to remove.", parent=dialog)
+                return
+            schedule = schedules_by_index[sel[0]]
+            if not messagebox.askyesno(
+                "Remove schedule",
+                f"Remove schedule {schedule.id}?",
+                parent=dialog,
+            ):
+                return
+            if remove_schedule(self._runtime.memory, schedule.id):
+                self._log(f"Removed schedule {schedule.id}\n")
+                refresh()
+            else:
+                messagebox.showerror("Routine schedules", "Schedule not found.", parent=dialog)
+
+        def toggle_enabled() -> None:
+            sel = listbox.curselection()
+            if not sel:
+                messagebox.showinfo("Routine schedules", "Select a schedule to toggle.", parent=dialog)
+                return
+            schedule = schedules_by_index[sel[0]]
+            schedules = load_schedules(self._runtime.memory)
+            updated = [
+                replace(row, enabled=not row.enabled) if row.id == schedule.id else row
+                for row in schedules
+            ]
+            persist_schedules(self._runtime.memory, updated)
+            self._log(f"Toggled schedule {schedule.id} enabled={not schedule.enabled}\n")
+            refresh()
+
+        listbox.bind("<<ListboxSelect>>", on_select)
+
+        btn_row = ttk.Frame(dialog, style="TFrame")
+        btn_row.pack(fill="x", padx=16, pady=12)
+        ttk.Button(btn_row, text="Add", style="Accent.TButton", command=add_schedule_dialog).pack(
+            side="left", padx=(0, 8)
+        )
+        ttk.Button(btn_row, text="Toggle enabled", command=toggle_enabled).pack(side="left", padx=(0, 8))
+        ttk.Button(btn_row, text="Remove", command=remove_selected).pack(side="left", padx=(0, 8))
         ttk.Button(btn_row, text="Refresh", command=refresh).pack(side="left", padx=(0, 8))
         ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
 

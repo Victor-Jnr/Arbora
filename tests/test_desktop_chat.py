@@ -13,10 +13,12 @@ from apps.desktop_chat.app import (
     format_audit_events,
     format_routine_detail,
     format_routine_rows,
+    format_schedule_list,
     main,
 )
 from arbora.cli.session import approve_all, build_runtime, persist_routines
 from arbora.core.types import AuditEvent, TrustedRoutine
+from arbora.schedules.store import add_schedule
 
 
 def test_main_callable():
@@ -54,6 +56,23 @@ def test_format_audit_events():
     assert format_audit_events([]) == "(audit log empty for this session)\n"
 
 
+def test_format_schedule_list(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    plan = runtime.planner.plan("list files in ~/Downloads")
+    runtime.broker.execute_plan(
+        plan,
+        approve_all(plan, promote_to_trusted=True, trusted_name="list-downloads"),
+        dry_run=True,
+    )
+    persist_routines(runtime)
+    routine_id = runtime.broker.list_routines()[0].id
+    add_schedule(runtime.memory, routine_id=routine_id, time_hhmm="09:00", days="mon")
+    rows = format_schedule_list(runtime.memory, runtime.broker.list_routines())
+    assert len(rows) == 1
+    assert "09:00" in rows[0]
+    assert "mon" in rows[0]
+
+
 def test_desktop_chat_ui_smoke(tmp_path: Path):
     try:
         root = tk.Tk()
@@ -86,6 +105,14 @@ def test_desktop_chat_ui_smoke(tmp_path: Path):
         listboxes = [w for w in _walk(routines_dialog) if isinstance(w, tk.Listbox)]
         assert listboxes and listboxes[0].size() == 1
         routine = app._runtime.broker.list_routines()[0]
+
+        add_schedule(app._runtime.memory, routine_id=routine.id, time_hhmm="10:30")
+        app.show_schedules()
+        schedules_dialog = [c for c in root.winfo_children() if isinstance(c, tk.Toplevel)][-1]
+        schedule_listboxes = [w for w in _walk(schedules_dialog) if isinstance(w, tk.Listbox)]
+        assert schedule_listboxes and schedule_listboxes[0].size() == 1
+        schedules_dialog.destroy()
+
         assert app._runtime.broker.revoke_routine(routine.id)
         persist_routines(app._runtime)
         assert app._runtime.broker.list_routines() == []
