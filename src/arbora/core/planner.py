@@ -383,13 +383,16 @@ class GoalPlanner:
 
     def _dev_setup_plan(self, goal: str) -> Plan:
         project_root = Path.cwd()
+        readme_path = project_root / "README.md"
+        gitignore_path = project_root / ".gitignore"
         return Plan(
             id=new_id("plan_"),
             goal=goal,
             rationale=(
-                "Developer setup journey — inspect first. "
+                "Developer setup journey — inspect first, then scaffold starter files. "
                 "1) Toolchain versions. 2) Current directory listing. "
-                "Install/clone/venv commands are not auto-run here; ask explicitly to run them."
+                "3) Ensure ArboraProjects exists. 4) Write README.md and .gitignore stubs. "
+                "Install/clone/venv commands are not auto-run; ask explicitly to run them."
             ),
             steps=[
                 ToolStep(
@@ -427,6 +430,46 @@ class GoalPlanner:
                     summary="Ensure ArboraProjects folder exists for future clones",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("May create a directory under your home folder",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="write_text",
+                    args={
+                        "path": str(readme_path),
+                        "content": (
+                            "# Project\n\n"
+                            "Started with Arbora developer setup journey.\n\n"
+                            "## Next steps\n\n"
+                            "- Review generated files.\n"
+                            "- Initialize git if needed.\n"
+                            "- Add your application code.\n"
+                        ),
+                    },
+                    summary=f"Write starter README.md to {readme_path.name}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Creates or overwrites README.md",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="write_text",
+                    args={
+                        "path": str(gitignore_path),
+                        "content": (
+                            ".venv/\n"
+                            "__pycache__/\n"
+                            "*.pyc\n"
+                            ".env\n"
+                            ".pytest_cache/\n"
+                            ".mypy_cache/\n"
+                            ".DS_Store\n"
+                            "Thumbs.db\n"
+                        ),
+                    },
+                    summary=f"Write starter .gitignore to {gitignore_path.name}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Creates or overwrites .gitignore",),
                 ),
             ],
         )

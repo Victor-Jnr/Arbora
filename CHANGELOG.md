@@ -91,6 +91,22 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/preferences/store.py` | Opt-in user preference serialization |
 | `src/arbora/cli/prefs.py` | `arbora prefs` CLI |
 | `tests/test_preferences.py` | User preference regression tests |
+| `workflows/dev-project-setup.json` | Bundled developer project scaffold workflow pack |
+
+---
+
+## 023 — Developer project workflow pack (2026-08-15)
+
+| File | Change |
+| --- | --- |
+| `workflows/dev-project-setup.json` | Added developer scaffold workflow pack |
+| `src/arbora/core/planner.py` | Hardened dev setup journey with README/.gitignore writes |
+| `tests/test_workflow_packs.py` | Added dev pack and scaffold journey tests |
+| `docs/NEXT.md` | Marked P4#15 done |
+| `documentation/023-dev-project-workflow-pack.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 023 |
+| `README.md` | Linked document 023 |
+| `CHANGELOG.md` | Added file roles and 023 section |
 
 ---
 

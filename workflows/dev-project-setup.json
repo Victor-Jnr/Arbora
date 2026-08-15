@@ -1,0 +1,63 @@
+{
+  "id": "dev-project-setup",
+  "name": "Developer project scaffold",
+  "description": "Inspect toolchain, list the current folder, and write starter README/.gitignore files.",
+  "goal_phrases": [
+    "dev project pack",
+    "project scaffold pack",
+    "scaffold this project",
+    "scaffold project files"
+  ],
+  "rationale": "Workflow pack: developer project scaffold — inspect first, then write non-destructive starter files in the current directory.",
+  "steps": [
+    {
+      "adapter": "terminal",
+      "action": "run_powershell",
+      "args": {
+        "command": "@('python','git','node') | ForEach-Object { $cmd = $_; try { & $cmd --version 2>$null | ForEach-Object { \"$cmd $_\" } } catch { \"$cmd not found\" } }; Write-Output 'toolchain check complete'",
+        "timeout_seconds": 30
+      },
+      "summary": "Check local toolchain versions (python/git/node)",
+      "sensitivity": "read",
+      "side_effects": ["Runs version queries in PowerShell"]
+    },
+    {
+      "adapter": "files",
+      "action": "list_directory",
+      "args": { "path": "." },
+      "summary": "List files in the current project directory",
+      "sensitivity": "read",
+      "side_effects": ["Reads directory listing"]
+    },
+    {
+      "adapter": "files",
+      "action": "ensure_directory",
+      "args": { "path": "~/ArboraProjects" },
+      "summary": "Ensure ArboraProjects folder exists for future clones",
+      "sensitivity": "mutate",
+      "side_effects": ["May create a directory under your home folder"]
+    },
+    {
+      "adapter": "files",
+      "action": "write_text",
+      "args": {
+        "path": "./README.md",
+        "content": "# Project\n\nStarted with Arbora dev project scaffold.\n\n## Next steps\n\n- Review generated files.\n- Initialize git if needed.\n- Add your application code.\n"
+      },
+      "summary": "Write starter README.md in the current directory",
+      "sensitivity": "mutate",
+      "side_effects": ["Creates or overwrites README.md"]
+    },
+    {
+      "adapter": "files",
+      "action": "write_text",
+      "args": {
+        "path": "./.gitignore",
+        "content": ".venv/\n__pycache__/\n*.pyc\n.env\n.pytest_cache/\n.mypy_cache/\n.DS_Store\nThumbs.db\n"
+      },
+      "summary": "Write starter .gitignore in the current directory",
+      "sensitivity": "mutate",
+      "side_effects": ["Creates or overwrites .gitignore"]
+    }
+  ]
+}

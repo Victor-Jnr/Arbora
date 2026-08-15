@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 023 | [Developer project workflow pack](documentation/023-dev-project-workflow-pack.md) |
 | 022 | [Opt-in user preferences](documentation/022-opt-in-user-preferences.md) |
 | 021 | [MVP validate CLI](documentation/021-mvp-validate-cli.md) |
 | 020 | [Persistent audit log](documentation/020-persistent-audit-log.md) |
