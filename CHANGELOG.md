@@ -86,6 +86,23 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_schedules.py` | Schedule store/run/CLI regression tests |
 | `src/arbora/core/audit_store.py` | Serialize and cap persisted audit events in memory |
 | `tests/test_audit_persistence.py` | Audit persistence across sessions regression tests |
+| `src/arbora/cli/validate.py` | `arbora validate` MVP exit-criteria dry-run checks |
+| `tests/test_validate.py` | MVP validate CLI regression tests |
+
+---
+
+## 021 — MVP validate CLI (2026-08-15)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/cli/validate.py` | Added five MVP exit-criteria checks |
+| `src/arbora/cli/main.py` | Dispatch `arbora validate` + banner line |
+| `tests/test_validate.py` | Added validate regression tests |
+| `docs/NEXT.md` | Added P4 plates; marked #13 done |
+| `documentation/021-mvp-validate-cli.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 021 |
+| `README.md` | Linked document 021 |
+| `CHANGELOG.md` | Added file roles and 021 section |
 
 ---
 

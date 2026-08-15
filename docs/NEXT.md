@@ -41,9 +41,17 @@ Already in place:
 - desktop schedule management in `arbora-ui`;
 - persistent audit log across sessions (encrypted local memory).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Revisit Stage 3 personal depth in this README when early testers finish the five MVP exit checks.
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work has started (see P4 below).
 
 ---
+
+### P4 — Stage 3 personal depth (in progress)
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 13 | **MVP validate CLI** | ✅ `arbora validate` dry-runs the five MVP exit criteria |
+| 14 | **Opt-in user preferences** | User-set defaults in encrypted memory (`/prefs`, planner hooks) |
+| 15 | **Developer project workflow pack** | Bundled dev scaffold pack + hardened setup journey |
 
 ## Non-negotiables (do not drift)
 
@@ -138,4 +146,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-Stage 2 MVP plates are complete. Pick the next item from **Stage 3 (personal depth)** in the root README, or run early-tester validation against the [MVP definition of done](#mvp-definition-of-done-exit-criteria) below.
+**P4 #14 — Opt-in user preferences** (encrypted local defaults for dry-run, provider, workday folder).

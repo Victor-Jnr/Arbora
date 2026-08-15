@@ -27,6 +27,7 @@ Models propose; the permission broker disposes.
 
 Commands:
   arbora doctor   Probe Memory / Ollama / Playwright (fix hints)
+  arbora validate Dry-run MVP exit-criteria checks
   /help           Show help
   /audit          Show recent audit events
   /routines       List trusted routines
@@ -57,6 +58,10 @@ def main(argv: list[str] | None = None) -> int:
         from arbora.cli.doctor import run_doctor
 
         return run_doctor(argv[1:])
+    if argv and argv[0] == "validate":
+        from arbora.cli.validate import run_validate
+
+        return run_validate(argv[1:])
     if argv and argv[0] == "schedule":
         from arbora.cli.schedule import run_schedule_cli
 

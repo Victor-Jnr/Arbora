@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 021 | [MVP validate CLI](documentation/021-mvp-validate-cli.md) |
 | 020 | [Persistent audit log](documentation/020-persistent-audit-log.md) |
 | 019 | [Desktop schedule UX](documentation/019-desktop-schedule-ux.md) |
 | 018 | [Scheduled trusted routines](documentation/018-scheduled-trusted-routines.md) |

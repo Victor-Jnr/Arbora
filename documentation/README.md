@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 021 | [MVP validate CLI](021-mvp-validate-cli.md) | 2026-08-15 | `arbora validate` dry-runs MVP exit criteria |
 | 020 | [Persistent audit log](020-persistent-audit-log.md) | 2026-08-13 | Audit events survive restarts in encrypted local memory |
 | 019 | [Desktop schedule UX](019-desktop-schedule-ux.md) | 2026-08-13 | Schedules dialog in arbora-ui for trusted-routine triggers |
 | 018 | [Scheduled trusted routines](018-scheduled-trusted-routines.md) | 2026-08-13 | Time triggers for trusted routines via `arbora schedule` |
