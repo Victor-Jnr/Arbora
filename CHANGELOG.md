@@ -88,6 +88,29 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_audit_persistence.py` | Audit persistence across sessions regression tests |
 | `src/arbora/cli/validate.py` | `arbora validate` MVP exit-criteria dry-run checks |
 | `tests/test_validate.py` | MVP validate CLI regression tests |
+| `src/arbora/preferences/store.py` | Opt-in user preference serialization |
+| `src/arbora/cli/prefs.py` | `arbora prefs` CLI |
+| `tests/test_preferences.py` | User preference regression tests |
+
+---
+
+## 022 — Opt-in user preferences (2026-08-15)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/preferences/store.py` | Added preference load/save/set helpers |
+| `src/arbora/preferences/__init__.py` | Preferences package exports |
+| `src/arbora/cli/prefs.py` | Added `arbora prefs list|set` |
+| `src/arbora/cli/session.py` | Apply preferences in `build_runtime` |
+| `src/arbora/cli/main.py` | `/prefs` command + dry-run default from prefs |
+| `src/arbora/core/planner.py` | Workday journey uses configured folder |
+| `apps/desktop_chat/app.py` | Load dry-run/provider defaults from prefs |
+| `tests/test_preferences.py` | Added preference regression tests |
+| `docs/NEXT.md` | Marked P4#14 done |
+| `documentation/022-opt-in-user-preferences.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 022 |
+| `README.md` | Linked document 022 |
+| `CHANGELOG.md` | Added file roles and 022 section |
 
 ---
 

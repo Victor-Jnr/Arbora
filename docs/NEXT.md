@@ -50,7 +50,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 13 | **MVP validate CLI** | ✅ `arbora validate` dry-runs the five MVP exit criteria |
-| 14 | **Opt-in user preferences** | User-set defaults in encrypted memory (`/prefs`, planner hooks) |
+| 14 | **Opt-in user preferences** | ✅ User-set defaults in encrypted memory (`/prefs`, planner hooks) |
 | 15 | **Developer project workflow pack** | Bundled dev scaffold pack + hardened setup journey |
 
 ## Non-negotiables (do not drift)
@@ -146,4 +146,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P4 #14 — Opt-in user preferences** (encrypted local defaults for dry-run, provider, workday folder).
+**P4 #15 — Developer project workflow pack** (bundled scaffold pack + hardened setup journey).

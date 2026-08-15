@@ -21,6 +21,7 @@ from arbora.core.types import (
     new_id,
 )
 from arbora.memory import LocalMemoryStore
+from arbora.preferences.store import UserPreferences, load_preferences
 from arbora.providers import EchoProvider, OllamaProvider, OpenAICompatibleProvider, cloud_provider_configured
 from arbora.providers.base import ModelProvider
 
@@ -32,6 +33,7 @@ class Runtime:
     planner: GoalPlanner
     memory: LocalMemoryStore
     provider_name: str
+    preferences: UserPreferences
 
 
 def select_provider(name: str | None = None) -> ModelProvider:
@@ -91,14 +93,17 @@ def build_runtime(memory_root: Path | None = None, provider: str | None = None) 
     broker.register_adapter(TerminalAdapter())
     broker.register_adapter(BrowserAdapter())
     broker.load_routines(routines_from_dicts(memory.get("trusted_routines")))
-    model = select_provider(provider)
-    planner = GoalPlanner(provider=model)
+    preferences = load_preferences(memory)
+    effective_provider = provider if provider is not None else (preferences.provider or None)
+    model = select_provider(effective_provider)
+    planner = GoalPlanner(provider=model, workday_root=preferences.resolved_workday_folder())
     return Runtime(
         audit=audit,
         broker=broker,
         planner=planner,
         memory=memory,
         provider_name=getattr(model, "name", "unknown"),
+        preferences=preferences,
     )
 
 

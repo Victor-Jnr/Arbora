@@ -21,8 +21,9 @@ SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
 
 
 class GoalPlanner:
-    def __init__(self, provider: ModelProvider | None = None) -> None:
+    def __init__(self, provider: ModelProvider | None = None, *, workday_root: Path | None = None) -> None:
         self._provider = provider
+        self._workday_root = workday_root
 
     def plan(self, goal: str) -> Plan:
         text = goal.strip()
@@ -189,7 +190,7 @@ class GoalPlanner:
         )
 
     def _workday_start_plan(self, goal: str) -> Plan:
-        work_root = Path.home() / "ArboraWorkday"
+        work_root = self._workday_root or Path.home() / "ArboraWorkday"
         briefing = work_root / "morning-briefing.txt"
         return Plan(
             id=new_id("plan_"),

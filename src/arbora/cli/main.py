@@ -17,6 +17,7 @@ from arbora.cli.session import (
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport
 from arbora.providers.ollama import DEFAULT_MODEL
+from arbora.preferences.store import load_preferences, preference_rows, set_preference
 from arbora.schedules.store import load_schedules, schedule_rows
 from arbora.workflows.packs import load_workflow_packs, workflow_pack_rows
 
@@ -28,6 +29,7 @@ Models propose; the permission broker disposes.
 Commands:
   arbora doctor   Probe Memory / Ollama / Playwright (fix hints)
   arbora validate Dry-run MVP exit-criteria checks
+  arbora prefs     Show or set opt-in user preferences
   /help           Show help
   /audit          Show recent audit events
   /routines       List trusted routines
@@ -36,6 +38,7 @@ Commands:
   /memory         Show local memory encryption status
   /wipe           Wipe local memory (routines/preferences)
   /workflows      List reusable workflow packs
+  /prefs          Show or set user preferences (dry_run, provider, workday_folder)
   /schedules      List trusted-routine schedules
   /undo           Undo the last organise move batch (shortcut plan)
   /dry on|off     Toggle dry-run mode (default: on)
@@ -62,6 +65,10 @@ def main(argv: list[str] | None = None) -> int:
         from arbora.cli.validate import run_validate
 
         return run_validate(argv[1:])
+    if argv and argv[0] == "prefs":
+        from arbora.cli.prefs import run_prefs
+
+        return run_prefs(argv[1:])
     if argv and argv[0] == "schedule":
         from arbora.cli.schedule import run_schedule_cli
 
@@ -82,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     runtime = build_runtime(memory_root=args.memory_dir, provider=args.provider)
-    dry_run = not args.execute
+    dry_run = not args.execute if args.goal else runtime.preferences.dry_run_default
 
     if args.goal:
         return _run_once(
@@ -298,6 +305,28 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
             print("Workflow packs:")
             for row in rows:
                 print(f"  {row}")
+        return dry_run, False
+    if cmd == "/prefs":
+        if not arg:
+            for row in preference_rows(runtime.preferences):
+                print(row)
+            return dry_run, False
+        parts = arg.split(maxsplit=1)
+        if len(parts) != 2 or parts[0].lower() != "set":
+            print("Usage: /prefs  or  /prefs set KEY VALUE")
+            return dry_run, False
+        key, value = parts[1].split(maxsplit=1)
+        try:
+            prefs = set_preference(runtime.memory, key, value)
+        except ValueError as exc:
+            print(exc)
+            return dry_run, False
+        runtime.preferences = prefs
+        if key.strip().lower().startswith("dry"):
+            dry_run = prefs.dry_run_default
+            print(f"Dry-run default set to {'ON' if dry_run else 'OFF'}")
+        for row in preference_rows(prefs):
+            print(row)
         return dry_run, False
     if cmd == "/schedules":
         schedules = load_schedules(runtime.memory)

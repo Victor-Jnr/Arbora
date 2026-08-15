@@ -96,7 +96,10 @@ class ArboraChatApp:
         self.dry_run_var = tk.BooleanVar(value=True)
         self.promote_var = tk.BooleanVar(value=False)
         self.routine_name_var = tk.StringVar(value="")
-        self._runtime = build_runtime(provider=self.provider_var.get())
+        self._runtime = build_runtime(provider=None)
+        if self._runtime.preferences.provider:
+            self.provider_var.set(self._runtime.preferences.provider)
+        self.dry_run_var.set(self._runtime.preferences.dry_run_default)
         self._plan: Plan | None = None
         self._matched_trusted = False
         self._status_dots: dict[str, tk.Canvas] = {}
