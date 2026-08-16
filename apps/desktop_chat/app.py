@@ -21,6 +21,7 @@ from arbora.cli.session import (
 )
 from arbora.core.audit_store import export_audit_payload
 from arbora.core.types import ApprovalDecision, AuditEvent, ExecutionReport, Plan, TrustedRoutine
+from arbora.schedules.runner import run_due_schedules
 from arbora.schedules.store import (
     add_schedule,
     load_schedules,
@@ -122,6 +123,19 @@ class ArboraChatApp:
         )
         self._refresh_privacy_banner()
         self.refresh_status_lights()
+        if self._runtime.preferences.run_due_schedules_on_start:
+            threading.Thread(target=self._run_due_schedules_on_start, daemon=True).start()
+
+    def _run_due_schedules_on_start(self) -> None:
+        results = run_due_schedules(self._runtime)
+        if not results:
+            return
+        lines = ["\nStartup schedules:"]
+        for result in results:
+            status = "skipped" if result.skipped else ("ok" if result.ok else "failed")
+            lines.append(f"  {result.schedule_id}: {status} — {result.message}")
+        lines.append("")
+        self.root.after(0, lambda: self._log("\n".join(lines)))
 
     def _build_style(self) -> None:
         style = ttk.Style(self.root)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from arbora.cli.session import build_runtime
-from arbora.preferences.store import load_preferences, set_preference
+from arbora.preferences.store import set_preference
 
 
 def test_set_and_load_preferences(tmp_path: Path):
@@ -27,9 +27,18 @@ def test_preferences_provider_override(tmp_path: Path):
     assert runtime.provider_name in {"echo", "echo-local"}
 
 
+def test_run_schedules_on_start_preference(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    prefs = set_preference(runtime.memory, "run_schedules_on_start", "on")
+    assert prefs.run_due_schedules_on_start is True
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    assert runtime2.preferences.run_due_schedules_on_start is True
+
+
 def test_prefs_cli_list(tmp_path: Path, capsys):
     from arbora.cli.prefs import run_prefs
 
     assert run_prefs(["--memory-dir", str(tmp_path), "list"]) == 0
     out = capsys.readouterr().out
     assert "dry_run_default" in out
+    assert "run_schedules_on_start" in out

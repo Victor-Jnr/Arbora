@@ -98,6 +98,22 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 
 ---
 
+## 026 — Startup schedule runner (2026-08-16)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/preferences/store.py` | Added `run_due_schedules_on_start` preference |
+| `apps/desktop_chat/app.py` | Run due schedules on startup when opted in |
+| `src/arbora/cli/main.py` | Documented preference in banner |
+| `tests/test_preferences.py` | Added startup schedule preference tests |
+| `docs/NEXT.md` | Marked P5#18 done |
+| `documentation/026-startup-schedule-runner.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 026 |
+| `README.md` | Linked document 026 |
+| `CHANGELOG.md` | Added file roles and 026 section |
+
+---
+
 ## 025 — Organise downloads workflow pack (2026-08-16)
 
 | File | Change |

@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 026 | [Startup schedule runner](026-startup-schedule-runner.md) | 2026-08-16 | Opt-in run-due-schedules when arbora-ui starts |
 | 025 | [Organise downloads workflow pack](025-organise-downloads-workflow-pack.md) | 2026-08-16 | Preview→apply Downloads filing workflow pack |
 | 024 | [Audit export](024-audit-export.md) | 2026-08-16 | Export persisted audit log as JSON |
 | 023 | [Developer project workflow pack](023-dev-project-workflow-pack.md) | 2026-08-15 | Dev scaffold pack + hardened set-up-a-project journey |
