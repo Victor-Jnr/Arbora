@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from arbora.cli.session import (
 )
 from arbora.core.types import ApprovalDecision, ExecutionReport
 from arbora.providers.ollama import DEFAULT_MODEL
+from arbora.core.audit_store import export_audit_payload
 from arbora.preferences.store import load_preferences, preference_rows, set_preference
 from arbora.schedules.store import load_schedules, schedule_rows
 from arbora.workflows.packs import load_workflow_packs, workflow_pack_rows
@@ -30,8 +32,9 @@ Commands:
   arbora doctor   Probe Memory / Ollama / Playwright (fix hints)
   arbora validate Dry-run MVP exit-criteria checks
   arbora prefs     Show or set opt-in user preferences
+  arbora audit     Export persisted audit events
   /help           Show help
-  /audit          Show recent audit events
+  /audit          Show recent audit events (/audit export [path])
   /routines       List trusted routines
   /revoke ID      Revoke a trusted routine
   /provider       Show active model provider
@@ -69,6 +72,10 @@ def main(argv: list[str] | None = None) -> int:
         from arbora.cli.prefs import run_prefs
 
         return run_prefs(argv[1:])
+    if argv and argv[0] == "audit":
+        from arbora.cli.audit_cmd import run_audit
+
+        return run_audit(argv[1:])
     if argv and argv[0] == "schedule":
         from arbora.cli.schedule import run_schedule_cli
 
@@ -274,6 +281,18 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
         print("Local memory wiped.")
         return dry_run, False
     if cmd == "/audit":
+        if arg.lower().startswith("export"):
+            parts = arg.split(maxsplit=1)
+            out_path = Path(parts[1].strip()) if len(parts) > 1 else None
+            payload = export_audit_payload(runtime.memory)
+            text = json.dumps(payload, indent=2)
+            if out_path is None:
+                print(text)
+            else:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out_path.write_text(text + "\n", encoding="utf-8")
+                print(f"Wrote {len(payload)} event(s) to {out_path}")
+            return dry_run, False
         events = runtime.audit.events()[-20:]
         if not events:
             print("(audit log empty)")

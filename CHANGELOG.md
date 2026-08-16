@@ -92,6 +92,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/cli/prefs.py` | `arbora prefs` CLI |
 | `tests/test_preferences.py` | User preference regression tests |
 | `workflows/dev-project-setup.json` | Bundled developer project scaffold workflow pack |
+| `src/arbora/cli/audit_cmd.py` | `arbora audit export` JSON export command |
+| `tests/test_audit_export.py` | Audit export regression tests |
+
+---
+
+## 024 — Audit export (2026-08-16)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/audit_store.py` | Added `export_audit_payload` helper |
+| `src/arbora/cli/audit_cmd.py` | Added `arbora audit export` |
+| `src/arbora/cli/main.py` | Dispatch audit CLI + `/audit export` |
+| `apps/desktop_chat/app.py` | Added Export JSON button in Audit dialog |
+| `tests/test_audit_export.py` | Added audit export tests |
+| `docs/NEXT.md` | Added P5 plates; marked #16 done |
+| `documentation/024-audit-export.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 024 |
+| `README.md` | Linked document 024 |
+| `CHANGELOG.md` | Added file roles and 024 section |
 
 ---
 

@@ -52,3 +52,11 @@ def load_audit_events(memory: LocalMemoryStore) -> list[AuditEvent]:
 def persist_audit_events(memory: LocalMemoryStore, events: list[AuditEvent]) -> None:
     trimmed = events[-MAX_EVENTS:]
     memory.set(MEMORY_KEY, events_to_dicts(trimmed))
+
+
+def export_audit_payload(memory: LocalMemoryStore, *, limit: int | None = None) -> list[dict[str, Any]]:
+    events = load_audit_events(memory)
+    if limit is not None and limit > 0:
+        events = events[-limit:]
+    return events_to_dicts(events)
+

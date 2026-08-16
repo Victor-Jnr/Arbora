@@ -53,6 +53,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 14 | **Opt-in user preferences** | ✅ User-set defaults in encrypted memory (`/prefs`, planner hooks) |
 | 15 | **Developer project workflow pack** | ✅ Bundled dev scaffold pack + hardened setup journey |
 
+### P5 — Stage 3 depth (in progress)
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 16 | **Audit export** | ✅ Export persisted audit log as JSON (CLI + desktop) |
+| 17 | **Organise downloads workflow pack** | Bundled preview→apply organise pack with undo path |
+| 18 | **Startup schedule runner** | Opt-in run-due-schedules when `arbora-ui` starts |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -146,4 +154,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P4 Stage 3 starter plates are complete. Run `arbora validate` on tester machines, then pick the next item from **Stage 3 (personal depth)** in the root README (e.g. richer research workflows or voice).
+**P5 #17 — Organise downloads workflow pack** (preview→apply filing pack for Downloads).

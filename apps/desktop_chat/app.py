@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import threading
 import tkinter as tk
 from dataclasses import replace
-from tkinter import messagebox, ttk
+from datetime import datetime
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
 from arbora.cli.session import (
     approve_all,
@@ -16,6 +19,7 @@ from arbora.cli.session import (
     persist_routines,
     provider_privacy_notice,
 )
+from arbora.core.audit_store import export_audit_payload
 from arbora.core.types import ApprovalDecision, AuditEvent, ExecutionReport, Plan, TrustedRoutine
 from arbora.schedules.store import (
     add_schedule,
@@ -921,8 +925,25 @@ class ArboraChatApp:
             text.configure(state="disabled")
             text.see("end")
 
+        def export_audit() -> None:
+            default_name = f"arbora-audit-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+            path = filedialog.asksaveasfilename(
+                parent=dialog,
+                title="Export audit log",
+                defaultextension=".json",
+                initialfile=default_name,
+                filetypes=[("JSON", "*.json"), ("All files", "*.*")],
+            )
+            if not path:
+                return
+            payload = export_audit_payload(self._runtime.memory)
+            out_path = Path(path)
+            out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            messagebox.showinfo("Audit log", f"Exported {len(payload)} event(s) to:\n{out_path}", parent=dialog)
+
         btn_row = ttk.Frame(dialog, style="TFrame")
         btn_row.pack(fill="x", padx=16, pady=12)
+        ttk.Button(btn_row, text="Export JSON", command=export_audit).pack(side="left", padx=(0, 8))
         ttk.Button(btn_row, text="Refresh", command=refresh).pack(side="left", padx=(0, 8))
         ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
 
