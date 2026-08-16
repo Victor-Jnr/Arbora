@@ -1,0 +1,38 @@
+{
+  "id": "organise-downloads",
+  "name": "Organise Downloads",
+  "description": "Preview then apply extension-based filing for the Downloads folder with undo support.",
+  "goal_phrases": [
+    "organise downloads pack",
+    "downloads filing pack",
+    "sort downloads pack",
+    "file my downloads pack"
+  ],
+  "rationale": "Workflow pack: preview Downloads filing groups, then apply moves with a local undo batch.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "list_directory",
+      "args": { "path": "~/Downloads" },
+      "summary": "Preview Downloads contents",
+      "sensitivity": "read",
+      "side_effects": ["Reads directory listing"]
+    },
+    {
+      "adapter": "files",
+      "action": "preview_organise",
+      "args": { "path": "~/Downloads" },
+      "summary": "Preview filing groups for Downloads (dry classification)",
+      "sensitivity": "read",
+      "side_effects": ["Classifies filenames in memory; no moves yet"]
+    },
+    {
+      "adapter": "files",
+      "action": "apply_organise",
+      "args": { "path": "~/Downloads" },
+      "summary": "Move Downloads files into extension folders (records undo batch)",
+      "sensitivity": "mutate",
+      "side_effects": ["Moves files into subfolders; undo batch stored locally"]
+    }
+  ]
+}

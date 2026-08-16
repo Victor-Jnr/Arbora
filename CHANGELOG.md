@@ -94,6 +94,21 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `workflows/dev-project-setup.json` | Bundled developer project scaffold workflow pack |
 | `src/arbora/cli/audit_cmd.py` | `arbora audit export` JSON export command |
 | `tests/test_audit_export.py` | Audit export regression tests |
+| `workflows/organise-downloads.json` | Bundled organise Downloads preview→apply workflow pack |
+
+---
+
+## 025 — Organise downloads workflow pack (2026-08-16)
+
+| File | Change |
+| --- | --- |
+| `workflows/organise-downloads.json` | Added organise Downloads workflow pack |
+| `tests/test_workflow_packs.py` | Added organise pack match tests |
+| `docs/NEXT.md` | Marked P5#17 done |
+| `documentation/025-organise-downloads-workflow-pack.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 025 |
+| `README.md` | Linked document 025 |
+| `CHANGELOG.md` | Added file roles and 025 section |
 
 ---
 

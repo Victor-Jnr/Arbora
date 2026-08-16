@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 025 | [Organise downloads workflow pack](documentation/025-organise-downloads-workflow-pack.md) |
 | 024 | [Audit export](documentation/024-audit-export.md) |
 | 023 | [Developer project workflow pack](documentation/023-dev-project-workflow-pack.md) |
 | 022 | [Opt-in user preferences](documentation/022-opt-in-user-preferences.md) |

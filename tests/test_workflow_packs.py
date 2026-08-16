@@ -14,6 +14,7 @@ def test_load_bundled_workflow_packs():
     assert "list-downloads" in ids
     assert "disk-diagnose" in ids
     assert "dev-project-setup" in ids
+    assert "organise-downloads" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -63,6 +64,16 @@ def test_workflow_pack_plan_via_runtime(tmp_path: Path):
     assert plan.steps[0].adapter == "files"
     results = runtime.broker.execute_plan(plan, approve_all(plan), dry_run=True)
     assert results and results[0].ok
+
+
+def test_organise_downloads_workflow_pack_matches():
+    pack = match_workflow_pack("run organise downloads pack")
+    assert pack is not None
+    assert pack.id == "organise-downloads"
+    plan = pack.to_plan("run organise downloads pack")
+    assert plan is not None
+    actions = [step.action for step in plan.steps]
+    assert actions == ["list_directory", "preview_organise", "apply_organise"]
 
 
 def test_dev_project_workflow_pack_matches():

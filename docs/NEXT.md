@@ -58,7 +58,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 16 | **Audit export** | ✅ Export persisted audit log as JSON (CLI + desktop) |
-| 17 | **Organise downloads workflow pack** | Bundled preview→apply organise pack with undo path |
+| 17 | **Organise downloads workflow pack** | ✅ Bundled preview→apply organise pack with undo path |
 | 18 | **Startup schedule runner** | Opt-in run-due-schedules when `arbora-ui` starts |
 
 ## Non-negotiables (do not drift)
@@ -154,4 +154,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P5 #17 — Organise downloads workflow pack** (preview→apply filing pack for Downloads).
+**P5 #18 — Startup schedule runner** (opt-in run-due-schedules when `arbora-ui` starts).
