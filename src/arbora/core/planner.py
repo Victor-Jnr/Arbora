@@ -21,9 +21,16 @@ SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
 
 
 class GoalPlanner:
-    def __init__(self, provider: ModelProvider | None = None, *, workday_root: Path | None = None) -> None:
+    def __init__(
+        self,
+        provider: ModelProvider | None = None,
+        *,
+        workday_root: Path | None = None,
+        briefs_root: Path | None = None,
+    ) -> None:
         self._provider = provider
         self._workday_root = workday_root
+        self._briefs_root = briefs_root
 
     def plan(self, goal: str) -> Plan:
         text = goal.strip()
@@ -589,7 +596,7 @@ class GoalPlanner:
             flags=re.I,
         ).strip() or "web page"
         brief_name = re.sub(r"[^\w\-]+", "-", topic.lower()).strip("-")[:48] or "brief"
-        briefs_root = Path.home() / "ArboraBriefs"
+        briefs_root = self._briefs_root or Path.home() / "ArboraBriefs"
         brief_path = str(briefs_root / f"{brief_name}.md")
         snapshot_path = str(briefs_root / f"{brief_name}-snapshot.png")
         return Plan(

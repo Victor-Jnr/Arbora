@@ -98,6 +98,23 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 
 ---
 
+## 028 — Briefs folder preference (2026-08-17)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/preferences/store.py` | Added `briefs_folder` preference |
+| `src/arbora/core/planner.py` | Research journey uses configured briefs root |
+| `src/arbora/cli/session.py` | Pass `briefs_root` into planner |
+| `src/arbora/cli/main.py` | Documented `briefs_folder` in banner |
+| `tests/test_preferences.py` | Added briefs folder preference tests |
+| `docs/NEXT.md` | Marked P6#20 done |
+| `documentation/028-briefs-folder-preference.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 028 |
+| `README.md` | Linked document 028 |
+| `CHANGELOG.md` | Added file roles and 028 section |
+
+---
+
 ## 027 — Research journey snapshot (2026-08-17)
 
 | File | Change |

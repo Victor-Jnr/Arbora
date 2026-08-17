@@ -96,7 +96,11 @@ def build_runtime(memory_root: Path | None = None, provider: str | None = None) 
     preferences = load_preferences(memory)
     effective_provider = provider if provider is not None else (preferences.provider or None)
     model = select_provider(effective_provider)
-    planner = GoalPlanner(provider=model, workday_root=preferences.resolved_workday_folder())
+    planner = GoalPlanner(
+        provider=model,
+        workday_root=preferences.resolved_workday_folder(),
+        briefs_root=preferences.resolved_briefs_folder(),
+    )
     return Runtime(
         audit=audit,
         broker=broker,
