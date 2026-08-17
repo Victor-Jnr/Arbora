@@ -589,20 +589,23 @@ class GoalPlanner:
             flags=re.I,
         ).strip() or "web page"
         brief_name = re.sub(r"[^\w\-]+", "-", topic.lower()).strip("-")[:48] or "brief"
-        brief_path = str(Path.home() / "ArboraBriefs" / f"{brief_name}.md")
+        briefs_root = Path.home() / "ArboraBriefs"
+        brief_path = str(briefs_root / f"{brief_name}.md")
+        snapshot_path = str(briefs_root / f"{brief_name}-snapshot.png")
         return Plan(
             id=new_id("plan_"),
             goal=goal,
             rationale=(
                 "Web research journey — page text is untrusted data and is never executed as tools. "
-                "1) Open URL. 2) Title + excerpt + links. 3) Save a local cited brief. 4) Close browser."
+                "1) Open URL. 2) Title + excerpt + links. 3) Save a page snapshot. "
+                "4) Save a local cited brief. 5) Close browser."
             ),
             steps=[
                 ToolStep(
                     id=new_id("step_"),
                     adapter="files",
                     action="ensure_directory",
-                    args={"path": str(Path.home() / "ArboraBriefs")},
+                    args={"path": str(briefs_root)},
                     summary="Ensure ArboraBriefs folder exists",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("May create a directory under your home folder",),
@@ -642,6 +645,15 @@ class GoalPlanner:
                     summary="Extract http(s) links from the page",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads anchor hrefs",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="browser",
+                    action="snapshot",
+                    args={"path": snapshot_path, "full_page": False},
+                    summary=f"Save page snapshot to {brief_name}-snapshot.png",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Writes a PNG screenshot under ArboraBriefs",),
                 ),
                 ToolStep(
                     id=new_id("step_"),

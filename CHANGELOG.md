@@ -98,6 +98,21 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 
 ---
 
+## 027 — Research journey snapshot (2026-08-17)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Added snapshot step to research journey |
+| `workflows/research-example.json` | Added snapshot step to example pack |
+| `tests/test_browser_adapter.py` | Assert research plan includes snapshot |
+| `docs/NEXT.md` | Added P6 plates; marked #19 done |
+| `documentation/027-research-journey-snapshot.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 027 |
+| `README.md` | Linked document 027 |
+| `CHANGELOG.md` | Added file roles and 027 section |
+
+---
+
 ## 026 — Startup schedule runner (2026-08-16)
 
 | File | Change |

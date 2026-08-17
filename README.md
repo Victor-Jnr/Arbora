@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 027 | [Research journey snapshot](documentation/027-research-journey-snapshot.md) |
 | 026 | [Startup schedule runner](documentation/026-startup-schedule-runner.md) |
 | 025 | [Organise downloads workflow pack](documentation/025-organise-downloads-workflow-pack.md) |
 | 024 | [Audit export](documentation/024-audit-export.md) |

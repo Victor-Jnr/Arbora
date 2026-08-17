@@ -98,6 +98,7 @@ def test_research_plan_shape():
     plan = runtime.planner.plan("research https://example.com about trees")
     assert any(s.adapter == "browser" and s.action == "open_url" for s in plan.steps)
     assert any(s.action == "save_brief" for s in plan.steps)
+    assert any(s.action == "snapshot" for s in plan.steps)
     assert any(s.action == "extract_text" for s in plan.steps)
     assert any(s.adapter == "files" and s.action == "ensure_directory" for s in plan.steps)
     assert "untrusted" in plan.rationale.lower()

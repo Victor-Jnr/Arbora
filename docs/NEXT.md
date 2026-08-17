@@ -61,6 +61,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 17 | **Organise downloads workflow pack** | ✅ Bundled preview→apply organise pack with undo path |
 | 18 | **Startup schedule runner** | ✅ Opt-in run-due-schedules when `arbora-ui` starts |
 
+### P6 — Stage 3 research and voice (in progress)
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 19 | **Research journey snapshot** | ✅ Research plans save a local page snapshot before the brief |
+| 20 | **Briefs folder preference** | User-configurable `briefs_folder` for research output |
+| 21 | **Windows voice input** | Opt-in push-to-talk goal entry in `arbora-ui` |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -154,4 +162,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P5 Stage 3 depth plates are complete. Run `arbora validate` on tester machines, then pick the next item from **Stage 3 (personal depth)** in the root README (e.g. richer research workflows or voice).
+**P6 #20 — Briefs folder preference** (user-configurable research output directory).

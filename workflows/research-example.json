@@ -35,6 +35,14 @@
     },
     {
       "adapter": "browser",
+      "action": "snapshot",
+      "args": { "path": "~/ArboraBriefs/example-pack-snapshot.png", "full_page": false },
+      "summary": "Save page snapshot locally",
+      "sensitivity": "mutate",
+      "side_effects": ["Writes a PNG screenshot under ArboraBriefs"]
+    },
+    {
+      "adapter": "browser",
       "action": "save_brief",
       "args": { "path": "~/ArboraBriefs/example-pack.md", "topic": "example.com" },
       "summary": "Save research brief locally",
