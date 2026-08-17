@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 029 | [Windows voice input](documentation/029-windows-voice-input.md) |
 | 028 | [Briefs folder preference](documentation/028-briefs-folder-preference.md) |
 | 027 | [Research journey snapshot](documentation/027-research-journey-snapshot.md) |
 | 026 | [Startup schedule runner](documentation/026-startup-schedule-runner.md) |

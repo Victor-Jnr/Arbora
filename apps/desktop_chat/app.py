@@ -29,6 +29,7 @@ from arbora.schedules.store import (
     remove_schedule,
     schedule_rows,
 )
+from arbora.voice.windows import listen_once, voice_input_available
 from arbora.setup_status import (
     LIGHT_HEX,
     Light,
@@ -280,6 +281,7 @@ class ArboraChatApp:
         )
         self.goal_entry.pack(side="left", fill="x", expand=True, ipady=8, padx=(0, 8))
         self.goal_entry.bind("<Return>", lambda _e: self.make_plan())
+        ttk.Button(entry_row, text="Voice", command=self.voice_goal).pack(side="left", padx=(0, 8))
         ttk.Button(entry_row, text="Plan", style="Accent.TButton", command=self.make_plan).pack(side="left")
 
         actions = ttk.Frame(self.root, style="TFrame")
@@ -463,6 +465,35 @@ class ArboraChatApp:
         self.transcript.insert("end", text if text.endswith("\n") else text + "\n")
         self.transcript.see("end")
         self.transcript.configure(state="disabled")
+
+    def voice_goal(self) -> None:
+        if not voice_input_available():
+            messagebox.showinfo(
+                "Voice input",
+                "Voice input is only available on Windows in this prototype.",
+                parent=self.root,
+            )
+            return
+        self._log("Listening for goal (speak now)…\n")
+
+        def work() -> None:
+            result = listen_once()
+
+            def finish() -> None:
+                if result.ok:
+                    self.goal_entry.delete(0, "end")
+                    self.goal_entry.insert(0, result.text)
+                    self._log(f"Heard: {result.text}\n")
+                else:
+                    messagebox.showwarning(
+                        "Voice input",
+                        result.error or "Voice recognition failed.",
+                        parent=self.root,
+                    )
+
+            self.root.after(0, finish)
+
+        threading.Thread(target=work, daemon=True).start()
 
     def make_plan(self) -> None:
         goal = self.goal_entry.get().strip()

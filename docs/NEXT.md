@@ -67,7 +67,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 19 | **Research journey snapshot** | ✅ Research plans save a local page snapshot before the brief |
 | 20 | **Briefs folder preference** | ✅ User-configurable `briefs_folder` for research output |
-| 21 | **Windows voice input** | Opt-in push-to-talk goal entry in `arbora-ui` |
+| 21 | **Windows voice input** | ✅ Opt-in push-to-talk goal entry in `arbora-ui` |
 
 ## Non-negotiables (do not drift)
 
@@ -162,4 +162,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P6 #21 — Windows voice input** (opt-in push-to-talk goal entry in `arbora-ui`).
+P6 Stage 3 research and voice plates are complete. Run `arbora validate` on tester machines, then continue Stage 3 depth from the root README (e.g. developer-tool adapters or richer organisation).

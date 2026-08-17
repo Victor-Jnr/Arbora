@@ -95,6 +95,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/cli/audit_cmd.py` | `arbora audit export` JSON export command |
 | `tests/test_audit_export.py` | Audit export regression tests |
 | `workflows/organise-downloads.json` | Bundled organise Downloads preview→apply workflow pack |
+| `src/arbora/voice/windows.py` | Windows System.Speech voice-to-text helper |
+| `tests/test_voice_windows.py` | Voice input helper regression tests |
+
+---
+
+## 029 — Windows voice input (2026-08-17)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/voice/windows.py` | Added System.Speech listen helper |
+| `src/arbora/voice/__init__.py` | Voice package exports |
+| `apps/desktop_chat/app.py` | Added Voice button and background listener |
+| `tests/test_voice_windows.py` | Added voice helper tests |
+| `docs/NEXT.md` | Marked P6#21 done |
+| `documentation/029-windows-voice-input.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 029 |
+| `README.md` | Linked document 029 |
+| `CHANGELOG.md` | Added file roles and 029 section |
 
 ---
 
