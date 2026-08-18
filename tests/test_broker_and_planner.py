@@ -20,6 +20,15 @@ def _runtime(tmp_path: Path | None = None):
     return build_runtime(memory_root=root, provider="echo")
 
 
+def test_save_note_alt_phrasing():
+    runtime = _runtime()
+    plan = runtime.planner.plan("jot down pick up the keys")
+    assert "save-note" in plan.rationale.lower()
+    assert any(step.action == "write_text" for step in plan.steps)
+    write = next(step for step in plan.steps if step.action == "write_text")
+    assert "pick up the keys" in write.args["content"]
+
+
 def test_workday_plan_shape():
     runtime = _runtime()
     plan = runtime.planner.plan("start my workday")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from arbora.cli.session import build_runtime
+from arbora.cli.session import approve_all, build_runtime
 from arbora.preferences.store import set_preference
 
 
@@ -38,6 +38,26 @@ def test_downloads_folder_preference(tmp_path: Path):
     assert str(custom) in listed.args["path"]
     listed_default = runtime2.planner.plan("list files")
     assert str(custom) in listed_default.steps[0].args["path"]
+
+
+def test_notes_folder_preference_and_save_note_plan(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    custom = tmp_path / "MyNotes"
+    set_preference(runtime.memory, "notes_folder", str(custom))
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    assert runtime2.preferences.resolved_notes_folder() == custom
+    plan = runtime2.planner.plan("save a note about buying milk")
+    assert "save-note" in plan.rationale.lower()
+    ensure = next(step for step in plan.steps if step.action == "ensure_directory")
+    write = next(step for step in plan.steps if step.action == "write_text")
+    assert str(custom) in ensure.args["path"]
+    assert str(custom) in write.args["path"]
+    assert "buying milk" in write.args["content"]
+    results = runtime2.broker.execute_plan(plan, approve_all(plan), dry_run=False)
+    assert all(result.ok for result in results)
+    written = list(custom.glob("note-*.txt"))
+    assert len(written) == 1
+    assert "buying milk" in written[0].read_text(encoding="utf-8")
 
 
 def test_projects_folder_preference(tmp_path: Path):
@@ -80,3 +100,4 @@ def test_prefs_cli_list(tmp_path: Path, capsys):
     assert "briefs_folder" in out
     assert "projects_folder" in out
     assert "downloads_folder" in out
+    assert "notes_folder" in out

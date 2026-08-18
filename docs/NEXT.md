@@ -82,7 +82,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 25 | **Downloads folder preference** | ✅ User-configurable `downloads_folder` for organise/list journeys |
-| 26 | **Save-note journey** | Notes folder preference + planner journey to write a local note |
+| 26 | **Save-note journey** | ✅ Notes folder preference + planner journey to write a local note |
 | 27 | **Local memory export** | Export encrypted-memory contents as JSON (CLI + desktop) |
 
 ## Non-negotiables (do not drift)
@@ -178,4 +178,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P8 #26 — Save-note journey** (notes folder preference + write-a-note plan).
+**P8 #27 — Local memory export** (`arbora memory export` + desktop export, no encryption keys).

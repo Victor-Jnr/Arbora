@@ -101,6 +101,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/memory/goal_history.py` | Recent goal history in encrypted memory |
 | `tests/test_goal_history.py` | Goal history regression tests |
 | `documentation/033-downloads-folder-preference.md` | Change doc for downloads folder preference |
+| `documentation/034-save-note-journey.md` | Change doc for save-note journey |
+
+---
+
+## 034 — Save-note journey (2026-08-18)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/preferences/store.py` | Added `notes_folder` preference |
+| `src/arbora/core/planner.py` | Added save-note journey and timestamped write plan |
+| `src/arbora/cli/session.py` | Pass `notes_root` into planner |
+| `src/arbora/cli/main.py` | Documented notes preference and example goal |
+| `src/arbora/cli/prefs.py` | Listed `notes_folder` in set-key help |
+| `tests/test_preferences.py` | Added notes folder + live write tests |
+| `tests/test_broker_and_planner.py` | Added save-note phrasing test |
+| `docs/NEXT.md` | Marked P8#26 done |
+| `documentation/034-save-note-journey.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 034 |
+| `README.md` | Linked document 034 |
+| `CHANGELOG.md` | Added file roles and 034 section |
 
 ---
 

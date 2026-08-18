@@ -42,7 +42,7 @@ Commands:
   /memory         Show local memory encryption status
   /wipe           Wipe local memory (routines/preferences)
   /workflows      List reusable workflow packs
-  /prefs          Show or set user preferences (dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, run_schedules_on_start)
+  /prefs          Show or set user preferences (dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, run_schedules_on_start)
   /schedules      List trusted-routine schedules
   /undo           Undo the last organise move batch (shortcut plan)
   /dry on|off     Toggle dry-run mode (default: on)
@@ -54,6 +54,7 @@ Try goals like:
   set up a project
   organise my downloads
   undo last organise
+  save a note about tomorrow's standup
   list downloads
   disk diagnose pack
 """.strip()

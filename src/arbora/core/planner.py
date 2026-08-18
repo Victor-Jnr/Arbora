@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -29,15 +30,20 @@ class GoalPlanner:
         briefs_root: Path | None = None,
         projects_root: Path | None = None,
         downloads_root: Path | None = None,
+        notes_root: Path | None = None,
     ) -> None:
         self._provider = provider
         self._workday_root = workday_root
         self._briefs_root = briefs_root
         self._projects_root = projects_root
         self._downloads_root = downloads_root
+        self._notes_root = notes_root
 
     def _downloads_dir(self) -> Path:
         return self._downloads_root or Path.home() / "Downloads"
+
+    def _notes_dir(self) -> Path:
+        return self._notes_root or Path.home() / "ArboraNotes"
 
     def plan(self, goal: str) -> Plan:
         text = goal.strip()
@@ -55,6 +61,8 @@ class GoalPlanner:
             return self._organise_downloads_plan(text)
         if self._looks_like_undo_organise(lower):
             return self._undo_organise_plan(text)
+        if self._looks_like_save_note(lower):
+            return self._save_note_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -549,6 +557,54 @@ class GoalPlanner:
             ],
         )
 
+    def _save_note_plan(self, goal: str) -> Plan:
+        notes_root = self._notes_dir()
+        body = self._note_body_from_goal(goal)
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        note_path = notes_root / f"note-{stamp}.txt"
+        content = f"{body}\n"
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Save-note journey — write one local text file after ensuring the notes folder. "
+                "Nothing is uploaded; overwrite is avoided with a timestamped filename."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(notes_root)},
+                    summary=f"Ensure notes folder exists at {notes_root}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="write_text",
+                    args={"path": str(note_path), "content": content},
+                    summary=f"Write {note_path.name} in the notes folder",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Creates a new local text file",),
+                ),
+            ],
+        )
+
+    @staticmethod
+    def _note_body_from_goal(goal: str) -> str:
+        text = goal.strip()
+        text = re.sub(
+            r"^(?:save a note|write a note|add a note|leave a note|save note|jot down)\s*"
+            r"(?:about|that|:)?\s*",
+            "",
+            text,
+            count=1,
+            flags=re.I,
+        )
+        return text.strip() or "Empty note from Arbora."
+
     def _list_files_plan(self, goal: str) -> Plan:
         path_match = re.search(r"(?:in|at)\s+([A-Za-z]:\\[^\"]+|~[/\\][^\"]+|[/\\][^\"]+)", goal)
         path = path_match.group(1) if path_match else str(self._downloads_dir())
@@ -782,6 +838,20 @@ class GoalPlanner:
                 "reverse organise",
                 "undo file moves",
                 "undo last file",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_save_note(lower: str) -> bool:
+        return any(
+            phrase in lower
+            for phrase in (
+                "save a note",
+                "write a note",
+                "add a note",
+                "leave a note",
+                "save note",
+                "jot down",
             )
         )
 

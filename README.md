@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 034 | [Save-note journey](documentation/034-save-note-journey.md) |
 | 033 | [Downloads folder preference](documentation/033-downloads-folder-preference.md) |
 | 032 | [Recent goal history](documentation/032-recent-goal-history.md) |
 | 031 | [Projects folder preference](documentation/031-projects-folder-preference.md) |
