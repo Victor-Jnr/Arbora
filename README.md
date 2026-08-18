@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 031 | [Projects folder preference](documentation/031-projects-folder-preference.md) |
 | 030 | [Git status workflow pack](documentation/030-git-status-workflow-pack.md) |
 | 029 | [Windows voice input](documentation/029-windows-voice-input.md) |
 | 028 | [Briefs folder preference](documentation/028-briefs-folder-preference.md) |

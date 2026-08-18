@@ -27,6 +27,17 @@ def test_preferences_provider_override(tmp_path: Path):
     assert runtime.provider_name in {"echo", "echo-local"}
 
 
+def test_projects_folder_preference(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    custom = tmp_path / "Projects"
+    set_preference(runtime.memory, "projects_folder", str(custom))
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    assert runtime2.preferences.resolved_projects_folder() == custom
+    plan = runtime2.planner.plan("set up a project")
+    ensure = next(step for step in plan.steps if step.action == "ensure_directory")
+    assert str(custom) in ensure.args["path"]
+
+
 def test_briefs_folder_preference(tmp_path: Path):
     runtime = build_runtime(memory_root=tmp_path, provider="echo")
     custom = tmp_path / "MyBriefs"
@@ -54,3 +65,4 @@ def test_prefs_cli_list(tmp_path: Path, capsys):
     assert "dry_run_default" in out
     assert "run_schedules_on_start" in out
     assert "briefs_folder" in out
+    assert "projects_folder" in out

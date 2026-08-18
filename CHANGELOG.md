@@ -101,6 +101,23 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 
 ---
 
+## 031 — Projects folder preference (2026-08-18)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/preferences/store.py` | Added `projects_folder` preference |
+| `src/arbora/core/planner.py` | Dev setup and workday shutdown use configured roots |
+| `src/arbora/cli/session.py` | Pass `projects_root` into planner |
+| `src/arbora/cli/main.py` | Documented `projects_folder` in banner |
+| `tests/test_preferences.py` | Added projects folder preference tests |
+| `docs/NEXT.md` | Marked P7#23 done |
+| `documentation/031-projects-folder-preference.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 031 |
+| `README.md` | Linked document 031 |
+| `CHANGELOG.md` | Added file roles and 031 section |
+
+---
+
 ## 030 — Git status workflow pack (2026-08-18)
 
 | File | Change |

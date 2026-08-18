@@ -27,10 +27,12 @@ class GoalPlanner:
         *,
         workday_root: Path | None = None,
         briefs_root: Path | None = None,
+        projects_root: Path | None = None,
     ) -> None:
         self._provider = provider
         self._workday_root = workday_root
         self._briefs_root = briefs_root
+        self._projects_root = projects_root
 
     def plan(self, goal: str) -> Plan:
         text = goal.strip()
@@ -266,7 +268,8 @@ class GoalPlanner:
         )
 
     def _workday_shutdown_plan(self, goal: str) -> Plan:
-        note_path = Path.home() / "ArboraWorkday" / "resume-tomorrow.txt"
+        work_root = self._workday_root or Path.home() / "ArboraWorkday"
+        note_path = work_root / "resume-tomorrow.txt"
         return Plan(
             id=new_id("plan_"),
             goal=goal,
@@ -280,7 +283,7 @@ class GoalPlanner:
                     id=new_id("step_"),
                     adapter="files",
                     action="ensure_directory",
-                    args={"path": str(Path.home() / "ArboraWorkday")},
+                    args={"path": str(work_root)},
                     summary="Ensure ArboraWorkday folder exists",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("May create a directory under your home folder",),
@@ -390,6 +393,7 @@ class GoalPlanner:
 
     def _dev_setup_plan(self, goal: str) -> Plan:
         project_root = Path.cwd()
+        projects_root = self._projects_root or Path.home() / "ArboraProjects"
         readme_path = project_root / "README.md"
         gitignore_path = project_root / ".gitignore"
         return Plan(
@@ -433,8 +437,8 @@ class GoalPlanner:
                     id=new_id("step_"),
                     adapter="files",
                     action="ensure_directory",
-                    args={"path": str(Path.home() / "ArboraProjects")},
-                    summary="Ensure ArboraProjects folder exists for future clones",
+                    args={"path": str(projects_root)},
+                    summary=f"Ensure projects folder exists at {projects_root}",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("May create a directory under your home folder",),
                 ),

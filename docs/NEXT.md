@@ -74,7 +74,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 22 | **Git status workflow pack** | ✅ Read-only git status/diff pack for the current directory |
-| 23 | **Projects folder preference** | User-configurable `projects_folder` for dev setup |
+| 23 | **Projects folder preference** | ✅ User-configurable `projects_folder` for dev setup |
 | 24 | **Recent goal history** | Persist and recall recent goals (`/history`, desktop picker) |
 
 ## Non-negotiables (do not drift)
@@ -170,4 +170,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-**P7 #23 — Projects folder preference** (user-configurable dev projects directory).
+**P7 #24 — Recent goal history** (persist and recall recent goals locally).
