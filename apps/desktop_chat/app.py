@@ -31,6 +31,7 @@ from arbora.schedules.store import (
 )
 from arbora.memory.goal_history import list_recent_goals, record_goal
 from arbora.memory.store import export_memory_payload, memory_status_rows
+from arbora.voice.windows import listen_once, voice_input_available
 from arbora.setup_status import (
     LIGHT_HEX,
     Light,

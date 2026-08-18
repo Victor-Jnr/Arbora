@@ -26,6 +26,13 @@ def test_main_callable():
     assert callable(main)
 
 
+def test_voice_helpers_are_imported():
+    from apps.desktop_chat import app as desktop
+
+    assert callable(desktop.voice_input_available)
+    assert callable(desktop.listen_once)
+
+
 def test_format_routine_helpers():
     routine = TrustedRoutine(
         id="rtn_abcdefghijkl",
