@@ -2,6 +2,30 @@
 
 Thanks for your interest. Arbora is early (Stage 1 prototype). The [README](README.md) is still the north star for product intent and the safety contract.
 
+## Git workflow
+
+Do not commit on `main`. Treat it as the last known-good line testers clone.
+
+| Branch | Role |
+| --- | --- |
+| `main` | Protected default. Only updated by pull request from `dev` (or a hotfix PR). |
+| `dev` | Integration. Feature work merges here first. |
+| `feature/…`, `fix/…` | One change per branch. Open a PR into `dev`. |
+
+Typical day:
+
+```powershell
+git checkout dev
+git pull origin dev
+git checkout -b feature/short-name
+# …edit, pytest, commit…
+git push -u origin HEAD
+```
+
+Then open a pull request with **base = `dev`**. After GitHub Actions **pytest (Windows)** is green, merge it. When `dev` is stable enough to show testers, open a second PR: **`dev` → `main`**.
+
+GitHub Actions runs pytest on every push and PR to `main` or `dev`. A failing check does not un-push the commit; it only fails the PR. Turn on **branch protection** (require the `pytest (Windows)` check) so `main` and `dev` cannot merge red.
+
 ## Before you change code
 
 1. Read the [safety contract](README.md#safety-contract) and [autonomy model](README.md#autonomy-and-permissions).

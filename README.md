@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 039 | [GitHub Actions pytest CI](documentation/039-github-actions-pytest.md) |
 | 038 | [Larger desktop Trust dialogs](documentation/038-larger-desktop-dialogs.md) |
 | 037 | [Sample read-only trusted routines](documentation/037-sample-read-only-routines.md) |
 | 036 | [Fix desktop voice import](documentation/036-fix-desktop-voice-import.md) |
@@ -690,8 +691,9 @@ Arbora welcomes collaborators who care about useful automation *and* user agency
 - Discuss large architectural changes before implementing them.
 - Treat user-facing claims carefully: document intent vs. availability explicitly.
 - On each commit, add the next numbered document under [`documentation/`](documentation/README.md), update this README’s Documentation section, and append per-file one-liners to [`CHANGELOG.md`](CHANGELOG.md).
+- Work on a feature branch, open a PR, and wait for GitHub Actions pytest. Branch roles and the `dev` flow are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-Issue templates, a code of conduct, and contributor guidelines will be added as the repository leaves pure vision stage. Until then, use this README as the north star.
+Issue templates and a code of conduct will be added as the project matures. Until then, use this README as the product north star and CONTRIBUTING for how to land code.
 
 ---
 

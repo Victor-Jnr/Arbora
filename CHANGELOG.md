@@ -110,6 +110,21 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_sample_routines.py` | Sample routine seed regression tests |
 | `documentation/037-sample-read-only-routines.md` | Change doc for sample trusted routines |
 | `documentation/038-larger-desktop-dialogs.md` | Change doc for larger desktop dialogs |
+| `.github/workflows/ci.yml` | Windows pytest GitHub Actions workflow |
+| `documentation/039-github-actions-pytest.md` | Change doc for GitHub Actions pytest CI |
+
+---
+
+## 039 — GitHub Actions pytest CI (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `.github/workflows/ci.yml` | Run pytest on Windows for pushes and PRs to `main` and `dev` |
+| `CONTRIBUTING.md` | Document `main` / `dev` / feature-branch pull-request flow |
+| `documentation/039-github-actions-pytest.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 039 |
+| `README.md` | Linked document 039; point contributors at the git workflow |
+| `CHANGELOG.md` | Added file roles and 039 section |
 
 ---
 
