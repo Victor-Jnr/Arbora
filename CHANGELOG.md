@@ -106,6 +106,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/cli/memory_cmd.py` | `arbora memory status|export` command |
 | `tests/test_memory_export.py` | Memory export regression tests |
 | `documentation/036-fix-desktop-voice-import.md` | Change doc for desktop Voice import fix |
+| `src/arbora/core/sample_routines.py` | First-run read-only trusted routine seeds |
+| `tests/test_sample_routines.py` | Sample routine seed regression tests |
+| `documentation/037-sample-read-only-routines.md` | Change doc for sample trusted routines |
+
+---
+
+## 037 — Sample read-only trusted routines (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/sample_routines.py` | Seed list-downloads and disk-diagnose when memory is new |
+| `src/arbora/core/broker.py` | Added `promote_plan` without executing adapters |
+| `src/arbora/cli/session.py` | Optional `seed_samples` on runtime build |
+| `src/arbora/cli/main.py` | Seed samples in the interactive CLI |
+| `apps/desktop_chat/app.py` | Seed samples in arbora-ui; clearer empty Routines copy |
+| `tests/test_sample_routines.py` | Added seed/idempotency tests |
+| `documentation/037-sample-read-only-routines.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 037 |
+| `README.md` | Linked document 037 |
+| `CHANGELOG.md` | Added file roles and 037 section |
 
 ---
 

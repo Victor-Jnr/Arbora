@@ -288,6 +288,11 @@ class PermissionBroker:
 
         return results
 
+    def promote_plan(self, plan: Plan, name: str) -> TrustedRoutine:
+        """Record a trusted routine for this plan fingerprint without executing it."""
+        fingerprint = self.fingerprint_plan(plan)
+        return self._promote(plan, name, fingerprint)
+
     def _promote(self, plan: Plan, name: str, fingerprint: str) -> TrustedRoutine:
         scopes = [
             ScopeGrant(

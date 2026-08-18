@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    runtime = build_runtime(memory_root=args.memory_dir, provider=args.provider)
+    runtime = build_runtime(memory_root=args.memory_dir, provider=args.provider, seed_samples=True)
     dry_run = not args.execute if args.goal else runtime.preferences.dry_run_default
 
     if args.goal:

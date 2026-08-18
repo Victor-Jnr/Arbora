@@ -109,7 +109,7 @@ class ArboraChatApp:
         self.dry_run_var = tk.BooleanVar(value=True)
         self.promote_var = tk.BooleanVar(value=False)
         self.routine_name_var = tk.StringVar(value="")
-        self._runtime = build_runtime(provider=None)
+        self._runtime = build_runtime(provider=None, seed_samples=True)
         if self._runtime.preferences.provider:
             self.provider_var.set(self._runtime.preferences.provider)
         self.dry_run_var.set(self._runtime.preferences.dry_run_default)
@@ -458,7 +458,7 @@ class ArboraChatApp:
     def _on_provider_change(self, _event=None) -> None:
         choice = self.provider_var.get()
         try:
-            self._runtime = build_runtime(provider=choice)
+            self._runtime = build_runtime(provider=choice, seed_samples=True)
         except ValueError as exc:
             messagebox.showerror("Provider", str(exc))
             self.provider_var.set(self._runtime.provider_name)
@@ -770,7 +770,10 @@ class ArboraChatApp:
             listbox.delete(0, "end")
             routines = self._runtime.broker.list_routines()
             if not routines:
-                detail_var.set("No trusted routines yet. Promote a successful plan to create one.")
+                detail_var.set(
+                    "No trusted routines. Promote a successful plan, or restart to restore "
+                    "read-only samples (list downloads, diagnose disk space) if you wiped memory."
+                )
                 return
             for routine in routines:
                 routines_by_index.append(routine)

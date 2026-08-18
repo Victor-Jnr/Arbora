@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 037 | [Sample read-only trusted routines](037-sample-read-only-routines.md) | 2026-08-19 | First-run list-downloads and disk-diagnose samples |
 | 036 | [Fix desktop voice import](036-fix-desktop-voice-import.md) | 2026-08-18 | Import Voice button helpers in arbora-ui |
 | 035 | [Local memory export](035-local-memory-export.md) | 2026-08-18 | Export encrypted-memory contents as JSON |
 | 034 | [Save-note journey](034-save-note-journey.md) | 2026-08-18 | Notes folder preference + local save-note plan |
