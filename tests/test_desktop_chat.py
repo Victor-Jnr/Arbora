@@ -11,6 +11,7 @@ import pytest
 from apps.desktop_chat.app import (
     ArboraChatApp,
     format_audit_events,
+    format_memory_status,
     format_routine_detail,
     format_routine_rows,
     format_schedule_list,
@@ -54,6 +55,13 @@ def test_format_audit_events():
     assert "test plan" in body
     assert "plan_id=p1" in body
     assert format_audit_events([]) == "(audit log empty)\n"
+
+
+def test_format_memory_status(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    body = format_memory_status(runtime.memory)
+    assert "encrypted_at_rest" in body
+    assert "key_backend" in body
 
 
 def test_format_schedule_list(tmp_path: Path):

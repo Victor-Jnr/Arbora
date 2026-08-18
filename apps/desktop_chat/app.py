@@ -30,6 +30,7 @@ from arbora.schedules.store import (
     schedule_rows,
 )
 from arbora.memory.goal_history import list_recent_goals, record_goal
+from arbora.memory.store import export_memory_payload, memory_status_rows
 from arbora.setup_status import (
     LIGHT_HEX,
     Light,
@@ -88,6 +89,11 @@ def format_audit_events(events: list[AuditEvent]) -> str:
             lines.append(f"  {kv}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def format_memory_status(memory) -> str:
+    """Human-readable local memory status for the Memory dialog."""
+    return "\n".join(memory_status_rows(memory)) + "\n"
 
 
 class ArboraChatApp:
@@ -298,7 +304,8 @@ class ArboraChatApp:
         self._stop_btn.pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Routines", command=self.show_routines).pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Schedules", command=self.show_schedules).pack(side="left", padx=(0, 8))
-        ttk.Button(actions, text="Audit", command=self.show_audit).pack(side="left")
+        ttk.Button(actions, text="Audit", command=self.show_audit).pack(side="left", padx=(0, 8))
+        ttk.Button(actions, text="Memory", command=self.show_memory).pack(side="left")
         ttk.Label(actions, textvariable=self.routine_name_var, style="Muted.TLabel").pack(side="right")
         ttk.Label(actions, textvariable=self._stop_var, style="Muted.TLabel").pack(side="right", padx=(0, 12))
 
@@ -1042,6 +1049,65 @@ class ArboraChatApp:
         btn_row = ttk.Frame(dialog, style="TFrame")
         btn_row.pack(fill="x", padx=16, pady=12)
         ttk.Button(btn_row, text="Export JSON", command=export_audit).pack(side="left", padx=(0, 8))
+        ttk.Button(btn_row, text="Refresh", command=refresh).pack(side="left", padx=(0, 8))
+        ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
+
+        refresh()
+
+    def show_memory(self) -> None:
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Local memory")
+        dialog.configure(bg=COLORS["bg"])
+        dialog.transient(self.root)
+        dialog.geometry("640x360")
+        dialog.grab_set()
+
+        ttk.Label(dialog, text="Local memory", style="Brand.TLabel").pack(anchor="w", padx=16, pady=(16, 4))
+        ttk.Label(
+            dialog,
+            text="Encrypted on this machine. Export writes JSON without encryption keys.",
+            style="Muted.TLabel",
+            wraplength=600,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        text = tk.Text(
+            dialog,
+            wrap="word",
+            bg=COLORS["panel"],
+            fg=COLORS["ink"],
+            relief="flat",
+            font=self.font_mono,
+            padx=10,
+            pady=8,
+        )
+        text.pack(fill="both", expand=True, padx=16, pady=4)
+
+        def refresh() -> None:
+            text.configure(state="normal")
+            text.delete("1.0", "end")
+            text.insert("1.0", format_memory_status(self._runtime.memory))
+            text.configure(state="disabled")
+
+        def export_memory() -> None:
+            default_name = f"arbora-memory-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+            path = filedialog.asksaveasfilename(
+                parent=dialog,
+                title="Export local memory",
+                defaultextension=".json",
+                initialfile=default_name,
+                filetypes=[("JSON", "*.json"), ("All files", "*.*")],
+            )
+            if not path:
+                return
+            payload = export_memory_payload(self._runtime.memory)
+            out_path = Path(path)
+            out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            count = len(payload.get("data", {}))
+            messagebox.showinfo("Local memory", f"Exported {count} key(s) to:\n{out_path}", parent=dialog)
+
+        btn_row = ttk.Frame(dialog, style="TFrame")
+        btn_row.pack(fill="x", padx=16, pady=12)
+        ttk.Button(btn_row, text="Export JSON", command=export_memory).pack(side="left", padx=(0, 8))
         ttk.Button(btn_row, text="Refresh", command=refresh).pack(side="left", padx=(0, 8))
         ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
 

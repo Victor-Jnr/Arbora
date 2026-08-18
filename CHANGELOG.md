@@ -102,6 +102,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_goal_history.py` | Goal history regression tests |
 | `documentation/033-downloads-folder-preference.md` | Change doc for downloads folder preference |
 | `documentation/034-save-note-journey.md` | Change doc for save-note journey |
+| `documentation/035-local-memory-export.md` | Change doc for local memory export |
+| `src/arbora/cli/memory_cmd.py` | `arbora memory status|export` command |
+| `tests/test_memory_export.py` | Memory export regression tests |
+
+---
+
+## 035 — Local memory export (2026-08-18)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/memory/store.py` | Added JSON export payload and status rows (no key material) |
+| `src/arbora/memory/__init__.py` | Exported memory export helpers |
+| `src/arbora/cli/memory_cmd.py` | Added `arbora memory status` and `export` |
+| `src/arbora/cli/main.py` | Dispatch + `/memory export` |
+| `apps/desktop_chat/app.py` | Memory dialog with Export JSON |
+| `tests/test_memory_export.py` | Added memory export tests |
+| `tests/test_desktop_chat.py` | Added memory status formatter test |
+| `docs/NEXT.md` | Marked P8#27 done |
+| `documentation/035-local-memory-export.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 035 |
+| `README.md` | Linked document 035 |
+| `CHANGELOG.md` | Added file roles and 035 section |
 
 ---
 

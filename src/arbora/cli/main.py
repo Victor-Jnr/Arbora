@@ -20,6 +20,7 @@ from arbora.core.types import ApprovalDecision, ExecutionReport
 from arbora.providers.ollama import DEFAULT_MODEL
 from arbora.core.audit_store import export_audit_payload
 from arbora.memory.goal_history import list_recent_goals, record_goal
+from arbora.memory.store import export_memory_payload, memory_status_rows
 from arbora.preferences.store import load_preferences, preference_rows, set_preference
 from arbora.schedules.store import load_schedules, schedule_rows
 from arbora.workflows.packs import load_workflow_packs, workflow_pack_rows
@@ -34,12 +35,13 @@ Commands:
   arbora validate Dry-run MVP exit-criteria checks
   arbora prefs     Show or set opt-in user preferences
   arbora audit     Export persisted audit events
+  arbora memory    Show or export local memory JSON (no encryption keys)
   /history        Show recent goals
   /audit          Show recent audit events (/audit export [path])
   /routines       List trusted routines
   /revoke ID      Revoke a trusted routine
   /provider       Show active model provider
-  /memory         Show local memory encryption status
+  /memory         Show local memory status (/memory export [path])
   /wipe           Wipe local memory (routines/preferences)
   /workflows      List reusable workflow packs
   /prefs          Show or set user preferences (dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, run_schedules_on_start)
@@ -78,6 +80,10 @@ def main(argv: list[str] | None = None) -> int:
         from arbora.cli.audit_cmd import run_audit
 
         return run_audit(argv[1:])
+    if argv and argv[0] == "memory":
+        from arbora.cli.memory_cmd import run_memory
+
+        return run_memory(argv[1:])
     if argv and argv[0] == "schedule":
         from arbora.cli.schedule import run_schedule_cli
 
@@ -270,10 +276,20 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
             print(f"Privacy: {notice}")
         return dry_run, False
     if cmd == "/memory":
-        print(f"Root: {runtime.memory.root}")
-        print(f"Encrypted at rest: {runtime.memory.encrypted_at_rest}")
-        print(f"Key backend: {runtime.memory.key_backend}")
-        print(f"Keys in store: {len(runtime.memory.export())}")
+        if arg.lower().startswith("export"):
+            parts = arg.split(maxsplit=1)
+            out_path = Path(parts[1].strip()) if len(parts) > 1 else None
+            payload = export_memory_payload(runtime.memory)
+            text = json.dumps(payload, indent=2)
+            if out_path is None:
+                print(text)
+            else:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out_path.write_text(text + "\n", encoding="utf-8")
+                print(f"Wrote {len(payload.get('data', {}))} key(s) to {out_path}")
+            return dry_run, False
+        for row in memory_status_rows(runtime.memory):
+            print(row)
         return dry_run, False
     if cmd == "/wipe":
         if not _confirm("Wipe local memory (preferences + trusted routines)? [y/N] "):

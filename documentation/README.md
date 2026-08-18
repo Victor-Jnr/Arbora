@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 035 | [Local memory export](035-local-memory-export.md) | 2026-08-18 | Export encrypted-memory contents as JSON |
 | 034 | [Save-note journey](034-save-note-journey.md) | 2026-08-18 | Notes folder preference + local save-note plan |
 | 033 | [Downloads folder preference](033-downloads-folder-preference.md) | 2026-08-18 | User-configurable organise/list directory |
 | 032 | [Recent goal history](032-recent-goal-history.md) | 2026-08-18 | Persist and recall recent goals locally |

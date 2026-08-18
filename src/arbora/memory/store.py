@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -95,3 +96,28 @@ class LocalMemoryStore:
                 self._plain_path.unlink()
             except OSError:
                 pass
+
+
+def export_memory_payload(memory: LocalMemoryStore) -> dict[str, Any]:
+    """JSON-serialisable dump of local memory. Encryption keys are never included."""
+    data = memory.export()
+    return {
+        "version": 1,
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "encrypted_at_rest": memory.encrypted_at_rest,
+        "key_backend": memory.key_backend,
+        "keys": sorted(data),
+        "data": data,
+    }
+
+
+def memory_status_rows(memory: LocalMemoryStore) -> list[str]:
+    data = memory.export()
+    key_list = ", ".join(sorted(data)) if data else "none"
+    return [
+        f"root = {memory.root}",
+        f"encrypted_at_rest = {str(memory.encrypted_at_rest).lower()}",
+        f"key_backend = {memory.key_backend}",
+        f"keys = {len(data)} ({key_list})",
+    ]
+
