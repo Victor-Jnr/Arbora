@@ -29,7 +29,7 @@ from arbora.schedules.store import (
     remove_schedule,
     schedule_rows,
 )
-from arbora.voice.windows import listen_once, voice_input_available
+from arbora.memory.goal_history import list_recent_goals, record_goal
 from arbora.setup_status import (
     LIGHT_HEX,
     Light,
@@ -281,6 +281,7 @@ class ArboraChatApp:
         )
         self.goal_entry.pack(side="left", fill="x", expand=True, ipady=8, padx=(0, 8))
         self.goal_entry.bind("<Return>", lambda _e: self.make_plan())
+        ttk.Button(entry_row, text="History", command=self.show_goal_history).pack(side="left", padx=(0, 8))
         ttk.Button(entry_row, text="Voice", command=self.voice_goal).pack(side="left", padx=(0, 8))
         ttk.Button(entry_row, text="Plan", style="Accent.TButton", command=self.make_plan).pack(side="left")
 
@@ -495,10 +496,62 @@ class ArboraChatApp:
 
         threading.Thread(target=work, daemon=True).start()
 
+    def show_goal_history(self) -> None:
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Recent goals")
+        dialog.configure(bg=COLORS["bg"])
+        dialog.transient(self.root)
+        dialog.geometry("520x320")
+        dialog.grab_set()
+
+        ttk.Label(dialog, text="Recent goals", style="Brand.TLabel").pack(
+            anchor="w", padx=16, pady=(16, 4)
+        )
+        ttk.Label(
+            dialog,
+            text="Select a goal to refill the input field.",
+            style="Muted.TLabel",
+            wraplength=480,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        listbox = tk.Listbox(
+            dialog,
+            bg=COLORS["panel"],
+            fg=COLORS["ink"],
+            selectbackground=COLORS["accent_dim"],
+            relief="flat",
+            font=self.font_mono,
+            activestyle="none",
+        )
+        listbox.pack(fill="both", expand=True, padx=16, pady=4)
+        goals = list_recent_goals(self._runtime.memory, limit=20)
+        for goal in goals:
+            listbox.insert("end", goal)
+        if not goals:
+            listbox.insert("end", "(no recent goals yet)")
+
+        def use_selected() -> None:
+            sel = listbox.curselection()
+            if not sel or not goals:
+                return
+            chosen = goals[sel[0]]
+            self.goal_entry.delete(0, "end")
+            self.goal_entry.insert(0, chosen)
+            dialog.destroy()
+
+        btn_row = ttk.Frame(dialog, style="TFrame")
+        btn_row.pack(fill="x", padx=16, pady=12)
+        ttk.Button(btn_row, text="Use selected", style="Accent.TButton", command=use_selected).pack(
+            side="left", padx=(0, 8)
+        )
+        ttk.Button(btn_row, text="Close", command=dialog.destroy).pack(side="left")
+        listbox.bind("<Double-Button-1>", lambda _e: use_selected())
+
     def make_plan(self) -> None:
         goal = self.goal_entry.get().strip()
         if not goal:
             return
+        record_goal(self._runtime.memory, goal)
         self._log(f"\nYou> {goal}\n")
         plan = self._runtime.planner.plan(goal)
         self._runtime.audit.record("plan_created", plan.rationale or plan.goal, plan_id=plan.id, goal=goal)

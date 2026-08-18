@@ -98,6 +98,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/voice/windows.py` | Windows System.Speech voice-to-text helper |
 | `tests/test_voice_windows.py` | Voice input helper regression tests |
 | `workflows/git-status.json` | Read-only git status/diff workflow pack |
+| `src/arbora/memory/goal_history.py` | Recent goal history in encrypted memory |
+| `tests/test_goal_history.py` | Goal history regression tests |
+
+---
+
+## 032 — Recent goal history (2026-08-18)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/memory/goal_history.py` | Added record/list recent goals helpers |
+| `src/arbora/cli/main.py` | `/history` command + record on plan |
+| `apps/desktop_chat/app.py` | History picker + record on plan |
+| `tests/test_goal_history.py` | Added goal history tests |
+| `docs/NEXT.md` | Marked P7#24 done |
+| `documentation/032-recent-goal-history.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 032 |
+| `README.md` | Linked document 032 |
+| `CHANGELOG.md` | Added file roles and 032 section |
 
 ---
 

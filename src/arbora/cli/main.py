@@ -19,6 +19,7 @@ from arbora.cli.session import (
 from arbora.core.types import ApprovalDecision, ExecutionReport
 from arbora.providers.ollama import DEFAULT_MODEL
 from arbora.core.audit_store import export_audit_payload
+from arbora.memory.goal_history import list_recent_goals, record_goal
 from arbora.preferences.store import load_preferences, preference_rows, set_preference
 from arbora.schedules.store import load_schedules, schedule_rows
 from arbora.workflows.packs import load_workflow_packs, workflow_pack_rows
@@ -33,7 +34,7 @@ Commands:
   arbora validate Dry-run MVP exit-criteria checks
   arbora prefs     Show or set opt-in user preferences
   arbora audit     Export persisted audit events
-  /help           Show help
+  /history        Show recent goals
   /audit          Show recent audit events (/audit export [path])
   /routines       List trusted routines
   /revoke ID      Revoke a trusted routine
@@ -137,6 +138,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
 
         plan = runtime.planner.plan(raw)
+        record_goal(runtime.memory, raw)
         runtime.audit.record("plan_created", plan.rationale or plan.goal, plan_id=plan.id, goal=raw)
         matched = runtime.broker.find_matching_routine(plan)
         print()
@@ -279,6 +281,15 @@ def _handle_command(runtime, raw: str, dry_run: bool) -> tuple[bool, bool]:
         runtime.memory.wipe()
         runtime.broker.load_routines([])
         print("Local memory wiped.")
+        return dry_run, False
+    if cmd == "/history":
+        rows = list_recent_goals(runtime.memory, limit=15)
+        if not rows:
+            print("(no recent goals)")
+        else:
+            print("Recent goals:")
+            for index, goal in enumerate(rows, start=1):
+                print(f"  {index}. {goal}")
         return dry_run, False
     if cmd == "/audit":
         if arg.lower().startswith("export"):
