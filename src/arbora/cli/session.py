@@ -101,6 +101,7 @@ def build_runtime(memory_root: Path | None = None, provider: str | None = None) 
         workday_root=preferences.resolved_workday_folder(),
         briefs_root=preferences.resolved_briefs_folder(),
         projects_root=preferences.resolved_projects_folder(),
+        downloads_root=preferences.resolved_downloads_folder(),
     )
     return Runtime(
         audit=audit,

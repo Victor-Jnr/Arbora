@@ -27,6 +27,19 @@ def test_preferences_provider_override(tmp_path: Path):
     assert runtime.provider_name in {"echo", "echo-local"}
 
 
+def test_downloads_folder_preference(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    custom = tmp_path / "Inbox"
+    set_preference(runtime.memory, "downloads_folder", str(custom))
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    assert runtime2.preferences.resolved_downloads_folder() == custom
+    plan = runtime2.planner.plan("organise my downloads")
+    listed = next(step for step in plan.steps if step.action == "list_directory")
+    assert str(custom) in listed.args["path"]
+    listed_default = runtime2.planner.plan("list files")
+    assert str(custom) in listed_default.steps[0].args["path"]
+
+
 def test_projects_folder_preference(tmp_path: Path):
     runtime = build_runtime(memory_root=tmp_path, provider="echo")
     custom = tmp_path / "Projects"
@@ -66,3 +79,4 @@ def test_prefs_cli_list(tmp_path: Path, capsys):
     assert "run_schedules_on_start" in out
     assert "briefs_folder" in out
     assert "projects_folder" in out
+    assert "downloads_folder" in out

@@ -18,7 +18,10 @@ def run_prefs(argv: list[str] | None = None) -> int:
     sub.add_parser("list", help="Show saved preferences")
 
     set_parser = sub.add_parser("set", help="Set a preference")
-    set_parser.add_argument("key", help="dry_run | provider | workday_folder")
+    set_parser.add_argument(
+        "key",
+        help="dry_run | provider | workday_folder | briefs_folder | projects_folder | downloads_folder | run_schedules_on_start",
+    )
     set_parser.add_argument("value", help="New value")
 
     args = parser.parse_args(argv)

@@ -100,6 +100,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `workflows/git-status.json` | Read-only git status/diff workflow pack |
 | `src/arbora/memory/goal_history.py` | Recent goal history in encrypted memory |
 | `tests/test_goal_history.py` | Goal history regression tests |
+| `documentation/033-downloads-folder-preference.md` | Change doc for downloads folder preference |
+
+---
+
+## 033 — Downloads folder preference (2026-08-18)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/preferences/store.py` | Added `downloads_folder` preference |
+| `src/arbora/core/planner.py` | Organise, list, and fallback plans use configured downloads root |
+| `src/arbora/cli/session.py` | Pass `downloads_root` into planner |
+| `src/arbora/cli/main.py` | Documented `downloads_folder` in banner |
+| `src/arbora/cli/prefs.py` | Listed `downloads_folder` in set-key help |
+| `tests/test_preferences.py` | Added downloads folder preference tests |
+| `tests/test_file_undo.py` | Organise runtime test uses downloads preference |
+| `docs/NEXT.md` | Added P8 plates; marked #25 done |
+| `documentation/033-downloads-folder-preference.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 033 |
+| `README.md` | Linked document 033 |
+| `CHANGELOG.md` | Added file roles and 033 section |
 
 ---
 

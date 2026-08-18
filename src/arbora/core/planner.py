@@ -28,11 +28,16 @@ class GoalPlanner:
         workday_root: Path | None = None,
         briefs_root: Path | None = None,
         projects_root: Path | None = None,
+        downloads_root: Path | None = None,
     ) -> None:
         self._provider = provider
         self._workday_root = workday_root
         self._briefs_root = briefs_root
         self._projects_root = projects_root
+        self._downloads_root = downloads_root
+
+    def _downloads_dir(self) -> Path:
+        return self._downloads_root or Path.home() / "Downloads"
 
     def plan(self, goal: str) -> Plan:
         text = goal.strip()
@@ -169,6 +174,7 @@ class GoalPlanner:
             return None
 
     def _fallback_context_plan(self, text: str) -> Plan:
+        downloads = self._downloads_dir()
         return Plan(
             id=new_id("plan_"),
             goal=text,
@@ -190,8 +196,8 @@ class GoalPlanner:
                     id=new_id("step_"),
                     adapter="files",
                     action="list_directory",
-                    args={"path": str(Path.home() / "Downloads")},
-                    summary="List files in Downloads",
+                    args={"path": str(downloads)},
+                    summary=f"List files in {downloads}",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads directory listing",),
                 ),
@@ -486,7 +492,7 @@ class GoalPlanner:
         )
 
     def _organise_downloads_plan(self, goal: str) -> Plan:
-        downloads = Path.home() / "Downloads"
+        downloads = self._downloads_dir()
         return Plan(
             id=new_id("plan_"),
             goal=goal,
@@ -500,7 +506,7 @@ class GoalPlanner:
                     adapter="files",
                     action="list_directory",
                     args={"path": str(downloads)},
-                    summary="Preview Downloads contents",
+                    summary=f"Preview contents of {downloads}",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads directory listing",),
                 ),
@@ -509,7 +515,7 @@ class GoalPlanner:
                     adapter="files",
                     action="preview_organise",
                     args={"path": str(downloads)},
-                    summary="Preview filing groups for Downloads (dry classification)",
+                    summary=f"Preview filing groups for {downloads} (dry classification)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Classifies filenames in memory; no moves yet",),
                 ),
@@ -518,7 +524,7 @@ class GoalPlanner:
                     adapter="files",
                     action="apply_organise",
                     args={"path": str(downloads)},
-                    summary="Move Downloads files into extension folders (records undo batch)",
+                    summary=f"Move files in {downloads} into extension folders (records undo batch)",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("Moves files into subfolders; undo batch stored locally",),
                 ),
@@ -545,7 +551,7 @@ class GoalPlanner:
 
     def _list_files_plan(self, goal: str) -> Plan:
         path_match = re.search(r"(?:in|at)\s+([A-Za-z]:\\[^\"]+|~[/\\][^\"]+|[/\\][^\"]+)", goal)
-        path = path_match.group(1) if path_match else str(Path.home() / "Downloads")
+        path = path_match.group(1) if path_match else str(self._downloads_dir())
         if path.startswith("~"):
             path = str(Path.home() / path[2:].lstrip("\\/"))
         return Plan(

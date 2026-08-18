@@ -22,6 +22,7 @@ class UserPreferences:
     workday_folder: str = ""
     briefs_folder: str = ""
     projects_folder: str = ""
+    downloads_folder: str = ""
     run_due_schedules_on_start: bool = False
 
     def resolved_workday_folder(self) -> Path:
@@ -39,6 +40,11 @@ class UserPreferences:
             return Path(self.projects_folder).expanduser()
         return Path.home() / "ArboraProjects"
 
+    def resolved_downloads_folder(self) -> Path:
+        if self.downloads_folder.strip():
+            return Path(self.downloads_folder).expanduser()
+        return Path.home() / "Downloads"
+
 
 def preferences_to_dict(prefs: UserPreferences) -> dict[str, Any]:
     return {
@@ -47,6 +53,7 @@ def preferences_to_dict(prefs: UserPreferences) -> dict[str, Any]:
         "workday_folder": prefs.workday_folder,
         "briefs_folder": prefs.briefs_folder,
         "projects_folder": prefs.projects_folder,
+        "downloads_folder": prefs.downloads_folder,
         "run_due_schedules_on_start": prefs.run_due_schedules_on_start,
     }
 
@@ -65,6 +72,7 @@ def preferences_from_dict(raw: dict[str, Any] | None) -> UserPreferences:
         workday_folder=str(raw.get("workday_folder", "")),
         briefs_folder=str(raw.get("briefs_folder", "")),
         projects_folder=str(raw.get("projects_folder", "")),
+        downloads_folder=str(raw.get("downloads_folder", "")),
         run_due_schedules_on_start=bool(raw.get("run_due_schedules_on_start", False)),
     )
 
@@ -96,11 +104,13 @@ def set_preference(memory: LocalMemoryStore, key: str, value: str) -> UserPrefer
         prefs.briefs_folder = value.strip()
     elif normalized in {"projects_folder", "projects_root", "projects"}:
         prefs.projects_folder = value.strip()
+    elif normalized in {"downloads_folder", "downloads_root", "downloads"}:
+        prefs.downloads_folder = value.strip()
     elif normalized in {"run_due_schedules_on_start", "run_schedules_on_start", "schedules_on_start"}:
         prefs.run_due_schedules_on_start = value.strip().lower() in {"1", "true", "on", "yes", "y"}
     else:
         raise ValueError(
-            f"Unknown preference '{key}'. Use dry_run, provider, workday_folder, briefs_folder, projects_folder, or run_schedules_on_start."
+            f"Unknown preference '{key}'. Use dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, or run_schedules_on_start."
         )
     save_preferences(memory, prefs)
     return prefs
@@ -111,6 +121,7 @@ def preference_rows(prefs: UserPreferences) -> list[str]:
     workday = str(prefs.resolved_workday_folder())
     briefs = str(prefs.resolved_briefs_folder())
     projects = str(prefs.resolved_projects_folder())
+    downloads = str(prefs.resolved_downloads_folder())
     dry = "on" if prefs.dry_run_default else "off"
     return [
         f"dry_run_default = {dry}",
@@ -118,5 +129,6 @@ def preference_rows(prefs: UserPreferences) -> list[str]:
         f"workday_folder = {workday}",
         f"briefs_folder = {briefs}",
         f"projects_folder = {projects}",
+        f"downloads_folder = {downloads}",
         f"run_schedules_on_start = {'on' if prefs.run_due_schedules_on_start else 'off'}",
     ]

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from arbora.adapters.files import FilesAdapter, plan_organise_moves
 from arbora.cli.session import approve_all, build_runtime
+from arbora.preferences.store import set_preference
 
 
 def test_plan_organise_moves_groups_by_extension(tmp_path: Path):
@@ -51,11 +52,13 @@ def test_apply_and_undo_organise_roundtrip(tmp_path: Path):
 
 
 def test_undo_organise_plan_via_runtime(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr("arbora.core.planner.Path.home", lambda: tmp_path)
-    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    monkeypatch.chdir(tmp_path)
     root = tmp_path / "Downloads"
     root.mkdir()
     (root / "doc.pdf").write_text("pdf", encoding="utf-8")
+    seed = build_runtime(memory_root=tmp_path, provider="echo")
+    set_preference(seed.memory, "downloads_folder", str(root))
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
 
     organise = runtime.planner.plan("organise my downloads")
     runtime.broker.execute_plan(organise, approve_all(organise), dry_run=False)
