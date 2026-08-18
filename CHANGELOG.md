@@ -109,6 +109,20 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/core/sample_routines.py` | First-run read-only trusted routine seeds |
 | `tests/test_sample_routines.py` | Sample routine seed regression tests |
 | `documentation/037-sample-read-only-routines.md` | Change doc for sample trusted routines |
+| `documentation/038-larger-desktop-dialogs.md` | Change doc for larger desktop dialogs |
+
+---
+
+## 038 — Larger desktop Trust dialogs (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `apps/desktop_chat/app.py` | Shared `configure_dialog`; larger Audit/Memory/Routines/Schedules/Setup/History windows |
+| `tests/test_desktop_chat.py` | Assert Audit/Memory dialog minsize |
+| `documentation/038-larger-desktop-dialogs.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 038 |
+| `README.md` | Linked document 038 |
+| `CHANGELOG.md` | Added file roles and 038 section |
 
 ---
 

@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 038 | [Larger desktop Trust dialogs](documentation/038-larger-desktop-dialogs.md) |
 | 037 | [Sample read-only trusted routines](documentation/037-sample-read-only-routines.md) |
 | 036 | [Fix desktop voice import](documentation/036-fix-desktop-voice-import.md) |
 | 035 | [Local memory export](documentation/035-local-memory-export.md) |

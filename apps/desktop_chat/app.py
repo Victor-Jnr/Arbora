@@ -97,6 +97,25 @@ def format_memory_status(memory) -> str:
     return "\n".join(memory_status_rows(memory)) + "\n"
 
 
+def configure_dialog(
+    dialog: tk.Toplevel,
+    parent: tk.Misc,
+    *,
+    title: str,
+    width: int,
+    height: int,
+) -> None:
+    """Size a modal so action buttons stay visible on typical Windows scaling."""
+    dialog.title(title)
+    dialog.configure(bg=COLORS["bg"])
+    dialog.transient(parent)
+    dialog.geometry(f"{width}x{height}")
+    dialog.minsize(width, height)
+    dialog.resizable(True, True)
+    dialog.update_idletasks()
+    dialog.grab_set()
+
+
 class ArboraChatApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
@@ -339,11 +358,7 @@ class ArboraChatApp:
 
     def open_setup(self) -> None:
         dialog = tk.Toplevel(self.root)
-        dialog.title("Arbora Setup")
-        dialog.configure(bg=COLORS["bg"])
-        dialog.transient(self.root)
-        dialog.geometry("480x420")
-        dialog.grab_set()
+        configure_dialog(dialog, self.root, title="Arbora Setup", width=720, height=560)
 
         ttk.Label(dialog, text="First-run checklist", style="Brand.TLabel").pack(
             anchor="w", padx=16, pady=(16, 4)
@@ -352,7 +367,7 @@ class ArboraChatApp:
             dialog,
             text="Private-tester path: run scripts/first_run.ps1 once, then use this checklist.",
             style="Muted.TLabel",
-            wraplength=440,
+            wraplength=680,
         ).pack(anchor="w", padx=16, pady=(0, 8))
 
         checklist_box = tk.Text(
@@ -506,11 +521,7 @@ class ArboraChatApp:
 
     def show_goal_history(self) -> None:
         dialog = tk.Toplevel(self.root)
-        dialog.title("Recent goals")
-        dialog.configure(bg=COLORS["bg"])
-        dialog.transient(self.root)
-        dialog.geometry("520x320")
-        dialog.grab_set()
+        configure_dialog(dialog, self.root, title="Recent goals", width=720, height=500)
 
         ttk.Label(dialog, text="Recent goals", style="Brand.TLabel").pack(
             anchor="w", padx=16, pady=(16, 4)
@@ -519,7 +530,7 @@ class ArboraChatApp:
             dialog,
             text="Select a goal to refill the input field.",
             style="Muted.TLabel",
-            wraplength=480,
+            wraplength=680,
         ).pack(anchor="w", padx=16, pady=(0, 8))
 
         listbox = tk.Listbox(
@@ -685,10 +696,7 @@ class ArboraChatApp:
 
     def _ask_routine_name(self) -> str | None:
         dialog = tk.Toplevel(self.root)
-        dialog.title("Trusted routine")
-        dialog.configure(bg=COLORS["bg"])
-        dialog.transient(self.root)
-        dialog.grab_set()
+        configure_dialog(dialog, self.root, title="Trusted routine", width=480, height=220)
         ttk.Label(dialog, text="Routine name").pack(padx=16, pady=(16, 4))
         var = tk.StringVar(value="my-routine")
         entry = tk.Entry(dialog, textvariable=var, bg=COLORS["input_bg"], fg=COLORS["ink"], relief="flat")
@@ -726,11 +734,7 @@ class ArboraChatApp:
 
     def show_routines(self) -> None:
         dialog = tk.Toplevel(self.root)
-        dialog.title("Trusted routines")
-        dialog.configure(bg=COLORS["bg"])
-        dialog.transient(self.root)
-        dialog.geometry("560x360")
-        dialog.grab_set()
+        configure_dialog(dialog, self.root, title="Trusted routines", width=800, height=560)
 
         ttk.Label(dialog, text="Trusted routines", style="Brand.TLabel").pack(
             anchor="w", padx=16, pady=(16, 4)
@@ -739,7 +743,7 @@ class ArboraChatApp:
             dialog,
             text="Inspect and revoke routines. Hard-confirmation classes still apply after trust.",
             style="Muted.TLabel",
-            wraplength=520,
+            wraplength=760,
         ).pack(anchor="w", padx=16, pady=(0, 8))
 
         list_frame = ttk.Frame(dialog, style="TFrame")
@@ -759,7 +763,7 @@ class ArboraChatApp:
         listbox.configure(yscrollcommand=scroll.set)
 
         detail_var = tk.StringVar(value="Select a routine.")
-        ttk.Label(dialog, textvariable=detail_var, style="Muted.TLabel", wraplength=520).pack(
+        ttk.Label(dialog, textvariable=detail_var, style="Muted.TLabel", wraplength=760).pack(
             anchor="w", padx=16, pady=4
         )
 
@@ -821,11 +825,7 @@ class ArboraChatApp:
 
     def show_schedules(self) -> None:
         dialog = tk.Toplevel(self.root)
-        dialog.title("Routine schedules")
-        dialog.configure(bg=COLORS["bg"])
-        dialog.transient(self.root)
-        dialog.geometry("680x400")
-        dialog.grab_set()
+        configure_dialog(dialog, self.root, title="Routine schedules", width=860, height=620)
 
         ttk.Label(dialog, text="Routine schedules", style="Brand.TLabel").pack(
             anchor="w", padx=16, pady=(16, 4)
@@ -834,7 +834,7 @@ class ArboraChatApp:
             dialog,
             text="Time triggers for already-trusted routines only. Defaults to dry-run.",
             style="Muted.TLabel",
-            wraplength=640,
+            wraplength=820,
         ).pack(anchor="w", padx=16, pady=(0, 8))
 
         list_frame = ttk.Frame(dialog, style="TFrame")
@@ -854,7 +854,7 @@ class ArboraChatApp:
         listbox.configure(yscrollcommand=scroll.set)
 
         detail_var = tk.StringVar(value="Select a schedule.")
-        ttk.Label(dialog, textvariable=detail_var, style="Muted.TLabel", wraplength=640).pack(
+        ttk.Label(dialog, textvariable=detail_var, style="Muted.TLabel", wraplength=820).pack(
             anchor="w", padx=16, pady=4
         )
 
@@ -894,10 +894,7 @@ class ArboraChatApp:
                 return
 
             sub = tk.Toplevel(dialog)
-            sub.title("Add schedule")
-            sub.configure(bg=COLORS["bg"])
-            sub.transient(dialog)
-            sub.grab_set()
+            configure_dialog(sub, dialog, title="Add schedule", width=560, height=360)
 
             ttk.Label(sub, text="Trusted routine").pack(anchor="w", padx=16, pady=(16, 4))
             routine_var = tk.StringVar(value=routines[0].id)
@@ -1000,18 +997,14 @@ class ArboraChatApp:
 
     def show_audit(self) -> None:
         dialog = tk.Toplevel(self.root)
-        dialog.title("Audit log")
-        dialog.configure(bg=COLORS["bg"])
-        dialog.transient(self.root)
-        dialog.geometry("640x420")
-        dialog.grab_set()
+        configure_dialog(dialog, self.root, title="Audit log", width=860, height=620)
 
         ttk.Label(dialog, text="Audit log", style="Brand.TLabel").pack(anchor="w", padx=16, pady=(16, 4))
         ttk.Label(
             dialog,
             text="Recent approvals, tool outcomes, and trust changes (persisted locally).",
             style="Muted.TLabel",
-            wraplength=600,
+            wraplength=820,
         ).pack(anchor="w", padx=16, pady=(0, 8))
 
         text = tk.Text(
@@ -1060,18 +1053,14 @@ class ArboraChatApp:
 
     def show_memory(self) -> None:
         dialog = tk.Toplevel(self.root)
-        dialog.title("Local memory")
-        dialog.configure(bg=COLORS["bg"])
-        dialog.transient(self.root)
-        dialog.geometry("640x360")
-        dialog.grab_set()
+        configure_dialog(dialog, self.root, title="Local memory", width=800, height=560)
 
         ttk.Label(dialog, text="Local memory", style="Brand.TLabel").pack(anchor="w", padx=16, pady=(16, 4))
         ttk.Label(
             dialog,
             text="Encrypted on this machine. Export writes JSON without encryption keys.",
             style="Muted.TLabel",
-            wraplength=600,
+            wraplength=760,
         ).pack(anchor="w", padx=16, pady=(0, 8))
 
         text = tk.Text(
