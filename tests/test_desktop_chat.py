@@ -10,6 +10,7 @@ import pytest
 
 from apps.desktop_chat.app import (
     ArboraChatApp,
+    configure_dialog,
     format_audit_events,
     format_memory_status,
     format_routine_detail,
@@ -20,6 +21,23 @@ from apps.desktop_chat.app import (
 from arbora.cli.session import approve_all, build_runtime, persist_routines
 from arbora.core.types import AuditEvent, TrustedRoutine
 from arbora.schedules.store import add_schedule
+
+
+def test_configure_dialog_sets_minsize():
+    try:
+        root = tk.Tk()
+    except tk.TclError as exc:
+        pytest.skip(f"Tk unavailable: {exc}")
+    root.withdraw()
+    try:
+        dialog = tk.Toplevel(root)
+        configure_dialog(dialog, root, title="Test", width=860, height=620)
+        dialog.update_idletasks()
+        # Withdrawn Tk roots often report geometry 1x1; minsize is the real floor.
+        assert dialog.minsize() == (860, 620)
+        dialog.destroy()
+    finally:
+        root.destroy()
 
 
 def test_main_callable():
@@ -113,7 +131,13 @@ def test_desktop_chat_ui_smoke(tmp_path: Path):
         texts = [w for w in _walk(audit_dialog) if isinstance(w, tk.Text)]
         assert texts
         assert "plan_created" in texts[0].get("1.0", "end")
+        assert audit_dialog.minsize() == (860, 620)
         audit_dialog.destroy()
+
+        app.show_memory()
+        memory_dialog = [c for c in root.winfo_children() if isinstance(c, tk.Toplevel)][-1]
+        assert memory_dialog.minsize() == (800, 560)
+        memory_dialog.destroy()
 
         app.show_routines()
         routines_dialog = [c for c in root.winfo_children() if isinstance(c, tk.Toplevel)][-1]

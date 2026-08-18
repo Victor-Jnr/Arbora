@@ -12,6 +12,7 @@ from arbora.core.audit_store import load_audit_events, persist_audit_events
 from arbora.core.broker import PermissionBroker
 from arbora.core.planner import GoalPlanner
 from arbora.core.routines_store import routines_from_dicts, routines_to_dicts
+from arbora.core.sample_routines import seed_sample_routines
 from arbora.core.types import (
     ApprovalDecision,
     ExecutionReport,
@@ -69,7 +70,12 @@ def list_provider_choices() -> list[str]:
     return choices
 
 
-def build_runtime(memory_root: Path | None = None, provider: str | None = None) -> Runtime:
+def build_runtime(
+    memory_root: Path | None = None,
+    provider: str | None = None,
+    *,
+    seed_samples: bool = False,
+) -> Runtime:
     memory = LocalMemoryStore(root=memory_root)
     persisted = load_audit_events(memory)
 
@@ -104,7 +110,7 @@ def build_runtime(memory_root: Path | None = None, provider: str | None = None) 
         downloads_root=preferences.resolved_downloads_folder(),
         notes_root=preferences.resolved_notes_folder(),
     )
-    return Runtime(
+    runtime = Runtime(
         audit=audit,
         broker=broker,
         planner=planner,
@@ -112,6 +118,9 @@ def build_runtime(memory_root: Path | None = None, provider: str | None = None) 
         provider_name=getattr(model, "name", "unknown"),
         preferences=preferences,
     )
+    if seed_samples:
+        seed_sample_routines(runtime.broker, runtime.planner, runtime.memory)
+    return runtime
 
 
 def persist_routines(runtime: Runtime) -> None:
