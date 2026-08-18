@@ -97,6 +97,21 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `workflows/organise-downloads.json` | Bundled organise Downloads preview→apply workflow pack |
 | `src/arbora/voice/windows.py` | Windows System.Speech voice-to-text helper |
 | `tests/test_voice_windows.py` | Voice input helper regression tests |
+| `workflows/git-status.json` | Read-only git status/diff workflow pack |
+
+---
+
+## 030 — Git status workflow pack (2026-08-18)
+
+| File | Change |
+| --- | --- |
+| `workflows/git-status.json` | Added read-only git status workflow pack |
+| `tests/test_workflow_packs.py` | Added git status pack tests |
+| `docs/NEXT.md` | Added P7 plates; marked #22 done |
+| `documentation/030-git-status-workflow-pack.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 030 |
+| `README.md` | Linked document 030 |
+| `CHANGELOG.md` | Added file roles and 030 section |
 
 ---
 

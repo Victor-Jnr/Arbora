@@ -15,6 +15,7 @@ def test_load_bundled_workflow_packs():
     assert "disk-diagnose" in ids
     assert "dev-project-setup" in ids
     assert "organise-downloads" in ids
+    assert "git-status" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -64,6 +65,16 @@ def test_workflow_pack_plan_via_runtime(tmp_path: Path):
     assert plan.steps[0].adapter == "files"
     results = runtime.broker.execute_plan(plan, approve_all(plan), dry_run=True)
     assert results and results[0].ok
+
+
+def test_git_status_workflow_pack_matches():
+    pack = match_workflow_pack("run git status pack")
+    assert pack is not None
+    assert pack.id == "git-status"
+    plan = pack.to_plan("run git status pack")
+    assert plan is not None
+    assert all(step.adapter == "terminal" for step in plan.steps)
+    assert all(step.sensitivity.value == "read" for step in plan.steps)
 
 
 def test_organise_downloads_workflow_pack_matches():

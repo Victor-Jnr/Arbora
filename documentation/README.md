@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 030 | [Git status workflow pack](030-git-status-workflow-pack.md) | 2026-08-18 | Read-only git status/diff workflow pack |
 | 029 | [Windows voice input](029-windows-voice-input.md) | 2026-08-17 | Push-to-talk goal entry in arbora-ui via System.Speech |
 | 028 | [Briefs folder preference](028-briefs-folder-preference.md) | 2026-08-17 | User-configurable research output directory |
 | 027 | [Research journey snapshot](027-research-journey-snapshot.md) | 2026-08-17 | Research plans save a page snapshot before the brief |

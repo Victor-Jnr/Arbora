@@ -69,6 +69,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 20 | **Briefs folder preference** | ✅ User-configurable `briefs_folder` for research output |
 | 21 | **Windows voice input** | ✅ Opt-in push-to-talk goal entry in `arbora-ui` |
 
+### P7 — Stage 3 developer and memory (in progress)
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 22 | **Git status workflow pack** | ✅ Read-only git status/diff pack for the current directory |
+| 23 | **Projects folder preference** | User-configurable `projects_folder` for dev setup |
+| 24 | **Recent goal history** | Persist and recall recent goals (`/history`, desktop picker) |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -162,4 +170,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P6 Stage 3 research and voice plates are complete. Run `arbora validate` on tester machines, then continue Stage 3 depth from the root README (e.g. developer-tool adapters or richer organisation).
+**P7 #23 — Projects folder preference** (user-configurable dev projects directory).

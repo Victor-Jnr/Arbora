@@ -1,0 +1,36 @@
+{
+  "id": "git-status",
+  "name": "Git status check",
+  "description": "Read-only git status and diff summary for the current directory.",
+  "goal_phrases": [
+    "git status pack",
+    "check git status",
+    "what changed in git",
+    "git diff summary"
+  ],
+  "rationale": "Workflow pack: inspect git repository state without committing or pushing.",
+  "steps": [
+    {
+      "adapter": "terminal",
+      "action": "run_powershell",
+      "args": {
+        "command": "if (-not (Test-Path .git)) { 'Not a git repository in the current directory.'; exit 0 }; git status --short --branch | Out-String",
+        "timeout_seconds": 30
+      },
+      "summary": "Read-only: git status for the current directory",
+      "sensitivity": "read",
+      "side_effects": ["Runs read-only git status in PowerShell"]
+    },
+    {
+      "adapter": "terminal",
+      "action": "run_powershell",
+      "args": {
+        "command": "if (-not (Test-Path .git)) { 'Skipping diff — not a git repository.'; exit 0 }; git diff --stat | Out-String",
+        "timeout_seconds": 30
+      },
+      "summary": "Read-only: git diff --stat summary",
+      "sensitivity": "read",
+      "side_effects": ["Runs read-only git diff in PowerShell"]
+    }
+  ]
+}
