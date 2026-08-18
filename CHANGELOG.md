@@ -105,8 +105,23 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/035-local-memory-export.md` | Change doc for local memory export |
 | `src/arbora/cli/memory_cmd.py` | `arbora memory status|export` command |
 | `tests/test_memory_export.py` | Memory export regression tests |
+| `documentation/036-fix-desktop-voice-import.md` | Change doc for desktop Voice import fix |
 
 ---
+
+## 036 — Fix desktop voice import (2026-08-18)
+
+| File | Change |
+| --- | --- |
+| `apps/desktop_chat/app.py` | Imported `listen_once` and `voice_input_available` for the Voice button |
+| `tests/test_desktop_chat.py` | Assert desktop module exposes voice helpers |
+| `documentation/036-fix-desktop-voice-import.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 036 |
+| `README.md` | Linked document 036 |
+| `CHANGELOG.md` | Added file roles and 036 section |
+
+---
+
 
 ## 035 — Local memory export (2026-08-18)
 
