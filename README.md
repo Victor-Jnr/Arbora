@@ -625,6 +625,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 041 | [Pytest workflow pack](documentation/041-pytest-workflow-pack.md) |
 | 040 | [Largest-folder disk journey](documentation/040-largest-folder-disk-journey.md) |
 | 039 | [GitHub Actions pytest CI](documentation/039-github-actions-pytest.md) |
 | 038 | [Larger desktop Trust dialogs](documentation/038-larger-desktop-dialogs.md) |

@@ -103,6 +103,8 @@ class GoalPlanner:
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
             return self._research_plan(text)
+        if self._looks_like_run_tests(lower):
+            return self._run_tests_plan(text)
         if self._looks_like_terminal(lower):
             return self._terminal_plan(text)
 
@@ -743,6 +745,43 @@ class GoalPlanner:
             ],
         )
 
+    def _run_tests_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Pytest journey — run the test suite in the current directory. "
+                "1) Confirm pytest is importable. 2) Run python -m pytest. "
+                "Does not commit, push, or install packages."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="terminal",
+                    action="run_powershell",
+                    args={
+                        "command": "python -m pytest --version 2>&1 | Out-String",
+                        "timeout_seconds": 30,
+                    },
+                    summary="Check that python -m pytest is available",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Runs a version query in PowerShell",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="terminal",
+                    action="run_powershell",
+                    args={
+                        "command": "python -m pytest -q --tb=short 2>&1 | Out-String",
+                        "timeout_seconds": 180,
+                    },
+                    summary="Run pytest in the current directory (may write .pytest_cache)",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Executes the project test suite",),
+                ),
+            ],
+        )
+
     def _terminal_plan(self, goal: str) -> Plan:
         command_match = re.search(r"(?:run|execute)\s+[`'\"]?(.+?)[`'\"]?$", goal, re.I)
         command = command_match.group(1).strip() if command_match else "Get-Date | Out-String"
@@ -1040,6 +1079,20 @@ class GoalPlanner:
                 "web brief",
                 "summarise the page",
                 "summarize the page",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_run_tests(lower: str) -> bool:
+        return any(
+            phrase in lower
+            for phrase in (
+                "run pytest",
+                "run the tests",
+                "run tests",
+                "pytest pack",
+                "run unit tests",
+                "run the test suite",
             )
         )
 

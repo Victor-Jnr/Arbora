@@ -17,6 +17,7 @@ def test_load_bundled_workflow_packs():
     assert "organise-downloads" in ids
     assert "git-status" in ids
     assert "largest-folders" in ids
+    assert "pytest" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -76,6 +77,17 @@ def test_largest_folders_workflow_pack_matches():
     assert plan is not None
     assert all(step.sensitivity.value == "read" for step in plan.steps)
     assert any(int(step.args.get("timeout_seconds", 0)) >= 300 for step in plan.steps)
+
+
+def test_pytest_workflow_pack_matches():
+    pack = match_workflow_pack("run pytest pack")
+    assert pack is not None
+    assert pack.id == "pytest"
+    plan = pack.to_plan("run pytest pack")
+    assert plan is not None
+    assert plan.steps[0].sensitivity.value == "read"
+    assert plan.steps[1].sensitivity.value == "mutate"
+    assert all("pytest" in str(step.args.get("command", "")).lower() for step in plan.steps)
 
 
 def test_git_status_workflow_pack_matches():

@@ -40,7 +40,8 @@ Already in place:
 - scheduled trusted routines (`arbora schedule` + `/schedules`);
 - desktop schedule management in `arbora-ui`;
 - persistent audit log across sessions (encrypted local memory).
-- largest-folder disk ranking for “what is using space on C”.
+- largest-folder disk ranking for “what is using space on C”;
+- pytest suite run behind the broker for the current directory.
 
 Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P9).
 
@@ -91,7 +92,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 28 | **Largest-folder disk journey** | ✅ Read-only ranking of top-level folders on a drive |
-| 29 | **Pytest workflow pack** | Run the current directory's pytest suite behind the broker |
+| 29 | **Pytest workflow pack** | ✅ Run the current directory's pytest suite behind the broker |
 | 30 | **GitHub Actions PR gates** | PRs into `main` run pytest (and stay red until checks pass) |
 
 ## Non-negotiables (do not drift)
@@ -187,4 +188,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P8 Stage 3 organisation and memory plates are complete. P9 plate 28 (largest-folder journey) is in progress on this branch; plates 29–30 follow.
+P8 Stage 3 organisation and memory plates are complete. P9 plates 28–29 are done; plate 30 is GitHub Actions PR gates.

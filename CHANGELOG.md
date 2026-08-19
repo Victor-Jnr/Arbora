@@ -114,6 +114,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/039-github-actions-pytest.md` | Change doc for GitHub Actions pytest CI |
 | `workflows/largest-folders.json` | Bundled read-only top-level folder size ranking pack |
 | `documentation/040-largest-folder-disk-journey.md` | Change doc for largest-folder journey and Format-Table fix |
+| `workflows/pytest.json` | Bundled pytest suite pack for the current directory |
+| `documentation/041-pytest-workflow-pack.md` | Change doc for pytest workflow pack |
+
+---
+
+## 041 — Pytest workflow pack (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Added pytest journey so `run tests` is not a generic shell step |
+| `workflows/pytest.json` | Bundled version-check plus `python -m pytest` pack |
+| `src/arbora/cli/main.py` | Documented `run pytest` example goal |
+| `scripts/demo_journeys.py` | Added pytest smoke goal |
+| `tests/test_broker_and_planner.py` | Asserted pytest plan shape and no Get-Date fallback |
+| `tests/test_workflow_packs.py` | Asserted the pytest pack loads and matches |
+| `docs/NEXT.md` | Marked P9 plate 29 done |
+| `documentation/041-pytest-workflow-pack.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 041 |
+| `README.md` | Linked document 041 |
+| `CHANGELOG.md` | Added file roles and 041 section |
 
 ---
 

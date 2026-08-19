@@ -104,6 +104,24 @@ def test_format_table_is_not_treated_as_destructive():
     assert int(plan.steps[0].args["timeout_seconds"]) >= 300
 
 
+def test_run_tests_journey_uses_pytest():
+    runtime = _runtime()
+    plan = runtime.planner.plan("run pytest")
+    assert "pytest" in plan.rationale.lower()
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert plan.steps[1].sensitivity == Sensitivity.MUTATE
+    assert all("pytest" in str(step.args.get("command", "")).lower() for step in plan.steps)
+    assert not any(step.sensitivity == Sensitivity.DESTRUCTIVE for step in plan.steps)
+
+
+def test_run_tests_does_not_fall_through_to_generic_shell():
+    runtime = _runtime()
+    plan = runtime.planner.plan("run tests")
+    command = str(plan.steps[-1].args.get("command", ""))
+    assert "pytest" in command.lower()
+    assert "Get-Date" not in command
+
+
 def test_remove_item_stays_destructive():
     runtime = _runtime()
     plan = runtime.planner.plan("run Remove-Item -Recurse C:\\temp\\demo")

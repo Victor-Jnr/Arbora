@@ -12,6 +12,7 @@ GOALS = [
     "start my workday",
     "diagnose disk space",
     "what folder is using the most storage on C",
+    "run pytest",
     "set up a project",
     "organise my downloads",
 ]
