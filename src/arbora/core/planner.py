@@ -20,6 +20,40 @@ from arbora.workflows.packs import match_workflow_pack
 
 SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
 
+DRIVE_SIZE_WALK_TIMEOUT_SECONDS = 300
+
+
+def powershell_is_destructive(command: str) -> bool:
+    """True for deletes, format-volume, and shutdown — not Format-Table."""
+    text = command.lower()
+    markers = (
+        "remove-item",
+        "rmdir",
+        "clear-disk",
+        "format-volume",
+        "stop-computer",
+        "restart-computer",
+        "reset-computer",
+        "clear-content",
+    )
+    if any(token in text for token in markers):
+        return True
+    if re.search(r"(^|[\s;&(|])del\s+", text):
+        return True
+    if re.search(r"(^|[\s;&(|])rm\s+", text):
+        return True
+    if re.search(r"(^|[\s;&(|])format\s+[a-z]:", text):
+        return True
+    return False
+
+
+def looks_like_drive_size_walk(command: str) -> bool:
+    text = command.lower()
+    has_walk = any(token in text for token in ("get-childitem", "getfolder", "robocopy"))
+    has_size = any(token in text for token in ("length", ".size", "measure-object", "/bytes", "1gb", "1mb"))
+    has_root = re.search(r"[a-z]:\\", text) is not None
+    return bool(has_walk and has_size and has_root)
+
 
 class GoalPlanner:
     def __init__(
@@ -53,6 +87,8 @@ class GoalPlanner:
             return self._workday_start_plan(text)
         if self._looks_like_workday_shutdown(lower):
             return self._workday_shutdown_plan(text)
+        if self._looks_like_largest_folders(lower):
+            return self._largest_folders_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -116,6 +152,9 @@ class GoalPlanner:
             "sensitivity must be one of: read, mutate, destructive, credential, financial.\n"
             "Prefer read-only diagnostics first. Never invent adapters or actions.\n"
             "Keep plans short (1-5 steps).\n"
+            "Format-Table / Format-List are display cmdlets, not disk format. "
+            "Get-ChildItem, Get-PSDrive, Measure-Object, and FileSystemObject folder sizes are sensitivity=read.\n"
+            "Sizing every top-level folder on a drive needs timeout_seconds of at least 300; do not recurse the whole tree in one Get-ChildItem.\n"
             f"User goal: {goal}\n"
         )
 
@@ -132,21 +171,28 @@ class GoalPlanner:
             action = str(item.get("action", "")).strip()
             if adapter not in ALLOWED_ACTIONS or action not in ALLOWED_ACTIONS[adapter]:
                 return None
-            args = item.get("args") if isinstance(item.get("args"), dict) else {}
+            args = dict(item.get("args") if isinstance(item.get("args"), dict) else {})
             sens_raw = str(item.get("sensitivity", "read")).strip().lower()
             sensitivity = SENSITIVITY_VALUES.get(sens_raw, Sensitivity.READ)
-            # Force destructive detection for dangerous shell commands.
             if adapter == "terminal" and action == "run_powershell":
-                command = str(args.get("command", "")).lower()
-                if any(token in command for token in ("remove-item", "rm ", "del ", "format-", "rmdir")):
+                command = str(args.get("command", ""))
+                if powershell_is_destructive(command):
                     sensitivity = Sensitivity.DESTRUCTIVE
+                elif sensitivity == Sensitivity.DESTRUCTIVE:
+                    sensitivity = Sensitivity.READ
+                if looks_like_drive_size_walk(command):
+                    try:
+                        current = int(args.get("timeout_seconds", 60) or 60)
+                    except (TypeError, ValueError):
+                        current = 60
+                    args["timeout_seconds"] = max(current, DRIVE_SIZE_WALK_TIMEOUT_SECONDS)
             side = item.get("side_effects") if isinstance(item.get("side_effects"), list) else []
             steps.append(
                 ToolStep(
                     id=new_id("step_"),
                     adapter=adapter,
                     action=action,
-                    args=dict(args),
+                    args=args,
                     summary=str(item.get("summary") or f"{adapter}.{action}"),
                     sensitivity=sensitivity,
                     side_effects=tuple(str(s) for s in side),
@@ -327,6 +373,76 @@ class GoalPlanner:
                     summary="List running apps before any close requests",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Observes process list",),
+                ),
+            ],
+        )
+
+    def _largest_folders_plan(self, goal: str) -> Plan:
+        root = self._drive_root_from_goal(goal)
+        quoted = "'" + root.replace("'", "''") + "'"
+        drive_name = root[0]
+        command = (
+            f"$root = {quoted}; "
+            "$fso = New-Object -ComObject Scripting.FileSystemObject; "
+            "$skip = @('System Volume Information','$Recycle.Bin','Recovery'); "
+            "$rows = @(Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue | "
+            "ForEach-Object { "
+            "if ($skip -contains $_.Name) { "
+            "[PSCustomObject]@{ Folder = $_.FullName; GB = $null } "
+            "} else { "
+            "try { "
+            "[PSCustomObject]@{ Folder = $_.FullName; "
+            "GB = [math]::Round(([int64]$fso.GetFolder($_.FullName).Size)/1GB, 2) } "
+            "} catch { "
+            "[PSCustomObject]@{ Folder = $_.FullName; GB = $null } "
+            "} } }); "
+            "$rows | Sort-Object GB -Descending | Format-Table -AutoSize | Out-String; "
+            "$top = $rows | Where-Object { $null -ne $_.GB } | Sort-Object GB -Descending | "
+            "Select-Object -First 1; "
+            "if ($top) { \"Largest top-level folder: $($top.Folder) — $($top.GB) GB\" } "
+            "else { 'Could not measure any folders (access denied or empty).' }"
+        )
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Largest-folder journey — read-only. "
+                f"Sizes each immediate subfolder of {root} (skips recycle bin / system volume). "
+                "This can take a few minutes; it does not delete or move files."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="terminal",
+                    action="run_powershell",
+                    args={
+                        "command": (
+                            f"Get-PSDrive -Name {drive_name} | "
+                            "Select-Object Name, "
+                            "@{N='UsedGB';E={[math]::Round(($_.Used/1GB),2)}}, "
+                            "@{N='FreeGB';E={[math]::Round(($_.Free/1GB),2)}} | "
+                            "Format-Table | Out-String"
+                        ),
+                        "timeout_seconds": 30,
+                    },
+                    summary=f"Read-only: {drive_name}: used and free space (GB)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Runs a read-only PowerShell query",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="terminal",
+                    action="run_powershell",
+                    args={
+                        "command": command,
+                        "timeout_seconds": DRIVE_SIZE_WALK_TIMEOUT_SECONDS,
+                    },
+                    summary=(
+                        f"Read-only: size each top-level folder on {root} "
+                        "(may take several minutes)"
+                    ),
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Walks files under each top-level folder to sum sizes",),
                 ),
             ],
         )
@@ -631,8 +747,7 @@ class GoalPlanner:
         command_match = re.search(r"(?:run|execute)\s+[`'\"]?(.+?)[`'\"]?$", goal, re.I)
         command = command_match.group(1).strip() if command_match else "Get-Date | Out-String"
         sensitivity = Sensitivity.MUTATE
-        lower_cmd = command.lower()
-        if any(token in lower_cmd for token in ("remove-item", "rm ", "del ", "format-", "rmdir")):
+        if powershell_is_destructive(command):
             sensitivity = Sensitivity.DESTRUCTIVE
         return Plan(
             id=new_id("plan_"),
@@ -779,6 +894,47 @@ class GoalPlanner:
                 "shut down for the day",
             )
         )
+
+    @staticmethod
+    def _drive_root_from_goal(goal: str) -> str:
+        match = re.search(r"\b([a-zA-Z]):(?:\\|/)?", goal)
+        if match:
+            return f"{match.group(1).upper()}:\\"
+        match = re.search(r"\b([a-zA-Z])\s+drive\b", goal, re.I)
+        if match:
+            return f"{match.group(1).upper()}:\\"
+        return "C:\\"
+
+    @staticmethod
+    def _looks_like_largest_folders(lower: str) -> bool:
+        phrases = (
+            "largest folder",
+            "biggest folder",
+            "which folder uses",
+            "what folder is using",
+            "what folderis using",
+            "folder using the most",
+            "folder that uses the most",
+            "folders using the most",
+            "what's taking up space",
+            "whats taking up space",
+            "taking up the most space",
+            "using the most storage",
+            "uses the most storage",
+            "using the most space",
+            "uses the most disk",
+            "what's using the most space",
+            "whats using the most space",
+            "what is using the most storage",
+        )
+        if any(phrase in lower for phrase in phrases):
+            return True
+        folderish = any(word in lower for word in ("folder", "directory"))
+        sizeish = any(
+            word in lower
+            for word in ("storage", "disk space", "disk usage", "largest", "biggest")
+        )
+        return folderish and sizeish
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

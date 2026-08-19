@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 040 | [Largest-folder disk journey](040-largest-folder-disk-journey.md) | 2026-08-19 | Read-only C:\\ folder ranking; Format-Table is not destructive |
 | 039 | [GitHub Actions pytest CI](039-github-actions-pytest.md) | 2026-08-19 | Windows pytest on pushes and PRs to main and dev |
 | 038 | [Larger desktop Trust dialogs](038-larger-desktop-dialogs.md) | 2026-08-19 | Enlarge Audit/Memory/Routines windows so buttons stay visible |
 | 037 | [Sample read-only trusted routines](037-sample-read-only-routines.md) | 2026-08-19 | First-run list-downloads and disk-diagnose samples |

@@ -45,13 +45,69 @@ def test_workday_alt_phrasing():
     assert "workday" in plan.rationale.lower()
 
 
-def test_diagnostic_is_read_only():
+def test_largest_folders_journey_is_read_only():
+    runtime = _runtime()
+    plan = runtime.planner.plan("what folderis using the most amout of storage in c drive")
+    assert plan.steps
+    assert all(step.sensitivity == Sensitivity.READ for step in plan.steps)
+    assert "largest-folder" in plan.rationale.lower()
+    assert any(int(step.args.get("timeout_seconds", 0)) >= 300 for step in plan.steps)
+    command = " ".join(str(step.args.get("command", "")) for step in plan.steps)
+    assert "C:\\" in command
+    assert "GetFolder" in command
+
+
+def test_largest_folders_uses_named_drive():
+    runtime = _runtime()
+    plan = runtime.planner.plan("largest folder on D drive")
+    command = " ".join(str(step.args.get("command", "")) for step in plan.steps)
+    assert "D:\\" in command
+    assert all(step.sensitivity == Sensitivity.READ for step in plan.steps)
+
+
+def test_diagnostic_still_matches_disk_space_goal():
     runtime = _runtime()
     plan = runtime.planner.plan("diagnose disk space on this PC")
     assert plan.steps
     assert all(step.sensitivity == Sensitivity.READ for step in plan.steps)
     assert any("network" in step.summary.lower() for step in plan.steps)
     assert "read-only" in plan.rationale.lower()
+
+
+def test_format_table_is_not_treated_as_destructive():
+    planner = GoalPlanner()
+    plan = planner._plan_from_provider_json(
+        "list folders",
+        {
+            "rationale": "list",
+            "steps": [
+                {
+                    "adapter": "terminal",
+                    "action": "run_powershell",
+                    "args": {
+                        "command": (
+                            "Get-ChildItem C:\\ -Directory | "
+                            "ForEach-Object { (Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | "
+                            "Measure-Object -Property Length -Sum).Sum / 1GB } | Format-Table"
+                        ),
+                        "timeout_seconds": 60,
+                    },
+                    "summary": "folder sizes",
+                    "sensitivity": "destructive",
+                    "side_effects": ["none"],
+                }
+            ],
+        },
+    )
+    assert plan is not None
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert int(plan.steps[0].args["timeout_seconds"]) >= 300
+
+
+def test_remove_item_stays_destructive():
+    runtime = _runtime()
+    plan = runtime.planner.plan("run Remove-Item -Recurse C:\\temp\\demo")
+    assert plan.steps[0].sensitivity == Sensitivity.DESTRUCTIVE
 
 
 def test_diagnostic_alt_phrasing():
