@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 042 | [GitHub Actions PR gates](042-github-actions-pr-gates.md) | 2026-08-19 | pytest + arbora validate on PRs to main; branch-protection how-to |
 | 041 | [Pytest workflow pack](041-pytest-workflow-pack.md) | 2026-08-19 | Broker-gated python -m pytest for the current directory |
 | 040 | [Largest-folder disk journey](040-largest-folder-disk-journey.md) | 2026-08-19 | Read-only C:\\ folder ranking; Format-Table is not destructive |
 | 039 | [GitHub Actions pytest CI](039-github-actions-pytest.md) | 2026-08-19 | Windows pytest on pushes and PRs to main and dev |

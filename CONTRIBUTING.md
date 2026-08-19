@@ -8,23 +8,34 @@ Do not commit on `main`. Treat it as the last known-good line testers clone.
 
 | Branch | Role |
 | --- | --- |
-| `main` | Protected default. Only updated by pull request from `dev` (or a hotfix PR). |
-| `dev` | Integration. Feature work merges here first. |
-| `feature/…`, `fix/…` | One change per branch. Open a PR into `dev`. |
+| `main` | Default. Update only by pull request after **pytest (Windows)** is green. |
+| `dev` | Optional integration branch. Create it when you want a staging line. |
+| `feature/…`, `fix/…` | One change per branch. Open a PR into `main` (or into `dev` if that branch exists). |
 
 Typical day:
 
 ```powershell
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git checkout -b feature/short-name
 # …edit, pytest, commit…
 git push -u origin HEAD
 ```
 
-Then open a pull request with **base = `dev`**. After GitHub Actions **pytest (Windows)** is green, merge it. When `dev` is stable enough to show testers, open a second PR: **`dev` → `main`**.
+Then open a pull request with **base = `main`**. Wait for GitHub Actions **pytest (Windows)** (pytest + `arbora validate`). Merge only when that check is green.
 
-GitHub Actions runs pytest on every push and PR to `main` or `dev`. A failing check does not un-push the commit; it only fails the PR. Turn on **branch protection** (require the `pytest (Windows)` check) so `main` and `dev` cannot merge red.
+### Require the check on GitHub (one-time)
+
+The workflow file is not enough by itself: GitHub will still merge a red PR unless the branch is protected.
+
+1. Merge a PR that contains `.github/workflows/ci.yml` so the workflow exists on `main`.
+2. GitHub → **Settings** → **Branches** → **Add branch protection rule** (or **Rulesets**) for `main`.
+3. Enable **Require status checks to pass before merging**.
+4. Require the check named **`pytest (Windows)`**.
+5. Enable **Require branches to be up to date before merging**.
+6. Do **not** require a second approving review unless you have another reviewer.
+
+Until that rule exists, treat a red **pytest (Windows)** check as a merge blocker even if GitHub still allows the button.
 
 ## Before you change code
 

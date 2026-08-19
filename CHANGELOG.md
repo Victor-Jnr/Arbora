@@ -116,6 +116,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/040-largest-folder-disk-journey.md` | Change doc for largest-folder journey and Format-Table fix |
 | `workflows/pytest.json` | Bundled pytest suite pack for the current directory |
 | `documentation/041-pytest-workflow-pack.md` | Change doc for pytest workflow pack |
+| `.github/pull_request_template.md` | PR checklist for tests and broker safety |
+| `tests/test_ci_workflow.py` | Asserts CI still gates pull requests to main |
+| `documentation/042-github-actions-pr-gates.md` | Change doc for GitHub Actions PR gates |
+
+---
+
+## 042 — GitHub Actions PR gates (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `.github/workflows/ci.yml` | Added concurrency, manual dispatch, and `arbora validate` after pytest |
+| `.github/pull_request_template.md` | Added test-plan and safety checklist for PRs |
+| `CONTRIBUTING.md` | Documented PRs into `main` and the branch-protection click |
+| `README.md` | Added CI badge and PR-to-main contribution norm |
+| `tests/test_ci_workflow.py` | Locked in pull_request / main / pytest / validate in the workflow file |
+| `docs/NEXT.md` | Marked P9 plate 30 done |
+| `documentation/042-github-actions-pr-gates.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 042 |
+| `CHANGELOG.md` | Added file roles and 042 section |
 
 ---
 
