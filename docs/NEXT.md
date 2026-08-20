@@ -43,7 +43,9 @@ Already in place:
 - largest-folder disk ranking for “what is using space on C”;
 - pytest suite run behind the broker for the current directory;
 - GitHub Actions pytest + `arbora validate` on pull requests to `main`;
-- desktop Voice listen that cannot double-fire and reports confidence.
+- desktop Voice listen that cannot double-fire and reports confidence;
+- open Downloads or Desktop in File Explorer behind the broker;
+- Recycle Bin inspect, with empty only after hard confirmation.
 
 Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P10).
 
@@ -97,13 +99,13 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 29 | **Pytest workflow pack** | ✅ Run the current directory's pytest suite behind the broker |
 | 30 | **GitHub Actions PR gates** | ✅ PRs into `main` run pytest + validate; protection how-to in CONTRIBUTING |
 
-### P10 — Stage 3 voice polish and Windows folders (in progress)
+### P10 — Stage 3 voice polish and Windows folders
 
 | # | Plate | Done when |
 | --- | --- | --- |
 | 31 | **Voice listen UX** | ✅ Desktop Voice disables while listening and shows recognition confidence |
-| 32 | **Open folder in Explorer** | Open Downloads (or a named folder) in Explorer behind the broker |
-| 33 | **Recycle bin inspect / empty** | Preview Recycle Bin, then empty only with hard confirmation |
+| 32 | **Open folder in Explorer** | ✅ Open Downloads (or a named folder) in Explorer behind the broker |
+| 33 | **Recycle bin inspect / empty** | ✅ Preview Recycle Bin, then empty only with hard confirmation |
 
 ## Non-negotiables (do not drift)
 
@@ -198,4 +200,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P9 plates 28–30 are done. P10 plate 31 (voice listen UX) is in progress; plates 32–33 follow on their own branches.
+P9 plates 28–30 are done. P10 plates 31–33 are done. Run `arbora validate` on tester machines, then continue Stage 3 from the root README.
