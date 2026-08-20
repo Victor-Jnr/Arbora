@@ -66,6 +66,21 @@ def test_open_in_explorer_dry_run(tmp_path: Path):
     assert result.ok
     assert result.dry_run
     assert "Explorer" in result.output
+
+
+def test_recycle_bin_inspect_dry_run():
+    adapter = FilesAdapter()
+    result = adapter.execute("inspect_recycle_bin", {}, dry_run=True)
+    assert result.ok
+    assert result.dry_run
+
+
+def test_recycle_bin_empty_dry_run():
+    adapter = FilesAdapter()
+    result = adapter.execute("empty_recycle_bin", {}, dry_run=True)
+    assert result.ok
+    assert result.dry_run
+    assert "empty" in result.output.lower()
     adapter = DesktopAdapter()
     result = adapter.execute("launch_app", {"name": "notepad"}, dry_run=True)
     assert result.ok

@@ -104,6 +104,21 @@ def test_format_table_is_not_treated_as_destructive():
     assert int(plan.steps[0].args["timeout_seconds"]) >= 300
 
 
+def test_recycle_bin_inspect_is_read_only():
+    runtime = _runtime()
+    plan = runtime.planner.plan("what's in the recycle bin")
+    assert [step.action for step in plan.steps] == ["inspect_recycle_bin"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+
+
+def test_empty_recycle_bin_requires_hard_confirm():
+    runtime = _runtime()
+    plan = runtime.planner.plan("empty the recycle bin")
+    assert [step.action for step in plan.steps] == ["inspect_recycle_bin", "empty_recycle_bin"]
+    assert plan.steps[-1].sensitivity == Sensitivity.DESTRUCTIVE
+    assert plan.has_hard_confirmation_steps is True
+
+
 def test_open_explorer_journey_is_preview_then_open():
     runtime = _runtime()
     plan = runtime.planner.plan("open downloads in explorer")

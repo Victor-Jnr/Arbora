@@ -101,6 +101,8 @@ class GoalPlanner:
             return self._save_note_plan(text)
         if self._looks_like_open_explorer(lower):
             return self._open_explorer_plan(text)
+        if self._looks_like_recycle_bin(lower):
+            return self._recycle_bin_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -768,6 +770,45 @@ class GoalPlanner:
             ],
         )
 
+    def _recycle_bin_plan(self, goal: str) -> Plan:
+        lower = goal.lower()
+        empty = any(word in lower for word in ("empty", "clear", "delete", "purge"))
+        steps = [
+            ToolStep(
+                id=new_id("step_"),
+                adapter="files",
+                action="inspect_recycle_bin",
+                args={},
+                summary="Read-only: list Recycle Bin item names",
+                sensitivity=Sensitivity.READ,
+                side_effects=("Reads Recycle Bin names via Shell.Application",),
+            )
+        ]
+        rationale = (
+            "Recycle Bin journey — inspect first. "
+            "Emptying permanently removes those items and needs a fresh hard confirmation."
+        )
+        if empty:
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="empty_recycle_bin",
+                    args={},
+                    summary="Empty the Recycle Bin (permanent)",
+                    sensitivity=Sensitivity.DESTRUCTIVE,
+                    side_effects=("Permanently deletes Recycle Bin contents",),
+                )
+            )
+        else:
+            rationale = "Recycle Bin journey — read-only listing of item names. Ask to empty it for a separate hard-confirm plan."
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=rationale,
+            steps=steps,
+        )
+
     def _list_files_plan(self, goal: str) -> Plan:
         path = self._folder_path_from_goal(goal)
         return Plan(
@@ -1105,6 +1146,10 @@ class GoalPlanner:
                 "reveal in explorer",
             )
         )
+
+    @staticmethod
+    def _looks_like_recycle_bin(lower: str) -> bool:
+        return "recycle bin" in lower or "recyclebin" in lower
 
     @staticmethod
     def _looks_like_list_files(lower: str) -> bool:

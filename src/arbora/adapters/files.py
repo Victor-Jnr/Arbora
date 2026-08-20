@@ -18,6 +18,7 @@ from arbora.adapters.file_undo import (
     pop_last_batch,
     utc_now_iso,
 )
+from arbora.adapters.powershell import require_windows, run_powershell
 from arbora.core.types import StepResult, new_id
 
 _EXTENSION_GROUPS = {
@@ -106,6 +107,10 @@ class FilesAdapter:
                     dry_run=dry_run,
                 )
             return self._open_in_explorer(resolve_user_path(raw), dry_run=dry_run)
+        if action == "inspect_recycle_bin":
+            return self._inspect_recycle_bin(dry_run=dry_run)
+        if action == "empty_recycle_bin":
+            return self._empty_recycle_bin(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -239,6 +244,64 @@ class FilesAdapter:
                 error=f"Failed to open Explorer: {exc}",
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=f"Opened in Explorer: {target}")
+
+    def _inspect_recycle_bin(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output="[dry-run] Would list Recycle Bin item names (read-only)",
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        command = (
+            "$shell = New-Object -ComObject Shell.Application; "
+            "$bin = $shell.NameSpace(10); "
+            "if ($null -eq $bin) { 'Recycle Bin is not available.'; exit 0 }; "
+            "$items = @($bin.Items()); "
+            "'Recycle Bin items: ' + $items.Count; "
+            "$items | Select-Object -First 25 | ForEach-Object { $_.Name } | Out-String"
+        )
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error,
+            )
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=outcome.stdout or "(empty Recycle Bin)",
+        )
+
+    def _empty_recycle_bin(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output="[dry-run] Would empty the Recycle Bin (permanent for those items)",
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        command = (
+            "Clear-RecycleBin -Force -ErrorAction Stop; "
+            "'Recycle Bin emptied.'"
+        )
+        outcome = run_powershell(command, timeout_seconds=60)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error,
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=outcome.stdout or "Recycle Bin emptied.")
 
     def _write_text(self, path: Path, content: str, *, dry_run: bool) -> StepResult:
         if not str(path):
