@@ -3,6 +3,7 @@
 **A personalised digital assistant that understands your goals, respects your control, and automates your Windows system safely.**
 
 [![Status](https://img.shields.io/badge/status-vision--stage-orange)](#project-status)
+[![CI](https://github.com/Victor-Jnr/Arbora/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Victor-Jnr/Arbora/actions/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/platform-Windows%20first-blue)](#platform-strategy)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green)](#license)
 [![Privacy](https://img.shields.io/badge/privacy-local--first-lightgrey)](#privacy--data-ownership)
@@ -625,6 +626,10 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 042 | [GitHub Actions PR gates](documentation/042-github-actions-pr-gates.md) |
+| 041 | [Pytest workflow pack](documentation/041-pytest-workflow-pack.md) |
+| 040 | [Largest-folder disk journey](documentation/040-largest-folder-disk-journey.md) |
+| 039 | [GitHub Actions pytest CI](documentation/039-github-actions-pytest.md) |
 | 038 | [Larger desktop Trust dialogs](documentation/038-larger-desktop-dialogs.md) |
 | 037 | [Sample read-only trusted routines](documentation/037-sample-read-only-routines.md) |
 | 036 | [Fix desktop voice import](documentation/036-fix-desktop-voice-import.md) |
@@ -690,8 +695,9 @@ Arbora welcomes collaborators who care about useful automation *and* user agency
 - Discuss large architectural changes before implementing them.
 - Treat user-facing claims carefully: document intent vs. availability explicitly.
 - On each commit, add the next numbered document under [`documentation/`](documentation/README.md), update this README’s Documentation section, and append per-file one-liners to [`CHANGELOG.md`](CHANGELOG.md).
+- Work on a feature branch, open a PR into `main`, and wait for **pytest (Windows)**. How to require that check: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-Issue templates, a code of conduct, and contributor guidelines will be added as the repository leaves pure vision stage. Until then, use this README as the north star.
+Issue templates and a code of conduct will be added as the project matures. Until then, use this README as the product north star and CONTRIBUTING for how to land code.
 
 ---
 

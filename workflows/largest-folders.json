@@ -1,0 +1,34 @@
+{
+  "id": "largest-folders",
+  "name": "Largest folders",
+  "description": "Read-only ranking of top-level folders on C:\\ by size.",
+  "goal_phrases": [
+    "largest folders pack",
+    "biggest folders pack"
+  ],
+  "rationale": "Workflow pack: measure immediate C:\\ subfolders without deleting or moving files.",
+  "steps": [
+    {
+      "adapter": "terminal",
+      "action": "run_powershell",
+      "args": {
+        "command": "Get-PSDrive -Name C | Select-Object Name, @{N='UsedGB';E={[math]::Round(($_.Used/1GB),2)}}, @{N='FreeGB';E={[math]::Round(($_.Free/1GB),2)}} | Format-Table | Out-String",
+        "timeout_seconds": 30
+      },
+      "summary": "Read-only: C: used and free space (GB)",
+      "sensitivity": "read",
+      "side_effects": ["Runs a read-only PowerShell query"]
+    },
+    {
+      "adapter": "terminal",
+      "action": "run_powershell",
+      "args": {
+        "command": "$root = 'C:\\'; $fso = New-Object -ComObject Scripting.FileSystemObject; $skip = @('System Volume Information','$Recycle.Bin','Recovery'); $rows = @(Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue | ForEach-Object { if ($skip -contains $_.Name) { [PSCustomObject]@{ Folder = $_.FullName; GB = $null } } else { try { [PSCustomObject]@{ Folder = $_.FullName; GB = [math]::Round(([int64]$fso.GetFolder($_.FullName).Size)/1GB, 2) } } catch { [PSCustomObject]@{ Folder = $_.FullName; GB = $null } } } }); $rows | Sort-Object GB -Descending | Format-Table -AutoSize | Out-String; $top = $rows | Where-Object { $null -ne $_.GB } | Sort-Object GB -Descending | Select-Object -First 1; if ($top) { \"Largest top-level folder: $($top.Folder) — $($top.GB) GB\" } else { 'Could not measure any folders (access denied or empty).' }",
+        "timeout_seconds": 300
+      },
+      "summary": "Read-only: size each top-level folder on C:\\ (may take several minutes)",
+      "sensitivity": "read",
+      "side_effects": ["Walks files under each top-level folder to sum sizes"]
+    }
+  ]
+}

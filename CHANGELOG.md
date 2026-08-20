@@ -110,6 +110,80 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_sample_routines.py` | Sample routine seed regression tests |
 | `documentation/037-sample-read-only-routines.md` | Change doc for sample trusted routines |
 | `documentation/038-larger-desktop-dialogs.md` | Change doc for larger desktop dialogs |
+| `.github/workflows/ci.yml` | Windows pytest GitHub Actions workflow |
+| `documentation/039-github-actions-pytest.md` | Change doc for GitHub Actions pytest CI |
+| `workflows/largest-folders.json` | Bundled read-only top-level folder size ranking pack |
+| `documentation/040-largest-folder-disk-journey.md` | Change doc for largest-folder journey and Format-Table fix |
+| `workflows/pytest.json` | Bundled pytest suite pack for the current directory |
+| `documentation/041-pytest-workflow-pack.md` | Change doc for pytest workflow pack |
+| `.github/pull_request_template.md` | PR checklist for tests and broker safety |
+| `tests/test_ci_workflow.py` | Asserts CI still gates pull requests to main |
+| `documentation/042-github-actions-pr-gates.md` | Change doc for GitHub Actions PR gates |
+
+---
+
+## 042 — GitHub Actions PR gates (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `.github/workflows/ci.yml` | Added concurrency, manual dispatch, and `arbora validate` after pytest |
+| `.github/pull_request_template.md` | Added test-plan and safety checklist for PRs |
+| `CONTRIBUTING.md` | Documented PRs into `main` and the branch-protection click |
+| `README.md` | Added CI badge and PR-to-main contribution norm |
+| `tests/test_ci_workflow.py` | Locked in pull_request / main / pytest / validate in the workflow file |
+| `docs/NEXT.md` | Marked P9 plate 30 done |
+| `documentation/042-github-actions-pr-gates.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 042 |
+| `CHANGELOG.md` | Added file roles and 042 section |
+
+---
+
+## 041 — Pytest workflow pack (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Added pytest journey so `run tests` is not a generic shell step |
+| `workflows/pytest.json` | Bundled version-check plus `python -m pytest` pack |
+| `src/arbora/cli/main.py` | Documented `run pytest` example goal |
+| `scripts/demo_journeys.py` | Added pytest smoke goal |
+| `tests/test_broker_and_planner.py` | Asserted pytest plan shape and no Get-Date fallback |
+| `tests/test_workflow_packs.py` | Asserted the pytest pack loads and matches |
+| `docs/NEXT.md` | Marked P9 plate 29 done |
+| `documentation/041-pytest-workflow-pack.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 041 |
+| `README.md` | Linked document 041 |
+| `CHANGELOG.md` | Added file roles and 041 section |
+
+---
+
+## 040 — Largest-folder disk journey (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Added read-only largest-folder journey; stopped treating Format-Table as disk format |
+| `workflows/largest-folders.json` | Bundled pack for the same C:\\ ranking with a 300s timeout |
+| `src/arbora/cli/main.py` | Documented the largest-folder example goal |
+| `tests/test_broker_and_planner.py` | Covered the user phrasing, D: drive, Format-Table, and Remove-Item |
+| `tests/test_workflow_packs.py` | Asserted the largest-folders pack loads and matches |
+| `documentation/040-largest-folder-disk-journey.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 040 |
+| `README.md` | Linked document 040 |
+| `docs/NEXT.md` | Started P9; marked plate 28 done |
+| `scripts/demo_journeys.py` | Added largest-folder example goal |
+| `CHANGELOG.md` | Added file roles and 040 section |
+
+---
+
+## 039 — GitHub Actions pytest CI (2026-08-19)
+
+| File | Change |
+| --- | --- |
+| `.github/workflows/ci.yml` | Run pytest on Windows for pushes and PRs to `main` and `dev` |
+| `CONTRIBUTING.md` | Document `main` / `dev` / feature-branch pull-request flow |
+| `documentation/039-github-actions-pytest.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 039 |
+| `README.md` | Linked document 039; point contributors at the git workflow |
+| `CHANGELOG.md` | Added file roles and 039 section |
 
 ---
 
