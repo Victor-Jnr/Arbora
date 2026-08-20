@@ -119,6 +119,23 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `.github/pull_request_template.md` | PR checklist for tests and broker safety |
 | `tests/test_ci_workflow.py` | Asserts CI still gates pull requests to main |
 | `documentation/042-github-actions-pr-gates.md` | Change doc for GitHub Actions PR gates |
+| `documentation/043-voice-listen-ux.md` | Change doc for Voice listen UX polish |
+
+---
+
+## 043 — Voice listen UX polish (2026-08-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/voice/windows.py` | Used Windows UI culture, silence timeouts, and confidence on VoiceResult |
+| `apps/desktop_chat/app.py` | Disabled Voice while listening; log confidence; never auto-Plan |
+| `tests/test_voice_windows.py` | Covered confidence parsing and culture in the PowerShell script |
+| `tests/test_desktop_chat.py` | Asserted the Voice button starts idle |
+| `docs/NEXT.md` | Started P10; marked plate 31 done |
+| `documentation/043-voice-listen-ux.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 043 |
+| `README.md` | Linked document 043 |
+| `CHANGELOG.md` | Added file roles and 043 section |
 
 ---
 

@@ -308,7 +308,9 @@ class ArboraChatApp:
         self.goal_entry.pack(side="left", fill="x", expand=True, ipady=8, padx=(0, 8))
         self.goal_entry.bind("<Return>", lambda _e: self.make_plan())
         ttk.Button(entry_row, text="History", command=self.show_goal_history).pack(side="left", padx=(0, 8))
-        ttk.Button(entry_row, text="Voice", command=self.voice_goal).pack(side="left", padx=(0, 8))
+        self._voice_btn = ttk.Button(entry_row, text="Voice", command=self.voice_goal)
+        self._voice_btn.pack(side="left", padx=(0, 8))
+        self._voice_busy = False
         ttk.Button(entry_row, text="Plan", style="Accent.TButton", command=self.make_plan).pack(side="left")
 
         actions = ttk.Frame(self.root, style="TFrame")
@@ -491,6 +493,8 @@ class ArboraChatApp:
         self.transcript.configure(state="disabled")
 
     def voice_goal(self) -> None:
+        if self._voice_busy:
+            return
         if not voice_input_available():
             messagebox.showinfo(
                 "Voice input",
@@ -498,20 +502,30 @@ class ArboraChatApp:
                 parent=self.root,
             )
             return
-        self._log("Listening for goal (speak now)…\n")
+        self._voice_busy = True
+        self._voice_btn.configure(text="Listening…", state="disabled")
+        self._log("Listening for goal (speak now). Text is filled in; Plan is not auto-run.\n")
 
         def work() -> None:
             result = listen_once()
 
             def finish() -> None:
+                self._voice_busy = False
+                self._voice_btn.configure(text="Voice", state="normal")
                 if result.ok:
                     self.goal_entry.delete(0, "end")
                     self.goal_entry.insert(0, result.text)
-                    self._log(f"Heard: {result.text}\n")
+                    heard = f"Heard: {result.text}"
+                    if result.confidence is not None:
+                        heard += f" (confidence {result.confidence:.0%})"
+                        if result.confidence < 0.4:
+                            heard += " — edit before Plan if that looks wrong"
+                    self._log(heard + "\n")
                 else:
                     messagebox.showwarning(
                         "Voice input",
-                        result.error or "Voice recognition failed.",
+                        (result.error or "Voice recognition failed.")
+                        + "\n\nClick Voice to try again. Nothing was sent to the planner.",
                         parent=self.root,
                     )
 
