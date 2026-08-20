@@ -120,6 +120,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `tests/test_ci_workflow.py` | Asserts CI still gates pull requests to main |
 | `documentation/042-github-actions-pr-gates.md` | Change doc for GitHub Actions PR gates |
 | `documentation/043-voice-listen-ux.md` | Change doc for Voice listen UX polish |
+| `documentation/044-open-folder-explorer.md` | Change doc for opening a folder in Explorer |
+
+---
+
+## 044 — Open folder in Explorer (2026-08-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/files.py` | Added `open_in_explorer` with dry-run and Windows startfile |
+| `src/arbora/core/tool_catalog.py` | Allowed `files.open_in_explorer` |
+| `src/arbora/core/planner.py` | Added list-then-open Explorer journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `tests/test_adapters_hardening.py` | Covered missing path and dry-run |
+| `tests/test_broker_and_planner.py` | Covered Downloads and Desktop Explorer plans |
+| `docs/NEXT.md` | Marked P10 plate 32 done |
+| `documentation/044-open-folder-explorer.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 044 |
+| `README.md` | Linked document 044 |
+| `CHANGELOG.md` | Added file roles and 044 section |
 
 ---
 

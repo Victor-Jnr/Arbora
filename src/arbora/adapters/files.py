@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import shutil
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -93,6 +95,17 @@ class FilesAdapter:
             return self._apply_organise(resolve_user_path(str(args.get("path", ""))), dry_run=dry_run)
         if action == "undo_last_organise":
             return self._undo_last_organise(dry_run=dry_run)
+        if action == "open_in_explorer":
+            raw = str(args.get("path", "")).strip()
+            if not raw:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="open_in_explorer requires args.path",
+                    dry_run=dry_run,
+                )
+            return self._open_in_explorer(resolve_user_path(raw), dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -191,6 +204,41 @@ class FilesAdapter:
                 error=f"Failed to create directory {path}: {exc}",
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=f"Directory ready: {path}")
+
+    def _open_in_explorer(self, path: Path, *, dry_run: bool) -> StepResult:
+        target = path if (not path.exists() or path.is_dir()) else path.parent
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would open {target} in Explorer",
+                dry_run=True,
+            )
+        if sys.platform != "win32":
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="open_in_explorer is Windows-only",
+            )
+        if not path.exists():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Path does not exist: {path}",
+            )
+        target = path if path.is_dir() else path.parent
+        try:
+            os.startfile(target)  # type: ignore[attr-defined]
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to open Explorer: {exc}",
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=f"Opened in Explorer: {target}")
 
     def _write_text(self, path: Path, content: str, *, dry_run: bool) -> StepResult:
         if not str(path):

@@ -104,6 +104,22 @@ def test_format_table_is_not_treated_as_destructive():
     assert int(plan.steps[0].args["timeout_seconds"]) >= 300
 
 
+def test_open_explorer_journey_is_preview_then_open():
+    runtime = _runtime()
+    plan = runtime.planner.plan("open downloads in explorer")
+    assert [step.action for step in plan.steps] == ["list_directory", "open_in_explorer"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert plan.steps[1].sensitivity == Sensitivity.MUTATE
+    assert "Downloads" in plan.steps[1].args["path"] or "downloads" in plan.steps[1].args["path"].lower()
+
+
+def test_open_explorer_desktop_folder():
+    runtime = _runtime()
+    plan = runtime.planner.plan("open folder on the desktop")
+    assert plan.steps[-1].action == "open_in_explorer"
+    assert plan.steps[-1].args["path"].endswith("Desktop") or "Desktop" in plan.steps[-1].args["path"]
+
+
 def test_run_tests_journey_uses_pytest():
     runtime = _runtime()
     plan = runtime.planner.plan("run pytest")

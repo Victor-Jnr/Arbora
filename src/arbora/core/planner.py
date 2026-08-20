@@ -99,6 +99,8 @@ class GoalPlanner:
             return self._undo_organise_plan(text)
         if self._looks_like_save_note(lower):
             return self._save_note_plan(text)
+        if self._looks_like_open_explorer(lower):
+            return self._open_explorer_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -723,11 +725,51 @@ class GoalPlanner:
         )
         return text.strip() or "Empty note from Arbora."
 
-    def _list_files_plan(self, goal: str) -> Plan:
+    def _folder_path_from_goal(self, goal: str) -> str:
+        lower = goal.lower()
         path_match = re.search(r"(?:in|at)\s+([A-Za-z]:\\[^\"]+|~[/\\][^\"]+|[/\\][^\"]+)", goal)
-        path = path_match.group(1) if path_match else str(self._downloads_dir())
-        if path.startswith("~"):
-            path = str(Path.home() / path[2:].lstrip("\\/"))
+        if path_match:
+            path = path_match.group(1)
+            if path.startswith("~"):
+                return str(Path.home() / path[2:].lstrip("\\/"))
+            return path
+        if "desktop" in lower:
+            return str(Path.home() / "Desktop")
+        return str(self._downloads_dir())
+
+    def _open_explorer_plan(self, goal: str) -> Plan:
+        path = self._folder_path_from_goal(goal)
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Open-folder journey — list the folder, then open it in Explorer. "
+                "Opens a window on your desktop; does not move or delete files."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="list_directory",
+                    args={"path": path},
+                    summary=f"List files in {path}",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads directory listing",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="open_in_explorer",
+                    args={"path": path},
+                    summary=f"Open {path} in File Explorer",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Opens a File Explorer window",),
+                ),
+            ],
+        )
+
+    def _list_files_plan(self, goal: str) -> Plan:
+        path = self._folder_path_from_goal(goal)
         return Plan(
             id=new_id("plan_"),
             goal=goal,
@@ -1047,6 +1089,20 @@ class GoalPlanner:
                 "leave a note",
                 "save note",
                 "jot down",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_open_explorer(lower: str) -> bool:
+        return any(
+            phrase in lower
+            for phrase in (
+                "in explorer",
+                "in file explorer",
+                "open folder",
+                "open explorer",
+                "show in explorer",
+                "reveal in explorer",
             )
         )
 
