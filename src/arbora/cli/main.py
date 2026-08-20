@@ -61,6 +61,7 @@ Try goals like:
   save a note about tomorrow's standup
   list downloads
   open downloads in explorer
+  empty the recycle bin
   disk diagnose pack
 """.strip()
 
