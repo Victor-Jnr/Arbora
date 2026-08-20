@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 043 | [Voice listen UX polish](documentation/043-voice-listen-ux.md) |
 | 042 | [GitHub Actions PR gates](documentation/042-github-actions-pr-gates.md) |
 | 041 | [Pytest workflow pack](documentation/041-pytest-workflow-pack.md) |
 | 040 | [Largest-folder disk journey](documentation/040-largest-folder-disk-journey.md) |

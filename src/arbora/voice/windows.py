@@ -12,6 +12,7 @@ class VoiceResult:
     ok: bool
     text: str = ""
     error: str | None = None
+    confidence: float | None = None
 
 
 def voice_input_available() -> bool:
@@ -27,12 +28,21 @@ def listen_once(timeout_seconds: int = 8) -> VoiceResult:
     script = f"""
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Speech
-$engine = New-Object System.Speech.Recognition.SpeechRecognitionEngine
+$culture = [System.Globalization.CultureInfo]::CurrentUICulture
+try {{
+  $engine = New-Object System.Speech.Recognition.SpeechRecognitionEngine($culture)
+}} catch {{
+  $engine = New-Object System.Speech.Recognition.SpeechRecognitionEngine
+}}
 $engine.SetInputToDefaultAudioDevice()
+$engine.InitialSilenceTimeout = [TimeSpan]::FromSeconds(4)
+$engine.BabbleTimeout = [TimeSpan]::FromSeconds(4)
+$engine.EndSilenceTimeout = [TimeSpan]::FromSeconds(1.5)
 $grammar = New-Object System.Speech.Recognition.DictationGrammar
 $engine.LoadGrammar($grammar)
 $result = $engine.Recognize([TimeSpan]::FromSeconds({timeout_seconds}))
 if ($null -eq $result) {{ exit 2 }}
+Write-Output ("CONFIDENCE=" + $result.Confidence)
 Write-Output $result.Text
 """
     try:
@@ -53,7 +63,21 @@ Write-Output $result.Text
     if proc.returncode != 0:
         err = (proc.stderr or proc.stdout or "Voice recognition failed").strip()
         return VoiceResult(False, error=err)
-    text = proc.stdout.strip()
+    return _parse_listen_stdout(proc.stdout)
+
+
+def _parse_listen_stdout(stdout: str) -> VoiceResult:
+    lines = [line.strip() for line in (stdout or "").splitlines() if line.strip()]
+    confidence: float | None = None
+    text_lines = lines
+    if lines and lines[0].upper().startswith("CONFIDENCE="):
+        raw = lines[0].split("=", 1)[1].strip()
+        try:
+            confidence = float(raw)
+        except ValueError:
+            confidence = None
+        text_lines = lines[1:]
+    text = " ".join(text_lines).strip()
     if not text:
         return VoiceResult(False, error="No speech detected.")
-    return VoiceResult(True, text=text)
+    return VoiceResult(True, text=text, confidence=confidence)

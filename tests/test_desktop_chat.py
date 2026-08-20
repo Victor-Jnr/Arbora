@@ -51,6 +51,21 @@ def test_voice_helpers_are_imported():
     assert callable(desktop.listen_once)
 
 
+def test_desktop_voice_button_starts_idle():
+    try:
+        root = tk.Tk()
+    except tk.TclError as exc:
+        pytest.skip(f"Tk unavailable: {exc}")
+    root.withdraw()
+    try:
+        app = ArboraChatApp(root)
+        assert app._voice_busy is False
+        assert str(app._voice_btn.cget("text")) == "Voice"
+        assert str(app._voice_btn.cget("state")) != "disabled"
+    finally:
+        root.destroy()
+
+
 def test_format_routine_helpers():
     routine = TrustedRoutine(
         id="rtn_abcdefghijkl",
