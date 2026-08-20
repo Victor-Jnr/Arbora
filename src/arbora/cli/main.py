@@ -60,6 +60,7 @@ Try goals like:
   undo last organise
   save a note about tomorrow's standup
   list downloads
+  open downloads in explorer
   disk diagnose pack
 """.strip()
 

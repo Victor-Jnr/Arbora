@@ -12,6 +12,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "preview_organise",
             "apply_organise",
             "undo_last_organise",
+            "open_in_explorer",
         }
     ),
     "terminal": frozenset({"run_powershell"}),

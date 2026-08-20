@@ -43,7 +43,8 @@ Already in place:
 - largest-folder disk ranking for “what is using space on C”;
 - pytest suite run behind the broker for the current directory;
 - GitHub Actions pytest + `arbora validate` on pull requests to `main`;
-- desktop Voice listen that cannot double-fire and reports confidence.
+- desktop Voice listen that cannot double-fire and reports confidence;
+- open Downloads or Desktop in File Explorer behind the broker.
 
 Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P10).
 
@@ -102,7 +103,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 31 | **Voice listen UX** | ✅ Desktop Voice disables while listening and shows recognition confidence |
-| 32 | **Open folder in Explorer** | Open Downloads (or a named folder) in Explorer behind the broker |
+| 32 | **Open folder in Explorer** | ✅ Open Downloads (or a named folder) in Explorer behind the broker |
 | 33 | **Recycle bin inspect / empty** | Preview Recycle Bin, then empty only with hard confirmation |
 
 ## Non-negotiables (do not drift)
