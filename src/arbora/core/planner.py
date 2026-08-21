@@ -8,7 +8,9 @@ returning. Models propose; the permission broker still disposes.
 from __future__ import annotations
 
 import json
+import os
 import re
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +23,11 @@ from arbora.workflows.packs import match_workflow_pack
 SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
 
 DRIVE_SIZE_WALK_TIMEOUT_SECONDS = 300
+
+
+def _user_temp_dir() -> Path:
+    raw = os.environ.get("TEMP") or os.environ.get("TMP") or tempfile.gettempdir()
+    return Path(raw).expanduser().resolve(strict=False)
 
 
 def powershell_is_destructive(command: str) -> bool:
@@ -105,6 +112,8 @@ class GoalPlanner:
             return self._recycle_bin_plan(text)
         if self._looks_like_find_files(lower):
             return self._find_files_plan(text)
+        if self._looks_like_temp(lower):
+            return self._temp_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -739,6 +748,8 @@ class GoalPlanner:
             return path
         if "desktop" in lower:
             return str(Path.home() / "Desktop")
+        if re.search(r"\btemp\b", lower) and "temperature" not in lower:
+            return str(_user_temp_dir())
         return str(self._downloads_dir())
 
     @staticmethod
@@ -847,6 +858,48 @@ class GoalPlanner:
                     side_effects=("Reads file names under the folder",),
                 )
             ],
+        )
+
+    def _temp_plan(self, goal: str) -> Plan:
+        lower = goal.lower()
+        clean = any(word in lower for word in ("empty", "clear", "delete", "purge", "clean"))
+        steps = [
+            ToolStep(
+                id=new_id("step_"),
+                adapter="files",
+                action="inspect_user_temp",
+                args={},
+                summary="Read-only: list top-level files in the user TEMP folder",
+                sensitivity=Sensitivity.READ,
+                side_effects=("Reads names and sizes in %TEMP%",),
+            )
+        ]
+        rationale = (
+            "User TEMP journey — inspect first. "
+            "Cleaning deletes top-level files only (directories stay) and needs a fresh hard confirmation."
+        )
+        if clean:
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="clean_user_temp",
+                    args={},
+                    summary="Delete top-level files in user TEMP (directories kept)",
+                    sensitivity=Sensitivity.DESTRUCTIVE,
+                    side_effects=("Permanently deletes files in %TEMP%",),
+                )
+            )
+        else:
+            rationale = (
+                "User TEMP journey — read-only listing of top-level files. "
+                "Ask to clean temp for a separate hard-confirm plan."
+            )
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=rationale,
+            steps=steps,
         )
 
     def _list_files_plan(self, goal: str) -> Plan:
@@ -1207,6 +1260,28 @@ class GoalPlanner:
                 "search for",
                 "locate file",
                 "locate files",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_temp(lower: str) -> bool:
+        if "temperature" in lower:
+            return False
+        if re.search(r"\bin temp\b", lower):
+            return True
+        return any(
+            phrase in lower
+            for phrase in (
+                "temp folder",
+                "temporary files",
+                "windows temp",
+                "user temp",
+                "clean temp",
+                "empty temp",
+                "clear temp",
+                "what's in temp",
+                "whats in temp",
+                "inspect temp",
             )
         )
 

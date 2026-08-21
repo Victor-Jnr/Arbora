@@ -151,6 +151,21 @@ def test_search_for_glob_in_downloads():
     assert plan.steps[0].args["pattern"] == "*.pdf"
 
 
+def test_temp_inspect_is_read_only():
+    runtime = _runtime()
+    plan = runtime.planner.plan("what's in temp")
+    assert [step.action for step in plan.steps] == ["inspect_user_temp"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+
+
+def test_clean_temp_requires_hard_confirm():
+    runtime = _runtime()
+    plan = runtime.planner.plan("empty temp")
+    assert [step.action for step in plan.steps] == ["inspect_user_temp", "clean_user_temp"]
+    assert plan.steps[-1].sensitivity == Sensitivity.DESTRUCTIVE
+    assert plan.has_hard_confirmation_steps is True
+
+
 def test_run_tests_journey_uses_pytest():
     runtime = _runtime()
     plan = runtime.planner.plan("run pytest")
@@ -296,7 +311,7 @@ def test_provider_json_plan():
             """
 
     planner = GoalPlanner(provider=FakeProvider())
-    plan = planner.plan("show me what is sitting in temp please")
+    plan = planner.plan("show me the frobbits in the widget drawer")
     assert plan.steps
     assert plan.steps[0].adapter == "files"
     assert "[fake-local]" in plan.rationale

@@ -6,6 +6,7 @@ import fnmatch
 import os
 import shutil
 import sys
+import tempfile
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -138,6 +139,33 @@ def search_files_by_name(
     return matches
 
 
+def user_temp_dir() -> Path:
+    """The current user's TEMP folder — never C:\\Windows\\Temp unless that is TEMP."""
+    raw = os.environ.get("TEMP") or os.environ.get("TMP") or tempfile.gettempdir()
+    return Path(raw).expanduser().resolve(strict=False)
+
+
+def list_temp_toplevel(root: Path) -> tuple[list[Path], list[Path]]:
+    """Return (files, directories) immediately under the temp folder."""
+    files: list[Path] = []
+    directories: list[Path] = []
+    if not root.exists() or not root.is_dir():
+        return files, directories
+    try:
+        entries = list(root.iterdir())
+    except (PermissionError, OSError):
+        return files, directories
+    for entry in entries:
+        try:
+            if entry.is_dir() and not entry.is_symlink():
+                directories.append(entry)
+            elif entry.is_file() or entry.is_symlink():
+                files.append(entry)
+        except OSError:
+            continue
+    return files, directories
+
+
 class FilesAdapter:
     name = "files"
 
@@ -182,6 +210,10 @@ class FilesAdapter:
             return self._inspect_recycle_bin(dry_run=dry_run)
         if action == "empty_recycle_bin":
             return self._empty_recycle_bin(dry_run=dry_run)
+        if action == "inspect_user_temp":
+            return self._inspect_user_temp(dry_run=dry_run)
+        if action == "clean_user_temp":
+            return self._clean_user_temp(dry_run=dry_run)
         if action == "search_by_name":
             raw = str(args.get("path", "")).strip()
             if not raw:
@@ -451,6 +483,90 @@ class FilesAdapter:
                 error=outcome.error,
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=outcome.stdout or "Recycle Bin emptied.")
+
+    def _inspect_user_temp(self, *, dry_run: bool) -> StepResult:
+        root = user_temp_dir()
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would list top-level files in user TEMP ({root})",
+                dry_run=True,
+            )
+        if is_protected_search_root(root):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Refusing to inspect Windows directory TEMP: {root}",
+            )
+        if not root.exists() or not root.is_dir():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"TEMP folder is missing: {root}",
+            )
+        files, directories = list_temp_toplevel(root)
+        total_bytes = 0
+        for item in files:
+            try:
+                total_bytes += item.stat().st_size
+            except OSError:
+                continue
+        mb = round(total_bytes / (1024 * 1024), 2)
+        lines = [
+            f"User TEMP: {root}",
+            f"Top-level files: {len(files)} ({mb} MB)",
+            f"Top-level directories (kept on clean): {len(directories)}",
+        ]
+        sample = files[:40]
+        if sample:
+            lines.append("Sample files:")
+            lines.extend(f"  {item.name}" for item in sample)
+        if len(files) > 40:
+            lines.append(f"... and {len(files) - 40} more files")
+        if not files:
+            lines.append("(no top-level files)")
+        return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))
+
+    def _clean_user_temp(self, *, dry_run: bool) -> StepResult:
+        root = user_temp_dir()
+        if is_protected_search_root(root):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Refusing to clean Windows directory TEMP: {root}",
+                dry_run=dry_run,
+            )
+        files, directories = list_temp_toplevel(root)
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would delete {len(files)} top-level files in {root}; "
+                    f"{len(directories)} directories would be left in place"
+                ),
+                dry_run=True,
+            )
+        deleted = 0
+        skipped = 0
+        for item in files:
+            try:
+                item.unlink()
+                deleted += 1
+            except OSError:
+                skipped += 1
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=(
+                f"Deleted {deleted} top-level files in {root}; "
+                f"skipped {skipped}; left {len(directories)} directories"
+            ),
+        )
 
     def _write_text(self, path: Path, content: str, *, dry_run: bool) -> StepResult:
         if not str(path):
