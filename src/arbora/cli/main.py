@@ -63,6 +63,7 @@ Try goals like:
   find invoice.pdf in downloads
   what's in temp
   empty temp
+  open chrome
   open downloads in explorer
   empty the recycle bin
   disk diagnose pack

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Any
 
 from arbora.adapters.powershell import ps_quote, require_windows, run_powershell
@@ -18,7 +20,74 @@ APP_ALIASES: dict[str, str] = {
     "paint": "mspaint.exe",
     "mspaint": "mspaint.exe",
     "wordpad": "wordpad.exe",
+    "chrome": "chrome.exe",
+    "google chrome": "chrome.exe",
+    "edge": "msedge.exe",
+    "msedge": "msedge.exe",
+    "microsoft edge": "msedge.exe",
+    "firefox": "firefox.exe",
+    "code": "Code.exe",
+    "vscode": "Code.exe",
+    "visual studio code": "Code.exe",
+    "discord": "Discord.exe",
+    "spotify": "Spotify.exe",
+    "wt": "wt.exe",
+    "windows terminal": "wt.exe",
+    "slack": "slack.exe",
 }
+
+_KNOWN_LAUNCH_PATHS: dict[str, tuple[str, ...]] = {
+    "chrome": (
+        r"%ProgramFiles%\Google\Chrome\Application\chrome.exe",
+        r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe",
+        r"%LocalAppData%\Google\Chrome\Application\chrome.exe",
+    ),
+    "edge": (
+        r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe",
+        r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe",
+    ),
+    "firefox": (
+        r"%ProgramFiles%\Mozilla Firefox\firefox.exe",
+        r"%ProgramFiles(x86)%\Mozilla Firefox\firefox.exe",
+    ),
+    "vscode": (
+        r"%LocalAppData%\Programs\Microsoft VS Code\Code.exe",
+        r"%ProgramFiles%\Microsoft VS Code\Code.exe",
+    ),
+    "discord": (r"%LocalAppData%\Discord\Discord.exe",),
+    "spotify": (
+        r"%AppData%\Spotify\Spotify.exe",
+        r"%LocalAppData%\Microsoft\WindowsApps\Spotify.exe",
+    ),
+    "wt": (r"%LocalAppData%\Microsoft\WindowsApps\wt.exe",),
+    "slack": (r"%LocalAppData%\slack\slack.exe",),
+}
+
+_EXE_TO_PATH_KEY = {
+    "chrome.exe": "chrome",
+    "msedge.exe": "edge",
+    "firefox.exe": "firefox",
+    "code.exe": "vscode",
+    "discord.exe": "discord",
+    "spotify.exe": "spotify",
+    "wt.exe": "wt",
+    "slack.exe": "slack",
+}
+
+
+def resolve_launch_target(name: str) -> str:
+    """Map a friendly name to an exe or a known install path if it exists."""
+    raw = name.strip()
+    if not raw:
+        return raw
+    lowered = raw.lower()
+    exe = APP_ALIASES.get(lowered, raw)
+    key = _EXE_TO_PATH_KEY.get(exe.lower(), lowered if lowered in _KNOWN_LAUNCH_PATHS else "")
+    for candidate in _KNOWN_LAUNCH_PATHS.get(key, ()):
+        path = Path(os.path.expandvars(candidate))
+        if path.is_file():
+            return str(path)
+    return exe
 
 
 class DesktopAdapter:
@@ -80,7 +149,7 @@ class DesktopAdapter:
                 error="launch_app requires args.name",
                 dry_run=dry_run,
             )
-        target = APP_ALIASES.get(name.strip().lower(), name.strip())
+        target = resolve_launch_target(name)
         if dry_run:
             return StepResult(
                 step_id=new_id("res_"),

@@ -126,6 +126,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/046-find-files-by-name.md` | Change doc for find-files journey |
 | `workflows/inspect-temp.json` | Bundled user TEMP inspect pack |
 | `documentation/047-temp-inspect-clean.md` | Change doc for TEMP inspect/clean |
+| `documentation/048-app-launch-aliases.md` | Change doc for everyday app launch aliases |
+
+---
+
+## 048 — Everyday app launch aliases (2026-08-21)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Chrome/Edge/VS Code aliases and known install paths |
+| `src/arbora/core/planner.py` | Open/launch/start journey for those apps |
+| `src/arbora/cli/main.py` | Documented `open chrome` |
+| `tests/test_adapters_hardening.py` | Alias resolve and chrome dry-run |
+| `tests/test_broker_and_planner.py` | Launch plan; explorer/workday still win |
+| `docs/NEXT.md` | Marked P11 plate 36 done |
+| `documentation/048-app-launch-aliases.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 048 |
+| `README.md` | Linked document 048 |
+| `CHANGELOG.md` | Added file roles and 048 section |
 
 ---
 

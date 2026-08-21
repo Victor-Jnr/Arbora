@@ -114,6 +114,8 @@ class GoalPlanner:
             return self._find_files_plan(text)
         if self._looks_like_temp(lower):
             return self._temp_plan(text)
+        if self._looks_like_launch_app(lower):
+            return self._launch_app_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -902,6 +904,49 @@ class GoalPlanner:
             steps=steps,
         )
 
+    def _launch_app_plan(self, goal: str) -> Plan:
+        alias = self._app_alias_from_goal(goal.lower()) or "notepad"
+        focus = {
+            "chrome": "Chrome",
+            "edge": "Edge",
+            "firefox": "Firefox",
+            "vscode": "Visual Studio Code",
+            "discord": "Discord",
+            "spotify": "Spotify",
+            "wt": "Terminal",
+            "notepad": "Notepad",
+            "calc": "Calculator",
+            "slack": "Slack",
+        }.get(alias, alias)
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Launch-app journey — start a known desktop app by alias. "
+                "Uses your installed Chrome/Edge/VS Code if present; does not drive a browser session."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="launch_app",
+                    args={"name": alias},
+                    summary=f"Launch {alias}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Starts a process",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="focus_window",
+                    args={"title_contains": focus},
+                    summary=f"Focus the {focus} window if it is open",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Brings an existing window to the foreground",),
+                ),
+            ],
+        )
+
     def _list_files_plan(self, goal: str) -> Plan:
         path = self._folder_path_from_goal(goal)
         return Plan(
@@ -1284,6 +1329,49 @@ class GoalPlanner:
                 "inspect temp",
             )
         )
+
+    @staticmethod
+    def _app_alias_from_goal(lower: str) -> str | None:
+        phrases = (
+            ("visual studio code", "vscode"),
+            ("google chrome", "chrome"),
+            ("microsoft edge", "edge"),
+            ("windows terminal", "wt"),
+            ("chrome", "chrome"),
+            ("msedge", "edge"),
+            ("firefox", "firefox"),
+            ("vscode", "vscode"),
+            ("discord", "discord"),
+            ("spotify", "spotify"),
+            ("notepad", "notepad"),
+            ("calculator", "calc"),
+            ("slack", "slack"),
+            ("edge", "edge"),
+        )
+        for phrase, alias in phrases:
+            if phrase in lower:
+                return alias
+        if re.search(r"\b(open|launch|start)\s+code\b", lower):
+            return "vscode"
+        return None
+
+    @staticmethod
+    def _looks_like_launch_app(lower: str) -> bool:
+        if any(
+            phrase in lower
+            for phrase in (
+                "in explorer",
+                "open folder",
+                "http://",
+                "https://",
+                "recycle",
+                "workday",
+            )
+        ):
+            return False
+        if not re.search(r"\b(open|launch|start)\b", lower):
+            return False
+        return GoalPlanner._app_alias_from_goal(lower) is not None
 
     @staticmethod
     def _looks_like_list_files(lower: str) -> bool:

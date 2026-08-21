@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 048 | [Everyday app launch aliases](documentation/048-app-launch-aliases.md) |
 | 047 | [Temp inspect and clean](documentation/047-temp-inspect-clean.md) |
 | 046 | [Find files by name](documentation/046-find-files-by-name.md) |
 | 045 | [Recycle Bin inspect and empty](documentation/045-recycle-bin-inspect-empty.md) |
