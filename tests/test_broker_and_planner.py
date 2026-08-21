@@ -166,6 +166,23 @@ def test_clean_temp_requires_hard_confirm():
     assert plan.has_hard_confirmation_steps is True
 
 
+def test_open_chrome_uses_launch_alias():
+    runtime = _runtime()
+    plan = runtime.planner.plan("open chrome")
+    assert [step.action for step in plan.steps] == ["launch_app", "focus_window"]
+    assert plan.steps[0].args["name"] == "chrome"
+    assert plan.steps[0].sensitivity == Sensitivity.MUTATE
+    assert not plan.has_hard_confirmation_steps
+
+
+def test_open_chrome_does_not_steal_explorer_or_workday():
+    runtime = _runtime()
+    explorer = runtime.planner.plan("open downloads in explorer")
+    assert explorer.steps[-1].action == "open_in_explorer"
+    workday = runtime.planner.plan("start my workday")
+    assert workday.steps[0].action == "list_running_apps"
+
+
 def test_run_tests_journey_uses_pytest():
     runtime = _runtime()
     plan = runtime.planner.plan("run pytest")
