@@ -1,0 +1,20 @@
+{
+  "id": "inspect-temp",
+  "name": "Inspect user TEMP",
+  "description": "Read-only listing of top-level files in the user TEMP folder.",
+  "goal_phrases": [
+    "inspect temp pack",
+    "run inspect temp pack"
+  ],
+  "rationale": "Workflow pack: inspect %TEMP% without deleting files.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "inspect_user_temp",
+      "args": {},
+      "summary": "List top-level files in user TEMP",
+      "sensitivity": "read",
+      "side_effects": ["Reads names and sizes in %TEMP%"]
+    }
+  ]
+}

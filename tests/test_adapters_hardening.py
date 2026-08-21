@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from arbora.adapters.desktop import APP_ALIASES, DesktopAdapter
-from arbora.adapters.files import FilesAdapter, resolve_user_path, search_files_by_name
+from arbora.adapters.files import FilesAdapter, resolve_user_path, search_files_by_name, user_temp_dir
 from arbora.adapters.powershell import ShellOutcome, ps_quote, run_powershell
 from arbora.adapters.terminal import TerminalAdapter
 
@@ -124,6 +124,34 @@ def test_search_files_by_name_matches_nested(tmp_path: Path):
     )
     assert listed.ok
     assert "invoice.pdf" in listed.output
+
+
+def test_inspect_user_temp_dry_run(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("TEMP", str(tmp_path))
+    adapter = FilesAdapter()
+    result = adapter.execute("inspect_user_temp", {}, dry_run=True)
+    assert result.ok
+    assert result.dry_run
+    assert "TEMP" in result.output
+
+
+def test_clean_user_temp_deletes_files_not_dirs(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("TEMP", str(tmp_path))
+    keep_dir = tmp_path / "keepme"
+    keep_dir.mkdir()
+    doomed = tmp_path / "junk.tmp"
+    doomed.write_text("x", encoding="utf-8")
+    preview = FilesAdapter().execute("inspect_user_temp", {}, dry_run=False)
+    assert preview.ok
+    assert "junk.tmp" in preview.output
+    dry = FilesAdapter().execute("clean_user_temp", {}, dry_run=True)
+    assert dry.ok and dry.dry_run
+    assert doomed.exists()
+    cleaned = FilesAdapter().execute("clean_user_temp", {}, dry_run=False)
+    assert cleaned.ok
+    assert not doomed.exists()
+    assert keep_dir.exists()
+    assert user_temp_dir() == tmp_path.resolve()
 
 
 def test_desktop_focus_requires_title():
