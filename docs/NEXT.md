@@ -46,7 +46,8 @@ Already in place:
 - desktop Voice listen that cannot double-fire and reports confidence;
 - open Downloads or Desktop in File Explorer behind the broker;
 - Recycle Bin inspect / empty;
-- depth-capped filename search (`find invoice.pdf in downloads`).
+- depth-capped filename search (`find invoice.pdf in downloads`);
+- user TEMP inspect, with clean only after hard confirmation.
 
 Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P11).
 
@@ -113,7 +114,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 34 | **Find files by name** | ✅ Depth-capped filename search behind the broker |
-| 35 | **Temp inspect / clean** | Preview user TEMP files, then delete only with hard confirmation |
+| 35 | **Temp inspect / clean** | ✅ Preview user TEMP files, then delete only with hard confirmation |
 | 36 | **Everyday app launch aliases** | Chrome / Edge / VS Code (and similar) resolve on `launch_app` |
 
 ## Non-negotiables (do not drift)
@@ -209,4 +210,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P10 plates 31–33 are done. **P11 #35** is next: inspect user TEMP, then clean only with hard confirmation.
+P11 plate 34 is done. **P11 #36** is next: everyday app launch aliases (Chrome / Edge / VS Code).

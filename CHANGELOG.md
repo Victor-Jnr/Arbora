@@ -124,6 +124,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/045-recycle-bin-inspect-empty.md` | Change doc for Recycle Bin inspect/empty |
 | `workflows/find-files.json` | Bundled depth-capped filename search pack |
 | `documentation/046-find-files-by-name.md` | Change doc for find-files journey |
+| `workflows/inspect-temp.json` | Bundled user TEMP inspect pack |
+| `documentation/047-temp-inspect-clean.md` | Change doc for TEMP inspect/clean |
+
+---
+
+## 047 — Temp inspect and clean (2026-08-21)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/files.py` | Added inspect/clean of top-level files in user TEMP |
+| `src/arbora/core/tool_catalog.py` | Allowed `inspect_user_temp` and `clean_user_temp` |
+| `src/arbora/core/planner.py` | Inspect-only vs inspect-then-clean with hard confirmation |
+| `src/arbora/cli/main.py` | Documented the example goals |
+| `workflows/inspect-temp.json` | Bundled inspect-temp pack |
+| `tests/test_adapters_hardening.py` | Inspect/clean against a fake TEMP |
+| `tests/test_broker_and_planner.py` | Read-only vs destructive TEMP plans |
+| `tests/test_workflow_packs.py` | Pack match for inspect-temp |
+| `docs/NEXT.md` | Marked P11 plate 35 done |
+| `documentation/047-temp-inspect-clean.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 047 |
+| `README.md` | Linked document 047 |
+| `CHANGELOG.md` | Added file roles and 047 section |
 
 ---
 

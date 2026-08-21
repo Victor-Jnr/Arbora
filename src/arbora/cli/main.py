@@ -61,6 +61,8 @@ Try goals like:
   save a note about tomorrow's standup
   list downloads
   find invoice.pdf in downloads
+  what's in temp
+  empty temp
   open downloads in explorer
   empty the recycle bin
   disk diagnose pack
