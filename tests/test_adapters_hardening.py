@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from arbora.adapters.desktop import APP_ALIASES, DesktopAdapter
+from arbora.adapters.desktop import APP_ALIASES, DesktopAdapter, resolve_launch_target
 from arbora.adapters.files import FilesAdapter, resolve_user_path, search_files_by_name, user_temp_dir
 from arbora.adapters.powershell import ShellOutcome, ps_quote, run_powershell
 from arbora.adapters.terminal import TerminalAdapter
@@ -86,6 +86,16 @@ def test_recycle_bin_empty_dry_run():
     assert result.ok
     assert "notepad.exe" in result.output
     assert APP_ALIASES["notepad"] == "notepad.exe"
+
+
+def test_resolve_launch_target_chrome_alias():
+    target = resolve_launch_target("chrome")
+    assert target.lower().endswith("chrome.exe")
+    assert APP_ALIASES["google chrome"] == "chrome.exe"
+    assert APP_ALIASES["vscode"] == "Code.exe"
+    dry = DesktopAdapter().execute("launch_app", {"name": "chrome"}, dry_run=True)
+    assert dry.ok and dry.dry_run
+    assert "chrome" in dry.output.lower()
 
 
 def test_search_by_name_requires_path():
