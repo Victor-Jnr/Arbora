@@ -15,6 +15,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "open_in_explorer",
             "inspect_recycle_bin",
             "empty_recycle_bin",
+            "search_by_name",
         }
     ),
     "terminal": frozenset({"run_powershell"}),

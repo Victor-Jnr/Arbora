@@ -122,6 +122,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/043-voice-listen-ux.md` | Change doc for Voice listen UX polish |
 | `documentation/044-open-folder-explorer.md` | Change doc for opening a folder in Explorer |
 | `documentation/045-recycle-bin-inspect-empty.md` | Change doc for Recycle Bin inspect/empty |
+| `workflows/find-files.json` | Bundled depth-capped filename search pack |
+| `documentation/046-find-files-by-name.md` | Change doc for find-files journey |
+
+---
+
+## 046 — Find files by name (2026-08-21)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/files.py` | Added `search_by_name` with depth/result caps and Windows-dir refusal |
+| `src/arbora/core/tool_catalog.py` | Allowed `files.search_by_name` |
+| `src/arbora/core/planner.py` | Added find/search-for filename journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/find-files.json` | Bundled find-files pack |
+| `tests/test_adapters_hardening.py` | Nested match, dry-run, missing path |
+| `tests/test_broker_and_planner.py` | Read-only find and glob plans |
+| `tests/test_workflow_packs.py` | Pack match for find-files |
+| `docs/NEXT.md` | Added P11; marked plate 34 done |
+| `documentation/046-find-files-by-name.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 046 |
+| `README.md` | Linked document 046 |
+| `CHANGELOG.md` | Added file roles and 046 section |
 
 ---
 

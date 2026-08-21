@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 046 | [Find files by name](documentation/046-find-files-by-name.md) |
 | 045 | [Recycle Bin inspect and empty](documentation/045-recycle-bin-inspect-empty.md) |
 | 044 | [Open folder in Explorer](documentation/044-open-folder-explorer.md) |
 | 043 | [Voice listen UX polish](documentation/043-voice-listen-ux.md) |

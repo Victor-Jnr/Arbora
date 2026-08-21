@@ -18,6 +18,7 @@ def test_load_bundled_workflow_packs():
     assert "git-status" in ids
     assert "largest-folders" in ids
     assert "pytest" in ids
+    assert "find-files" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -88,6 +89,16 @@ def test_pytest_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
     assert plan.steps[1].sensitivity.value == "mutate"
     assert all("pytest" in str(step.args.get("command", "")).lower() for step in plan.steps)
+
+
+def test_find_files_workflow_pack_matches():
+    pack = match_workflow_pack("run find files pack")
+    assert pack is not None
+    assert pack.id == "find-files"
+    plan = pack.to_plan("run find files pack")
+    assert plan is not None
+    assert plan.steps[0].action == "search_by_name"
+    assert plan.steps[0].sensitivity.value == "read"
 
 
 def test_git_status_workflow_pack_matches():

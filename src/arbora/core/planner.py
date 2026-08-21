@@ -103,6 +103,8 @@ class GoalPlanner:
             return self._open_explorer_plan(text)
         if self._looks_like_recycle_bin(lower):
             return self._recycle_bin_plan(text)
+        if self._looks_like_find_files(lower):
+            return self._find_files_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -739,6 +741,21 @@ class GoalPlanner:
             return str(Path.home() / "Desktop")
         return str(self._downloads_dir())
 
+    @staticmethod
+    def _search_pattern_from_goal(goal: str) -> str:
+        match = re.search(
+            r"(?:find|locate|search for)\s+(?:files?\s+)?(?:named\s+|called\s+)?(.+?)(?:\s+in\s+|\s+under\s+|$)",
+            goal,
+            flags=re.IGNORECASE,
+        )
+        if not match:
+            return "*"
+        token = match.group(1).strip().strip("\"'")
+        token = re.sub(r"\s+files?$", "", token, flags=re.IGNORECASE).strip()
+        if not token or token.lower() in {"file", "a file", "the file"}:
+            return "*"
+        return token
+
     def _open_explorer_plan(self, goal: str) -> Plan:
         path = self._folder_path_from_goal(goal)
         return Plan(
@@ -807,6 +824,29 @@ class GoalPlanner:
             goal=goal,
             rationale=rationale,
             steps=steps,
+        )
+
+    def _find_files_plan(self, goal: str) -> Plan:
+        path = self._folder_path_from_goal(goal)
+        pattern = self._search_pattern_from_goal(goal)
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Find-files journey — read-only name search with a depth cap. "
+                "Does not open, move, or delete files."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="search_by_name",
+                    args={"path": path, "pattern": pattern, "max_depth": 3, "max_results": 50},
+                    summary=f"Search {path} for names matching {pattern}",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads file names under the folder",),
+                )
+            ],
         )
 
     def _list_files_plan(self, goal: str) -> Plan:
@@ -1150,6 +1190,25 @@ class GoalPlanner:
     @staticmethod
     def _looks_like_recycle_bin(lower: str) -> bool:
         return "recycle bin" in lower or "recyclebin" in lower
+
+    @staticmethod
+    def _looks_like_find_files(lower: str) -> bool:
+        if "research" in lower or "recycle" in lower:
+            return False
+        if "search google" in lower or "search the web" in lower:
+            return False
+        if lower.startswith("find ") and " in " in lower:
+            return True
+        return any(
+            phrase in lower
+            for phrase in (
+                "find file",
+                "find files",
+                "search for",
+                "locate file",
+                "locate files",
+            )
+        )
 
     @staticmethod
     def _looks_like_list_files(lower: str) -> bool:

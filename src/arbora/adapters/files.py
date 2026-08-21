@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import os
 import shutil
 import sys
@@ -67,6 +68,76 @@ def plan_organise_moves(root: Path) -> list[tuple[str, Path, Path]]:
     return moves
 
 
+DEFAULT_SEARCH_MAX_DEPTH = 3
+DEFAULT_SEARCH_MAX_RESULTS = 50
+
+
+def is_protected_search_root(path: Path) -> bool:
+    """Refuse walks under the Windows directory."""
+    windir = Path(os.environ.get("WINDIR", r"C:\Windows")).expanduser().resolve(strict=False)
+    try:
+        resolved = path.expanduser().resolve(strict=False)
+    except OSError:
+        return True
+    if resolved == windir:
+        return True
+    return windir in resolved.parents
+
+
+def _is_drive_root(path: Path) -> bool:
+    resolved = path.expanduser().resolve(strict=False)
+    return resolved.parent == resolved
+
+
+def _name_glob(pattern: str) -> str:
+    raw = (pattern or "*").strip() or "*"
+    if not any(char in raw for char in "*?["):
+        return f"*{raw}*"
+    return raw
+
+
+def search_files_by_name(
+    root: Path,
+    pattern: str,
+    *,
+    max_depth: int = DEFAULT_SEARCH_MAX_DEPTH,
+    max_results: int = DEFAULT_SEARCH_MAX_RESULTS,
+) -> list[Path]:
+    """Match file names under root, capped so C:\\ walks cannot hang the broker."""
+    if max_depth < 0 or max_results < 1:
+        return []
+    if is_protected_search_root(root):
+        return []
+    if not root.exists() or not root.is_dir():
+        return []
+    depth_cap = 1 if _is_drive_root(root) else max_depth
+    needle = _name_glob(pattern).lower()
+    matches: list[Path] = []
+
+    def walk(current: Path, depth: int) -> None:
+        if len(matches) >= max_results:
+            return
+        try:
+            entries = list(current.iterdir())
+        except (PermissionError, OSError):
+            return
+        for entry in entries:
+            if len(matches) >= max_results:
+                return
+            try:
+                if entry.is_symlink():
+                    continue
+                if entry.is_file() and fnmatch.fnmatch(entry.name.lower(), needle):
+                    matches.append(entry)
+                elif entry.is_dir() and depth < depth_cap:
+                    walk(entry, depth + 1)
+            except OSError:
+                continue
+
+    walk(root, 0)
+    return matches
+
+
 class FilesAdapter:
     name = "files"
 
@@ -111,6 +182,31 @@ class FilesAdapter:
             return self._inspect_recycle_bin(dry_run=dry_run)
         if action == "empty_recycle_bin":
             return self._empty_recycle_bin(dry_run=dry_run)
+        if action == "search_by_name":
+            raw = str(args.get("path", "")).strip()
+            if not raw:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="search_by_name requires args.path",
+                    dry_run=dry_run,
+                )
+            try:
+                max_depth = int(args.get("max_depth", DEFAULT_SEARCH_MAX_DEPTH) or DEFAULT_SEARCH_MAX_DEPTH)
+            except (TypeError, ValueError):
+                max_depth = DEFAULT_SEARCH_MAX_DEPTH
+            try:
+                max_results = int(args.get("max_results", DEFAULT_SEARCH_MAX_RESULTS) or DEFAULT_SEARCH_MAX_RESULTS)
+            except (TypeError, ValueError):
+                max_results = DEFAULT_SEARCH_MAX_RESULTS
+            return self._search_by_name(
+                resolve_user_path(raw),
+                str(args.get("pattern", "*")),
+                max_depth=max_depth,
+                max_results=max_results,
+                dry_run=dry_run,
+            )
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -175,6 +271,59 @@ class FilesAdapter:
             ok=True,
             output="\n".join(lines) if lines else "(empty)",
         )
+
+    def _search_by_name(
+        self,
+        path: Path,
+        pattern: str,
+        *,
+        max_depth: int,
+        max_results: int,
+        dry_run: bool,
+    ) -> StepResult:
+        glob = _name_glob(pattern)
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would search {path} for names matching {glob} "
+                    f"(max_depth={max_depth}, max_results={max_results})"
+                ),
+                dry_run=True,
+            )
+        if is_protected_search_root(path):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Refusing to search the Windows directory: {path}",
+            )
+        if not path.exists():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Path does not exist: {path}",
+            )
+        if not path.is_dir():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Not a directory: {path}",
+            )
+        matches = search_files_by_name(
+            path, pattern, max_depth=max_depth, max_results=max_results
+        )
+        lines = [f"Search in {path} for {glob} (depth ≤ {max_depth}, cap {max_results})"]
+        if not matches:
+            lines.append("(no matches)")
+        else:
+            lines.extend(str(item) for item in matches)
+            if len(matches) >= max_results:
+                lines.append(f"... stopped at {max_results} matches")
+        return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))
 
     def _ensure_directory(self, path: Path, *, dry_run: bool) -> StepResult:
         if not str(path):

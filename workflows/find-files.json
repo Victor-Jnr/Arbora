@@ -1,0 +1,25 @@
+{
+  "id": "find-files",
+  "name": "Find files by name",
+  "description": "Read-only filename search under Downloads, depth-capped.",
+  "goal_phrases": [
+    "find files pack",
+    "run find files pack"
+  ],
+  "rationale": "Workflow pack: search Downloads filenames without opening or deleting files.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "search_by_name",
+      "args": {
+        "path": "~/Downloads",
+        "pattern": "*",
+        "max_depth": 3,
+        "max_results": 50
+      },
+      "summary": "Search Downloads for matching file names",
+      "sensitivity": "read",
+      "side_effects": ["Reads file names under Downloads"]
+    }
+  ]
+}
