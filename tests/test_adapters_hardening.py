@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from arbora.adapters.desktop import APP_ALIASES, DesktopAdapter
-from arbora.adapters.files import FilesAdapter, resolve_user_path
+from arbora.adapters.files import FilesAdapter, resolve_user_path, search_files_by_name
 from arbora.adapters.powershell import ShellOutcome, ps_quote, run_powershell
 from arbora.adapters.terminal import TerminalAdapter
 
@@ -86,6 +86,44 @@ def test_recycle_bin_empty_dry_run():
     assert result.ok
     assert "notepad.exe" in result.output
     assert APP_ALIASES["notepad"] == "notepad.exe"
+
+
+def test_search_by_name_requires_path():
+    adapter = FilesAdapter()
+    result = adapter.execute("search_by_name", {"pattern": "*.txt"}, dry_run=True)
+    assert result.ok is False
+    assert "path" in (result.error or "").lower()
+
+
+def test_search_by_name_dry_run(tmp_path: Path):
+    adapter = FilesAdapter()
+    result = adapter.execute(
+        "search_by_name",
+        {"path": str(tmp_path), "pattern": "*.pdf"},
+        dry_run=True,
+    )
+    assert result.ok
+    assert result.dry_run
+    assert "*.pdf" in result.output
+
+
+def test_search_files_by_name_matches_nested(tmp_path: Path):
+    (tmp_path / "skip.txt").write_text("a", encoding="utf-8")
+    nested = tmp_path / "sub"
+    nested.mkdir()
+    target = nested / "invoice.pdf"
+    target.write_text("b", encoding="utf-8")
+    hits = search_files_by_name(tmp_path, "invoice", max_depth=2)
+    assert target in hits
+    shallow = search_files_by_name(tmp_path, "invoice", max_depth=0)
+    assert target not in shallow
+    listed = FilesAdapter().execute(
+        "search_by_name",
+        {"path": str(tmp_path), "pattern": "invoice.pdf"},
+        dry_run=False,
+    )
+    assert listed.ok
+    assert "invoice.pdf" in listed.output
 
 
 def test_desktop_focus_requires_title():

@@ -45,9 +45,10 @@ Already in place:
 - GitHub Actions pytest + `arbora validate` on pull requests to `main`;
 - desktop Voice listen that cannot double-fire and reports confidence;
 - open Downloads or Desktop in File Explorer behind the broker;
-- Recycle Bin inspect, with empty only after hard confirmation.
+- Recycle Bin inspect / empty;
+- depth-capped filename search (`find invoice.pdf in downloads`).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P10).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P11).
 
 ---
 
@@ -106,6 +107,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 31 | **Voice listen UX** | ✅ Desktop Voice disables while listening and shows recognition confidence |
 | 32 | **Open folder in Explorer** | ✅ Open Downloads (or a named folder) in Explorer behind the broker |
 | 33 | **Recycle bin inspect / empty** | ✅ Preview Recycle Bin, then empty only with hard confirmation |
+
+### P11 — Stage 3 search, cleanup, and everyday apps
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 34 | **Find files by name** | ✅ Depth-capped filename search behind the broker |
+| 35 | **Temp inspect / clean** | Preview user TEMP files, then delete only with hard confirmation |
+| 36 | **Everyday app launch aliases** | Chrome / Edge / VS Code (and similar) resolve on `launch_app` |
 
 ## Non-negotiables (do not drift)
 
@@ -200,4 +209,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P9 plates 28–30 are done. P10 plates 31–33 are done. Run `arbora validate` on tester machines, then continue Stage 3 from the root README.
+P10 plates 31–33 are done. **P11 #35** is next: inspect user TEMP, then clean only with hard confirmation.

@@ -11,6 +11,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
+| 046 | [Find files by name](046-find-files-by-name.md) | 2026-08-21 | Depth-capped filename search behind the broker |
 | 045 | [Recycle Bin inspect and empty](045-recycle-bin-inspect-empty.md) | 2026-08-20 | Preview Recycle Bin; empty needs hard confirmation |
 | 044 | [Open folder in Explorer](044-open-folder-explorer.md) | 2026-08-20 | List then open a folder in File Explorer |
 | 043 | [Voice listen UX polish](043-voice-listen-ux.md) | 2026-08-20 | Disable Voice while listening; culture + confidence |
