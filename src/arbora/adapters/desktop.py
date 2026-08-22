@@ -9,6 +9,7 @@ from typing import Any
 
 from arbora.adapters.powershell import ps_quote, require_windows, run_powershell
 from arbora.core.types import StepResult, new_id
+from arbora.voice.windows import sanitize_speech_text, speak_text
 
 # Common friendly names → launch targets (Start-Process / Appx aliases).
 APP_ALIASES: dict[str, str] = {
@@ -270,6 +271,8 @@ class DesktopAdapter:
             )
         if action == "inspect_clipboard":
             return self._inspect_clipboard(reveal=_clipboard_arg_reveal(args), dry_run=dry_run)
+        if action == "speak_text":
+            return self._speak_text(str(args.get("text", "")), dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -438,3 +441,33 @@ class DesktopAdapter:
             ok=True,
             output=format_clipboard_report(snapshot, reveal=reveal),
         )
+
+    def _speak_text(self, text: str, *, dry_run: bool) -> StepResult:
+        spoken = sanitize_speech_text(text)
+        if not spoken:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="speak_text requires args.text",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would speak: {spoken}",
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        result = speak_text(spoken)
+        if not result.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=result.error or "Spoken output failed",
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=f"Spoke: {result.text}")

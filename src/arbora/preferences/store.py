@@ -25,6 +25,7 @@ class UserPreferences:
     downloads_folder: str = ""
     notes_folder: str = ""
     run_due_schedules_on_start: bool = False
+    spoken_confirmations: bool = False
 
     def resolved_workday_folder(self) -> Path:
         if self.workday_folder.strip():
@@ -62,6 +63,7 @@ def preferences_to_dict(prefs: UserPreferences) -> dict[str, Any]:
         "downloads_folder": prefs.downloads_folder,
         "notes_folder": prefs.notes_folder,
         "run_due_schedules_on_start": prefs.run_due_schedules_on_start,
+        "spoken_confirmations": prefs.spoken_confirmations,
     }
 
 
@@ -82,6 +84,7 @@ def preferences_from_dict(raw: dict[str, Any] | None) -> UserPreferences:
         downloads_folder=str(raw.get("downloads_folder", "")),
         notes_folder=str(raw.get("notes_folder", "")),
         run_due_schedules_on_start=bool(raw.get("run_due_schedules_on_start", False)),
+        spoken_confirmations=bool(raw.get("spoken_confirmations", False)),
     )
 
 
@@ -118,9 +121,11 @@ def set_preference(memory: LocalMemoryStore, key: str, value: str) -> UserPrefer
         prefs.notes_folder = value.strip()
     elif normalized in {"run_due_schedules_on_start", "run_schedules_on_start", "schedules_on_start"}:
         prefs.run_due_schedules_on_start = value.strip().lower() in {"1", "true", "on", "yes", "y"}
+    elif normalized in {"spoken_confirmations", "spoken_confirmation", "speak_confirmations"}:
+        prefs.spoken_confirmations = value.strip().lower() in {"1", "true", "on", "yes", "y"}
     else:
         raise ValueError(
-            f"Unknown preference '{key}'. Use dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, or run_schedules_on_start."
+            f"Unknown preference '{key}'. Use dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, run_schedules_on_start, or spoken_confirmations."
         )
     save_preferences(memory, prefs)
     return prefs
@@ -143,4 +148,5 @@ def preference_rows(prefs: UserPreferences) -> list[str]:
         f"downloads_folder = {downloads}",
         f"notes_folder = {notes}",
         f"run_schedules_on_start = {'on' if prefs.run_due_schedules_on_start else 'off'}",
+        f"spoken_confirmations = {'on' if prefs.spoken_confirmations else 'off'}",
     ]

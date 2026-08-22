@@ -22,6 +22,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-temp" in ids
     assert "list-recent-downloads" in ids
     assert "inspect-clipboard" in ids
+    assert "speak-confirmation" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -133,6 +134,16 @@ def test_inspect_clipboard_workflow_pack_matches():
     assert plan.steps[0].action == "inspect_clipboard"
     assert plan.steps[0].args.get("reveal") is False
     assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_speak_confirmation_workflow_pack_matches():
+    pack = match_workflow_pack("run speak confirmation pack")
+    assert pack is not None
+    assert pack.id == "speak-confirmation"
+    plan = pack.to_plan("run speak confirmation pack")
+    assert plan is not None
+    assert plan.steps[0].action == "speak_text"
+    assert plan.steps[0].sensitivity.value == "mutate"
 
 
 def test_git_status_workflow_pack_matches():

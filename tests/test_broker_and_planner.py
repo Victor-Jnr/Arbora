@@ -222,6 +222,29 @@ def test_show_clipboard_text_sets_reveal():
     assert listed.steps[0].action == "list_directory"
 
 
+def test_read_this_back_is_speak_not_workday():
+    runtime = _runtime()
+    plan = runtime.planner.plan("read this back: start my workday")
+    assert [step.action for step in plan.steps] == ["speak_text"]
+    assert plan.steps[0].sensitivity == Sensitivity.MUTATE
+    assert "start my workday" in plan.steps[0].args["text"]
+    assert not plan.has_hard_confirmation_steps
+    workday = runtime.planner.plan("start my workday")
+    assert workday.steps[0].action == "list_running_apps"
+
+
+def test_spoken_confirmations_preference_prepends_readback(tmp_path: Path):
+    from arbora.preferences.store import set_preference
+
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    set_preference(runtime.memory, "spoken_confirmations", "on")
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    plan = runtime2.planner.plan("inspect clipboard")
+    assert [step.action for step in plan.steps] == ["speak_text", "inspect_clipboard"]
+    assert plan.steps[0].sensitivity == Sensitivity.MUTATE
+    assert "inspect" in plan.steps[0].args["text"].lower() or "clipboard" in plan.steps[0].args["text"].lower()
+
+
 def test_run_tests_journey_uses_pytest():
     runtime = _runtime()
     plan = runtime.planner.plan("run pytest")
