@@ -116,6 +116,8 @@ class GoalPlanner:
             return self._temp_plan(text)
         if self._looks_like_launch_app(lower):
             return self._launch_app_plan(text)
+        if self._looks_like_clipboard(lower):
+            return self._clipboard_plan(text)
         if self._looks_like_recent_files(lower):
             return self._recent_files_plan(text)
         if self._looks_like_list_files(lower):
@@ -971,6 +973,38 @@ class GoalPlanner:
             ],
         )
 
+    def _clipboard_plan(self, goal: str) -> Plan:
+        lower = goal.lower()
+        reveal = any(
+            word in lower
+            for word in ("show", "reveal", "read", "paste", "contents", "text")
+        )
+        summary = (
+            "Show a short clipboard text preview (secrets still withheld)"
+            if reveal
+            else "Inspect clipboard type and length (content withheld)"
+        )
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Clipboard journey — read-only inspect. "
+                "Default is type and length only. A short preview needs an explicit show request, "
+                "and password/token-like text is still withheld."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_clipboard",
+                    args={"reveal": reveal},
+                    summary=summary,
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads the Windows clipboard",),
+                )
+            ],
+        )
+
     def _list_files_plan(self, goal: str) -> Plan:
         path = self._folder_path_from_goal(goal)
         return Plan(
@@ -1396,6 +1430,10 @@ class GoalPlanner:
         if not re.search(r"\b(open|launch|start)\b", lower):
             return False
         return GoalPlanner._app_alias_from_goal(lower) is not None
+
+    @staticmethod
+    def _looks_like_clipboard(lower: str) -> bool:
+        return "clipboard" in lower
 
     @staticmethod
     def _looks_like_recent_files(lower: str) -> bool:

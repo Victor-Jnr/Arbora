@@ -6,7 +6,14 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from arbora.adapters.desktop import APP_ALIASES, DesktopAdapter, resolve_launch_target
+from arbora.adapters.desktop import (
+    APP_ALIASES,
+    DesktopAdapter,
+    clipboard_looks_secret,
+    format_clipboard_report,
+    parse_clipboard_snapshot,
+    resolve_launch_target,
+)
 from arbora.adapters.files import FilesAdapter, list_recent_files, resolve_user_path, search_files_by_name, user_temp_dir
 from arbora.adapters.powershell import ShellOutcome, ps_quote, run_powershell
 from arbora.adapters.terminal import TerminalAdapter
@@ -210,6 +217,49 @@ def test_desktop_focus_requires_title():
     result = adapter.execute("focus_window", {}, dry_run=True)
     assert result.ok is False
     assert "title_contains" in (result.error or "")
+
+
+def test_clipboard_looks_secret_markers():
+    assert clipboard_looks_secret("password=hunter2") is True
+    assert clipboard_looks_secret("ghp_abcdefghijklmnopqrstuvwxyz012345") is True
+    assert clipboard_looks_secret("sk-abcdefghijklmnopqrstuvwxyz") is True
+    assert clipboard_looks_secret("meeting notes for Tuesday") is False
+
+
+def test_inspect_clipboard_dry_run():
+    adapter = DesktopAdapter()
+    withheld = adapter.execute("inspect_clipboard", {}, dry_run=True)
+    assert withheld.ok and withheld.dry_run
+    assert "withheld" in withheld.output.lower()
+    preview = adapter.execute("inspect_clipboard", {"reveal": True}, dry_run=True)
+    assert preview.ok and preview.dry_run
+    assert "preview" in preview.output.lower()
+
+
+def test_inspect_clipboard_withholds_secret_even_when_revealed():
+    snapshot = parse_clipboard_snapshot("KIND=text\nLENGTH=16\nTEXT_BEGIN\npassword=hunter2")
+    report = format_clipboard_report(snapshot, reveal=True)
+    assert "password=hunter2" not in report
+    assert "secret" in report.lower()
+
+
+def test_inspect_clipboard_preview_when_safe():
+    snapshot = parse_clipboard_snapshot("KIND=text\nLENGTH=12\nTEXT_BEGIN\nhello world!")
+    report = format_clipboard_report(snapshot, reveal=True)
+    assert "hello world!" in report
+    meta = format_clipboard_report(snapshot, reveal=False)
+    assert "hello world!" not in meta
+    assert "12" in meta
+
+
+def test_inspect_clipboard_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="KIND=empty\nLENGTH=0", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_clipboard", {}, dry_run=False)
+    assert result.ok
+    assert "empty" in result.output.lower()
 
 
 def test_terminal_timeout_surface():

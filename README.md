@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 050 | [Clipboard inspect](documentation/050-clipboard-inspect.md) |
 | 049 | [Recent files in Downloads](documentation/049-recent-files-downloads.md) |
 | 048 | [Everyday app launch aliases](documentation/048-app-launch-aliases.md) |
 | 047 | [Temp inspect and clean](documentation/047-temp-inspect-clean.md) |

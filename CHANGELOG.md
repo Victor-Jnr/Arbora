@@ -129,6 +129,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/048-app-launch-aliases.md` | Change doc for everyday app launch aliases |
 | `workflows/list-recent-downloads.json` | Bundled newest-first Downloads listing pack |
 | `documentation/049-recent-files-downloads.md` | Change doc for recent-files journey |
+| `workflows/inspect-clipboard.json` | Bundled clipboard type/length inspect pack |
+| `documentation/050-clipboard-inspect.md` | Change doc for clipboard inspect |
+
+---
+
+## 050 — Clipboard inspect (2026-08-22)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_clipboard` with secret withholding |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_clipboard` |
+| `src/arbora/core/planner.py` | Inspect vs show-text clipboard journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-clipboard.json` | Bundled inspect-clipboard pack |
+| `tests/test_adapters_hardening.py` | Secret heuristic, dry-run, mocked empty clipboard |
+| `tests/test_broker_and_planner.py` | Read-only inspect; show sets reveal; list files still wins |
+| `tests/test_workflow_packs.py` | Pack match for inspect-clipboard |
+| `docs/NEXT.md` | Marked P12 plate 38 done |
+| `documentation/050-clipboard-inspect.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 050 |
+| `README.md` | Linked document 050 |
+| `CHANGELOG.md` | Added file roles and 050 section |
 
 ---
 

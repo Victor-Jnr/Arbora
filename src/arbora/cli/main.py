@@ -62,6 +62,7 @@ Try goals like:
   list downloads
   find invoice.pdf in downloads
   recent files in downloads
+  inspect clipboard
   what's in temp
   empty temp
   open chrome

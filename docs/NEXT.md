@@ -50,6 +50,7 @@ Already in place:
 - user TEMP inspect, with clean only after hard confirmation;
 - everyday app aliases so “open chrome” launches the installed browser.
 - newest-first listing of recent files in Downloads.
+- clipboard inspect (type/length; secrets withheld).
 
 Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P12).
 
@@ -124,7 +125,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 37 | **Recent files in Downloads** | ✅ Newest-first listing behind the broker |
-| 38 | **Clipboard inspect** | Type/length (optional preview); secrets withheld |
+| 38 | **Clipboard inspect** | ✅ Type/length (optional preview); secrets withheld |
 | 39 | **Opt-in spoken confirmations** | TTS read-back of plan steps; broker-gated; no always-on mic |
 
 ## Non-negotiables (do not drift)
@@ -220,4 +221,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P12 plate 37 is done. Next: plate 38 clipboard inspect (read-only type/length, secrets withheld).
+P12 plates 37–38 are done. Next: plate 39 opt-in spoken confirmations (TTS read-back, still broker-gated, no always-on mic).
