@@ -8,6 +8,7 @@ import shutil
 import sys
 import tempfile
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +72,9 @@ def plan_organise_moves(root: Path) -> list[tuple[str, Path, Path]]:
 
 DEFAULT_SEARCH_MAX_DEPTH = 3
 DEFAULT_SEARCH_MAX_RESULTS = 50
+DEFAULT_RECENT_MAX_DEPTH = 2
+DEFAULT_RECENT_MAX_RESULTS = 20
+DEFAULT_RECENT_WALK_CAP = 2000
 
 
 def is_protected_search_root(path: Path) -> bool:
@@ -137,6 +141,57 @@ def search_files_by_name(
 
     walk(root, 0)
     return matches
+
+
+def _format_size(size: int) -> str:
+    if size < 1024:
+        return f"{size} B"
+    if size < 1024 * 1024:
+        return f"{round(size / 1024, 1)} KB"
+    return f"{round(size / (1024 * 1024), 2)} MB"
+
+
+def list_recent_files(
+    root: Path,
+    *,
+    max_depth: int = DEFAULT_RECENT_MAX_DEPTH,
+    max_results: int = DEFAULT_RECENT_MAX_RESULTS,
+    walk_cap: int = DEFAULT_RECENT_WALK_CAP,
+) -> list[tuple[Path, float, int]]:
+    """Return (path, mtime, size) for newest files under root, depth-capped."""
+    if max_depth < 0 or max_results < 1 or walk_cap < 1:
+        return []
+    if is_protected_search_root(root):
+        return []
+    if not root.exists() or not root.is_dir():
+        return []
+    depth_cap = 1 if _is_drive_root(root) else max_depth
+    found: list[tuple[Path, float, int]] = []
+
+    def walk(current: Path, depth: int) -> None:
+        if len(found) >= walk_cap:
+            return
+        try:
+            entries = list(current.iterdir())
+        except (PermissionError, OSError):
+            return
+        for entry in entries:
+            if len(found) >= walk_cap:
+                return
+            try:
+                if entry.is_symlink():
+                    continue
+                if entry.is_file():
+                    stat = entry.stat()
+                    found.append((entry, stat.st_mtime, stat.st_size))
+                elif entry.is_dir() and depth < depth_cap:
+                    walk(entry, depth + 1)
+            except OSError:
+                continue
+
+    walk(root, 0)
+    found.sort(key=lambda row: row[1], reverse=True)
+    return found[:max_results]
 
 
 def user_temp_dir() -> Path:
@@ -235,6 +290,30 @@ class FilesAdapter:
             return self._search_by_name(
                 resolve_user_path(raw),
                 str(args.get("pattern", "*")),
+                max_depth=max_depth,
+                max_results=max_results,
+                dry_run=dry_run,
+            )
+        if action == "list_recent":
+            raw = str(args.get("path", "")).strip()
+            if not raw:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="list_recent requires args.path",
+                    dry_run=dry_run,
+                )
+            try:
+                max_depth = int(args.get("max_depth", DEFAULT_RECENT_MAX_DEPTH) or DEFAULT_RECENT_MAX_DEPTH)
+            except (TypeError, ValueError):
+                max_depth = DEFAULT_RECENT_MAX_DEPTH
+            try:
+                max_results = int(args.get("max_results", DEFAULT_RECENT_MAX_RESULTS) or DEFAULT_RECENT_MAX_RESULTS)
+            except (TypeError, ValueError):
+                max_results = DEFAULT_RECENT_MAX_RESULTS
+            return self._list_recent(
+                resolve_user_path(raw),
                 max_depth=max_depth,
                 max_results=max_results,
                 dry_run=dry_run,
@@ -355,6 +434,62 @@ class FilesAdapter:
             lines.extend(str(item) for item in matches)
             if len(matches) >= max_results:
                 lines.append(f"... stopped at {max_results} matches")
+        return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))
+
+    def _list_recent(
+        self,
+        path: Path,
+        *,
+        max_depth: int,
+        max_results: int,
+        dry_run: bool,
+    ) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would list the newest files in {path} "
+                    f"(max_depth={max_depth}, max_results={max_results})"
+                ),
+                dry_run=True,
+            )
+        if is_protected_search_root(path):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Refusing to list recent files in the Windows directory: {path}",
+            )
+        if not path.exists():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Path does not exist: {path}",
+            )
+        if not path.is_dir():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Not a directory: {path}",
+            )
+        rows = list_recent_files(path, max_depth=max_depth, max_results=max_results)
+        header = (
+            f"Newest files in {path} (mtime descending, depth ≤ {max_depth}, cap {max_results})"
+        )
+        lines = [header]
+        if not rows:
+            lines.append("(no files)")
+        else:
+            for item, mtime, size in rows:
+                try:
+                    rel = item.relative_to(path)
+                except ValueError:
+                    rel = Path(item.name)
+                stamp = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+                lines.append(f"  {stamp}  {_format_size(size):>8}  {rel}")
         return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))
 
     def _ensure_directory(self, path: Path, *, dry_run: bool) -> StepResult:
