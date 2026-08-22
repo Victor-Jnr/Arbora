@@ -20,6 +20,7 @@ def test_load_bundled_workflow_packs():
     assert "pytest" in ids
     assert "find-files" in ids
     assert "inspect-temp" in ids
+    assert "list-recent-downloads" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -109,6 +110,16 @@ def test_inspect_temp_workflow_pack_matches():
     plan = pack.to_plan("run inspect temp pack")
     assert plan is not None
     assert plan.steps[0].action == "inspect_user_temp"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_list_recent_downloads_workflow_pack_matches():
+    pack = match_workflow_pack("run recent files pack")
+    assert pack is not None
+    assert pack.id == "list-recent-downloads"
+    plan = pack.to_plan("run recent files pack")
+    assert plan is not None
+    assert plan.steps[0].action == "list_recent"
     assert plan.steps[0].sensitivity.value == "read"
 
 
