@@ -21,6 +21,7 @@ def test_load_bundled_workflow_packs():
     assert "find-files" in ids
     assert "inspect-temp" in ids
     assert "list-recent-downloads" in ids
+    assert "inspect-clipboard" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -120,6 +121,17 @@ def test_list_recent_downloads_workflow_pack_matches():
     plan = pack.to_plan("run recent files pack")
     assert plan is not None
     assert plan.steps[0].action == "list_recent"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_clipboard_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect clipboard pack")
+    assert pack is not None
+    assert pack.id == "inspect-clipboard"
+    plan = pack.to_plan("run inspect clipboard pack")
+    assert plan is not None
+    assert plan.steps[0].action == "inspect_clipboard"
+    assert plan.steps[0].args.get("reveal") is False
     assert plan.steps[0].sensitivity.value == "read"
 
 

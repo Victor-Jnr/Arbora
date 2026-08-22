@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -90,6 +91,170 @@ def resolve_launch_target(name: str) -> str:
     return exe
 
 
+CLIPBOARD_PREVIEW_CHARS = 120
+
+_SECRET_MARKERS = (
+    "password=",
+    "passwd=",
+    "pwd=",
+    "secret=",
+    "api_key",
+    "apikey",
+    "access_token",
+    "refresh_token",
+    "bearer ",
+    "authorization:",
+    "private_key",
+    "-----begin",
+    "ghp_",
+    "github_pat_",
+    "glpat-",
+    "xoxb-",
+    "xoxp-",
+    "sk-ant-",
+    "sk-proj-",
+    "akia",
+)
+
+
+def clipboard_looks_secret(text: str) -> bool:
+    """True when clipboard text looks like a password, token, or key."""
+    if not text or not text.strip():
+        return False
+    lower = text.lower()
+    if any(marker in lower for marker in _SECRET_MARKERS):
+        return True
+    if re.search(r"(?i)(^|[\s\"'=])sk-[A-Za-z0-9]{10,}", text):
+        return True
+    stripped = text.strip()
+    if stripped.count(".") == 2 and len(stripped) >= 40 and stripped.startswith("eyJ"):
+        return True
+    compact = "".join(stripped.split())
+    if len(compact) >= 32 and all(char in "0123456789abcdefABCDEF" for char in compact):
+        return True
+    return False
+
+
+def parse_clipboard_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse the structured Get-Clipboard snapshot written by PowerShell."""
+    kind = "empty"
+    length = 0
+    width: int | None = None
+    height: int | None = None
+    files: list[str] = []
+    capturing_text = False
+    text_lines: list[str] = []
+    for line in (stdout or "").splitlines():
+        if capturing_text:
+            text_lines.append(line)
+            continue
+        if line == "TEXT_BEGIN":
+            capturing_text = True
+            continue
+        if line.startswith("KIND="):
+            kind = line.split("=", 1)[1].strip().lower() or "empty"
+        elif line.startswith("LENGTH="):
+            try:
+                length = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                length = 0
+        elif line.startswith("WIDTH="):
+            try:
+                width = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                width = None
+        elif line.startswith("HEIGHT="):
+            try:
+                height = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                height = None
+        elif line.startswith("FILE="):
+            files.append(line.split("=", 1)[1])
+    text = "\n".join(text_lines)
+    if kind == "text" and not length:
+        length = len(text)
+    if kind == "files" and not length:
+        length = len(files)
+    return {
+        "kind": kind,
+        "length": length,
+        "width": width,
+        "height": height,
+        "files": files,
+        "text": text,
+    }
+
+
+def format_clipboard_report(snapshot: dict[str, Any], *, reveal: bool) -> str:
+    kind = str(snapshot.get("kind") or "empty")
+    if kind == "empty":
+        return "Clipboard is empty."
+    if kind == "image":
+        width = snapshot.get("width")
+        height = snapshot.get("height")
+        size = f" {width}x{height}" if width and height else ""
+        return f"Clipboard holds an image{size}. Pixel data is not shown."
+    if kind == "files":
+        files = [str(item) for item in snapshot.get("files") or []]
+        count = int(snapshot.get("length") or len(files))
+        lines = [f"Clipboard holds {count} file path(s)."]
+        lines.extend(f"  {name}" for name in files[:20])
+        return "\n".join(lines)
+    length = int(snapshot.get("length") or 0)
+    text = str(snapshot.get("text") or "")
+    if clipboard_looks_secret(text):
+        return (
+            f"Clipboard holds text ({length} chars). "
+            "Content withheld because it looks like a secret (password, token, or key)."
+        )
+    if not reveal:
+        return (
+            f"Clipboard holds text ({length} chars). "
+            "Content withheld; ask to show clipboard text for a short preview."
+        )
+    preview = text.replace("\r\n", "\n")
+    if len(preview) > CLIPBOARD_PREVIEW_CHARS:
+        preview = preview[:CLIPBOARD_PREVIEW_CHARS] + "…"
+    return f"Clipboard text ({length} chars):\n{preview}"
+
+
+def _clipboard_arg_reveal(args: dict[str, Any]) -> bool:
+    value = args.get("reveal", False)
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on", "y"}
+
+
+_CLIPBOARD_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { $drop = Get-Clipboard -Format FileDropList } catch { $drop = $null }; "
+    "if ($drop) { "
+    "  $names = @($drop | ForEach-Object { $_.ToString() }); "
+    "  Write-Output 'KIND=files'; "
+    "  Write-Output ('LENGTH=' + $names.Count); "
+    "  $names | Select-Object -First 20 | ForEach-Object { Write-Output ('FILE=' + $_) }; "
+    "} else { "
+    "  try { $img = Get-Clipboard -Format Image } catch { $img = $null }; "
+    "  if ($img) { "
+    "    Write-Output 'KIND=image'; "
+    "    Write-Output ('WIDTH=' + $img.Width); "
+    "    Write-Output ('HEIGHT=' + $img.Height); "
+    "  } else { "
+    "    try { $text = Get-Clipboard -Raw } catch { $text = $null }; "
+    "    if ($null -ne $text -and [string]$text -ne '') { "
+    "      Write-Output 'KIND=text'; "
+    "      Write-Output ('LENGTH=' + ([string]$text).Length); "
+    "      Write-Output 'TEXT_BEGIN'; "
+    "      Write-Output ([string]$text); "
+    "    } else { "
+    "      Write-Output 'KIND=empty'; "
+    "      Write-Output 'LENGTH=0'; "
+    "    } "
+    "  } "
+    "}"
+)
+
+
 class DesktopAdapter:
     name = "desktop"
 
@@ -103,6 +268,8 @@ class DesktopAdapter:
                 str(args.get("title_contains", args.get("name", ""))),
                 dry_run=dry_run,
             )
+        if action == "inspect_clipboard":
+            return self._inspect_clipboard(reveal=_clipboard_arg_reveal(args), dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -238,3 +405,36 @@ class DesktopAdapter:
                 error=outcome.error or f"Failed to focus '{needle}'",
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=outcome.stdout or f"Focused '{needle}'")
+
+    def _inspect_clipboard(self, *, reveal: bool, dry_run: bool) -> StepResult:
+        if dry_run:
+            if reveal:
+                output = (
+                    "[dry-run] Would inspect the clipboard and show a short text preview "
+                    "unless it looks like a secret"
+                )
+            else:
+                output = "[dry-run] Would inspect the clipboard (type and length only; content withheld)"
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=output,
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_CLIPBOARD_PS, timeout_seconds=15)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Failed to read the clipboard",
+            )
+        snapshot = parse_clipboard_snapshot(outcome.stdout)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_clipboard_report(snapshot, reveal=reveal),
+        )
