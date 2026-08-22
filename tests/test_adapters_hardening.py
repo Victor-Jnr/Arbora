@@ -262,6 +262,18 @@ def test_inspect_clipboard_mocked_powershell():
     assert "empty" in result.output.lower()
 
 
+def test_speak_text_requires_text():
+    result = DesktopAdapter().execute("speak_text", {}, dry_run=True)
+    assert result.ok is False
+    assert "text" in (result.error or "").lower()
+
+
+def test_speak_text_dry_run():
+    result = DesktopAdapter().execute("speak_text", {"text": "Please review the plan."}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "Please review the plan." in result.output
+
+
 def test_terminal_timeout_surface():
     adapter = TerminalAdapter()
     fake = ShellOutcome(ok=False, stdout="", stderr="", timed_out=True, error="PowerShell timed out after 1s")

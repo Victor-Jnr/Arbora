@@ -1,0 +1,22 @@
+{
+  "id": "speak-confirmation",
+  "name": "Speak confirmation",
+  "description": "Broker-gated TTS read-back. Does not use the microphone.",
+  "goal_phrases": [
+    "speak confirmation pack",
+    "run speak confirmation pack"
+  ],
+  "rationale": "Workflow pack: speak a short confirmation. Still requires approval; no always-on mic.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "speak_text",
+      "args": {
+        "text": "Please review the Arbora plan on screen before it runs."
+      },
+      "summary": "Speak a short confirmation read-back",
+      "sensitivity": "mutate",
+      "side_effects": ["Plays speech through the default Windows voice"]
+    }
+  ]
+}
