@@ -66,6 +66,7 @@ Try goals like:
   read this back: start my workday
   copy the file report.pdf to documents
   take a screenshot
+  wifi status
   what's in temp
   empty temp
   open chrome

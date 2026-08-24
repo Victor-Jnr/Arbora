@@ -309,6 +309,32 @@ def test_capture_screenshot_dry_run(tmp_path: Path):
     assert "Notepad" in windowed.output
 
 
+def test_inspect_network_dry_run_and_no_secrets():
+    dry = DesktopAdapter().execute("inspect_network", {}, dry_run=True)
+    assert dry.ok and dry.dry_run
+    assert "key" in dry.output.lower() or "password" in dry.output.lower()
+    fake = ShellOutcome(ok=True, stdout="=== Adapters ===\nEthernet Up", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_network", {}, dry_run=False)
+    assert result.ok
+    command = str(mocked.call_args[0][0]).lower()
+    assert "key=clear" not in command
+    assert "show profile" not in command
+    assert "password" not in command
+
+
+def test_inspect_network_withholds_key_like_output():
+    fake = ShellOutcome(ok=True, stdout="Key Content : hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_network", {}, dry_run=False)
+    assert result.ok is False
+    assert "key" in (result.error or "").lower()
+
+
 def test_terminal_timeout_surface():
     adapter = TerminalAdapter()
     fake = ShellOutcome(ok=False, stdout="", stderr="", timed_out=True, error="PowerShell timed out after 1s")

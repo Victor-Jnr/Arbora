@@ -137,8 +137,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/052-copy-move-file.md` | Change doc for copy/move file journey |
 | `workflows/take-screenshot.json` | Bundled primary-screen PNG capture pack |
 | `documentation/053-capture-screenshot.md` | Change doc for screenshot / window snapshot |
+| `workflows/inspect-network.json` | Bundled read-only network inspect pack |
+| `documentation/054-inspect-network.md` | Change doc for network / wifi inspect |
 
 ---
+
+## 054 — Network / wifi inspect (2026-08-24)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_network` (adapters, IPv4, profiles; no keys) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_network` |
+| `src/arbora/core/planner.py` | Wifi-status journey; diagnose plans include the inspect step |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-network.json` | Bundled inspect-network pack |
+| `tests/test_adapters_hardening.py` | Dry-run; command has no key dump; key-like output withheld |
+| `tests/test_broker_and_planner.py` | Wifi-status plan; diagnose wifi stays a full diagnostic |
+| `tests/test_workflow_packs.py` | Pack match for inspect-network |
+| `docs/NEXT.md` | Marked P13 plate 42 done |
+| `documentation/054-inspect-network.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 054 |
+| `README.md` | Linked document 054 |
+| `CHANGELOG.md` | Added file roles and 054 section |
 
 ## 053 — Screenshot / window snapshot (2026-08-24)
 

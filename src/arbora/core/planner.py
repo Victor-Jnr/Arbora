@@ -104,6 +104,8 @@ class GoalPlanner:
             return self._workday_shutdown_plan(text)
         if self._looks_like_largest_folders(lower):
             return self._largest_folders_plan(text)
+        if self._looks_like_network_status(lower):
+            return self._network_status_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -482,6 +484,27 @@ class GoalPlanner:
             ],
         )
 
+    def _network_status_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Network inspect journey — read-only adapter, IPv4, and connection profile listing. "
+                "Does not show Wi-Fi passwords, change adapters, or send packets beyond local queries."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_network",
+                    args={},
+                    summary="Read-only: list adapters, IPv4 addresses, and connection profiles",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads local network configuration; no Wi-Fi keys",),
+                )
+            ],
+        )
+
     def _diagnostic_plan(self, goal: str) -> Plan:
         return Plan(
             id=new_id("plan_"),
@@ -543,6 +566,15 @@ class GoalPlanner:
                     summary="Read-only: basic network reachability probe",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Sends one ICMP echo request to 1.1.1.1",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_network",
+                    args={},
+                    summary="Read-only: network adapters, IPv4, and connection profiles",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads local adapter and IP configuration; no Wi-Fi keys",),
                 ),
                 ToolStep(
                     id=new_id("step_"),
@@ -1490,6 +1522,32 @@ class GoalPlanner:
             for word in ("storage", "disk space", "disk usage", "largest", "biggest")
         )
         return folderish and sizeish
+
+    @staticmethod
+    def _looks_like_network_status(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "wifi status",
+                "wi-fi status",
+                "wireless status",
+                "network adapter",
+                "network adapters",
+                "what's my ip",
+                "whats my ip",
+                "what is my ip",
+                "my ip address",
+                "ip configuration",
+                "ip config",
+                "ipconfig",
+                "inspect network",
+                "network status",
+                "wifi adapters",
+                "connection profile",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

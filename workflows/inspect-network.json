@@ -1,0 +1,21 @@
+{
+  "id": "inspect-network",
+  "name": "Inspect network",
+  "description": "Read-only adapter, IPv4, and connection profile listing. No Wi-Fi keys.",
+  "goal_phrases": [
+    "inspect network pack",
+    "run inspect network pack",
+    "wifi status pack"
+  ],
+  "rationale": "Workflow pack: read-only local network configuration without secrets.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_network",
+      "args": {},
+      "summary": "List adapters, IPv4 addresses, and connection profiles",
+      "sensitivity": "read",
+      "side_effects": ["Reads local network configuration; no Wi-Fi keys"]
+    }
+  ]
+}

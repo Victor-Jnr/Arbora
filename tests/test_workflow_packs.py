@@ -25,6 +25,7 @@ def test_load_bundled_workflow_packs():
     assert "speak-confirmation" in ids
     assert "copy-file" in ids
     assert "take-screenshot" in ids
+    assert "inspect-network" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -168,6 +169,16 @@ def test_take_screenshot_workflow_pack_matches():
     assert [step.action for step in plan.steps] == ["ensure_directory", "capture_screenshot"]
     assert plan.steps[-1].adapter == "desktop"
     assert plan.steps[-1].sensitivity.value == "mutate"
+
+
+def test_inspect_network_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect network pack")
+    assert pack is not None
+    assert pack.id == "inspect-network"
+    plan = pack.to_plan("run inspect network pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_network"]
+    assert plan.steps[0].sensitivity.value == "read"
 
 
 def test_git_status_workflow_pack_matches():
