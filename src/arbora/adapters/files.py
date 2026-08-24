@@ -151,6 +151,13 @@ def _format_size(size: int) -> str:
     return f"{round(size / (1024 * 1024), 2)} MB"
 
 
+def resolve_transfer_destination(source: Path, destination: Path) -> Path:
+    """If destination is an existing directory, place the file under it."""
+    if destination.exists() and destination.is_dir():
+        return destination / source.name
+    return destination
+
+
 def list_recent_files(
     root: Path,
     *,
@@ -316,6 +323,27 @@ class FilesAdapter:
                 resolve_user_path(raw),
                 max_depth=max_depth,
                 max_results=max_results,
+                dry_run=dry_run,
+            )
+        if action == "preview_copy_move":
+            return self._preview_copy_move(
+                str(args.get("source", "")),
+                str(args.get("destination", "")),
+                str(args.get("operation", "copy")),
+                dry_run=dry_run,
+            )
+        if action == "copy_file":
+            return self._apply_copy_move(
+                str(args.get("source", "")),
+                str(args.get("destination", "")),
+                operation="copy",
+                dry_run=dry_run,
+            )
+        if action == "move_file":
+            return self._apply_copy_move(
+                str(args.get("source", "")),
+                str(args.get("destination", "")),
+                operation="move",
                 dry_run=dry_run,
             )
         return StepResult(
@@ -491,6 +519,169 @@ class FilesAdapter:
                 stamp = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
                 lines.append(f"  {stamp}  {_format_size(size):>8}  {rel}")
         return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))
+
+    def _prepare_copy_move(
+        self, source_raw: str, destination_raw: str, operation: str, *, dry_run: bool
+    ) -> tuple[Path, Path, str, StepResult | None]:
+        op = (operation or "copy").strip().lower()
+        if op not in {"copy", "move"}:
+            op = "copy"
+        if not source_raw.strip() or not destination_raw.strip():
+            return (
+                Path(),
+                Path(),
+                op,
+                StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error=f"{op}_file requires args.source and args.destination",
+                    dry_run=dry_run,
+                ),
+            )
+        source = resolve_user_path(source_raw)
+        destination = resolve_transfer_destination(source, resolve_user_path(destination_raw))
+        if is_protected_search_root(source) or is_protected_search_root(destination):
+            return (
+                source,
+                destination,
+                op,
+                StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="Refusing to copy or move under the Windows directory",
+                    dry_run=dry_run,
+                ),
+            )
+        return source, destination, op, None
+
+    def _preview_copy_move(
+        self, source_raw: str, destination_raw: str, operation: str, *, dry_run: bool
+    ) -> StepResult:
+        source, destination, op, error = self._prepare_copy_move(
+            source_raw, destination_raw, operation, dry_run=dry_run
+        )
+        if error is not None:
+            return error
+        verb = "Copy" if op == "copy" else "Move"
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would preview {op} {source} -> {destination}",
+                dry_run=True,
+            )
+        if not source.exists():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Source does not exist: {source}",
+            )
+        if not source.is_file():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Source is not a file: {source}",
+            )
+        try:
+            size = _format_size(source.stat().st_size)
+        except OSError:
+            size = "unknown size"
+        dest_state = "exists (refusing overwrite)" if destination.exists() else "new file"
+        lines = [
+            f"{verb} preview",
+            f"  source: {source} ({size})",
+            f"  destination: {destination} ({dest_state})",
+        ]
+        if op == "move":
+            lines.append("  undo: move can be reversed with undo last organise / undo last move")
+        else:
+            lines.append("  copy is not undone automatically (destination would be a new file)")
+        return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines), dry_run=dry_run)
+
+    def _apply_copy_move(
+        self, source_raw: str, destination_raw: str, *, operation: str, dry_run: bool
+    ) -> StepResult:
+        source, destination, op, error = self._prepare_copy_move(
+            source_raw, destination_raw, operation, dry_run=dry_run
+        )
+        if error is not None:
+            return error
+        verb = "copy" if op == "copy" else "move"
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would {verb} {source} -> {destination}",
+                dry_run=True,
+            )
+        if not source.exists():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Source does not exist: {source}",
+            )
+        if not source.is_file():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Source is not a file: {source}",
+            )
+        if source.resolve(strict=False) == destination.resolve(strict=False):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Source and destination are the same path",
+            )
+        if destination.exists():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Destination already exists: {destination}",
+            )
+        try:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if op == "copy":
+                shutil.copy2(str(source), str(destination))
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=True,
+                    output=f"Copied {source} -> {destination}",
+                )
+            shutil.move(str(source), str(destination))
+            batch = UndoBatch(
+                batch_id=new_id("undo_"),
+                root=str(source.parent),
+                moves=tuple([FileMoveRecord(source=str(source), destination=str(destination))]),
+                created_at=utc_now_iso(),
+            )
+            append_batch(self._undo_loader, self._undo_store, batch)
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"Moved {source} -> {destination}\nUndo batch recorded: {batch.batch_id}",
+            )
+        except PermissionError:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Permission denied during {verb} of {source}",
+            )
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to {verb} {source}: {exc}",
+            )
 
     def _ensure_directory(self, path: Path, *, dry_run: bool) -> StepResult:
         if not str(path):

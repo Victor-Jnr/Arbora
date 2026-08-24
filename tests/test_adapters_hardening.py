@@ -184,6 +184,21 @@ def test_list_recent_files_orders_by_mtime(tmp_path: Path):
     assert listed.output.index("newer.txt") < listed.output.index("older.txt")
 
 
+def test_copy_file_dry_run_and_missing_source(tmp_path: Path):
+    adapter = FilesAdapter()
+    missing = adapter.execute("preview_copy_move", {}, dry_run=True)
+    assert missing.ok is False
+    source = tmp_path / "note.txt"
+    source.write_text("hi", encoding="utf-8")
+    dry = adapter.execute(
+        "copy_file",
+        {"source": str(source), "destination": str(tmp_path / "out.txt")},
+        dry_run=True,
+    )
+    assert dry.ok and dry.dry_run
+    assert not (tmp_path / "out.txt").exists()
+
+
 def test_inspect_user_temp_dry_run(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("TEMP", str(tmp_path))
     adapter = FilesAdapter()

@@ -64,6 +64,7 @@ Try goals like:
   recent files in downloads
   inspect clipboard
   read this back: start my workday
+  copy the file report.pdf to documents
   what's in temp
   empty temp
   open chrome

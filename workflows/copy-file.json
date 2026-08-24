@@ -1,0 +1,35 @@
+{
+  "id": "copy-file",
+  "name": "Copy a file",
+  "description": "Preview then copy one file; overwrite is refused.",
+  "goal_phrases": [
+    "copy file pack",
+    "run copy file pack"
+  ],
+  "rationale": "Workflow pack: preview a copy, then copy the file without overwriting.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "preview_copy_move",
+      "args": {
+        "source": "~/Downloads/report.pdf",
+        "destination": "~/Documents/report.pdf",
+        "operation": "copy"
+      },
+      "summary": "Preview copy of report.pdf into Documents",
+      "sensitivity": "read",
+      "side_effects": ["Reads file metadata; no copy yet"]
+    },
+    {
+      "adapter": "files",
+      "action": "copy_file",
+      "args": {
+        "source": "~/Downloads/report.pdf",
+        "destination": "~/Documents/report.pdf"
+      },
+      "summary": "Copy report.pdf into Documents",
+      "sensitivity": "mutate",
+      "side_effects": ["Creates a new file at the destination"]
+    }
+  ]
+}

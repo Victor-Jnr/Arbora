@@ -222,6 +222,27 @@ def test_show_clipboard_text_sets_reveal():
     assert listed.steps[0].action == "list_directory"
 
 
+def test_copy_file_journey_previews_then_copies():
+    runtime = _runtime()
+    plan = runtime.planner.plan("copy the file report.pdf to documents")
+    assert [step.action for step in plan.steps] == ["preview_copy_move", "copy_file"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert plan.steps[1].sensitivity == Sensitivity.MUTATE
+    assert plan.steps[1].args["source"].endswith("report.pdf")
+    assert not plan.has_hard_confirmation_steps
+    organise = runtime.planner.plan("organise my downloads")
+    assert organise.steps[-1].action == "apply_organise"
+
+
+def test_move_file_journey_and_undo_phrase():
+    runtime = _runtime()
+    plan = runtime.planner.plan("move the file invoice.pdf to documents")
+    assert [step.action for step in plan.steps] == ["preview_copy_move", "move_file"]
+    assert plan.steps[0].args["operation"] == "move"
+    undo = runtime.planner.plan("undo last move")
+    assert [step.action for step in undo.steps] == ["undo_last_organise"]
+
+
 def test_read_this_back_is_speak_not_workday():
     runtime = _runtime()
     plan = runtime.planner.plan("read this back: start my workday")

@@ -112,6 +112,8 @@ class GoalPlanner:
             return self._organise_downloads_plan(text)
         if self._looks_like_undo_organise(lower):
             return self._undo_organise_plan(text)
+        if self._looks_like_copy_move(lower):
+            return self._copy_move_plan(text)
         if self._looks_like_save_note(lower):
             return self._save_note_plan(text)
         if self._looks_like_open_explorer(lower):
@@ -703,6 +705,91 @@ class GoalPlanner:
                 ),
             ],
         )
+
+    def _copy_move_plan(self, goal: str) -> Plan:
+        operation, source, destination = self._copy_move_parts_from_goal(goal)
+        apply_action = "move_file" if operation == "move" else "copy_file"
+        verb = "Move" if operation == "move" else "Copy"
+        undo_note = (
+            " A move is recorded in the organise undo journal so 'undo last move' can reverse it."
+            if operation == "move"
+            else " Copy is not auto-undone because that would delete the new file."
+        )
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                f"{verb} journey — preview the source and destination, then {operation} the file."
+                f"{undo_note} Overwrite is refused. Does not walk the Windows directory."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="preview_copy_move",
+                    args={
+                        "source": source,
+                        "destination": destination,
+                        "operation": operation,
+                    },
+                    summary=f"Preview {operation} of {source} to {destination}",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads file metadata; no copy or move yet",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action=apply_action,
+                    args={"source": source, "destination": destination},
+                    summary=f"{verb} {source} to {destination}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=(
+                        "Moves the file and records an undo batch"
+                        if operation == "move"
+                        else "Creates a new file at the destination"
+                    ),
+                ),
+            ],
+        )
+
+    def _copy_move_parts_from_goal(self, goal: str) -> tuple[str, str, str]:
+        lower = goal.lower()
+        operation = "move" if re.search(r"\bmove\b", lower) and "copy" not in lower else "copy"
+        match = re.search(
+            r"\b(?:copy|move)\s+(?:the\s+file\s+)?(.+?)\s+to\s+(.+)$",
+            goal,
+            flags=re.I,
+        )
+        source_token = match.group(1).strip().strip("\"'") if match else ""
+        dest_token = match.group(2).strip().strip("\"'") if match else ""
+        source_token = re.sub(r"^(?:file|the file)\s+", "", source_token, flags=re.I).strip()
+        dest_token = re.sub(r"^(?:folder|the folder|directory|my)\s+", "", dest_token, flags=re.I).strip()
+        return operation, self._resolve_transfer_path(source_token, is_source=True), self._resolve_transfer_path(
+            dest_token, is_source=False
+        )
+
+    def _resolve_transfer_path(self, token: str, *, is_source: bool) -> str:
+        raw = (token or "").strip().strip("\"'")
+        lower = raw.lower().rstrip("\\/")
+        named = {
+            "downloads": self._downloads_dir(),
+            "download": self._downloads_dir(),
+            "documents": Path.home() / "Documents",
+            "docs": Path.home() / "Documents",
+            "desktop": Path.home() / "Desktop",
+            "notes": self._notes_dir(),
+        }
+        if lower in named:
+            return str(named[lower])
+        if not raw:
+            return str(self._downloads_dir() if is_source else Path.home() / "Documents")
+        if re.match(r"^[A-Za-z]:\\", raw) or raw.startswith(("~", "/", "\\")):
+            if raw.startswith("~"):
+                return str(Path.home() / raw[2:].lstrip("\\/"))
+            return raw
+        if is_source:
+            return str(self._downloads_dir() / raw)
+        return str((Path.home() / "Documents") / raw)
 
     def _save_note_plan(self, goal: str) -> Plan:
         notes_root = self._notes_dir()
@@ -1403,7 +1490,29 @@ class GoalPlanner:
                 "reverse organise",
                 "undo file moves",
                 "undo last file",
+                "undo last move",
+                "undo the last move",
             )
+        )
+
+    @staticmethod
+    def _looks_like_copy_move(lower: str) -> bool:
+        if "clipboard" in lower or "window" in lower or "recycle" in lower:
+            return False
+        if "organis" in lower or "organiz" in lower:
+            return False
+        if not re.search(r"\b(copy|move)\b", lower):
+            return False
+        if " to " not in lower:
+            return False
+        return bool(
+            re.search(
+                r"\.(pdf|txt|docx?|xlsx?|png|jpe?g|zip|md|csv)\b",
+                lower,
+            )
+            or "file" in lower
+            or ":\\" in lower
+            or "~/" in lower
         )
 
     @staticmethod
