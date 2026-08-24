@@ -24,6 +24,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-clipboard" in ids
     assert "speak-confirmation" in ids
     assert "copy-file" in ids
+    assert "take-screenshot" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -156,6 +157,17 @@ def test_copy_file_workflow_pack_matches():
     assert [step.action for step in plan.steps] == ["preview_copy_move", "copy_file"]
     assert plan.steps[0].sensitivity.value == "read"
     assert plan.steps[1].sensitivity.value == "mutate"
+
+
+def test_take_screenshot_workflow_pack_matches():
+    pack = match_workflow_pack("run screenshot pack")
+    assert pack is not None
+    assert pack.id == "take-screenshot"
+    plan = pack.to_plan("run screenshot pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["ensure_directory", "capture_screenshot"]
+    assert plan.steps[-1].adapter == "desktop"
+    assert plan.steps[-1].sensitivity.value == "mutate"
 
 
 def test_git_status_workflow_pack_matches():

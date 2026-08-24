@@ -65,6 +65,7 @@ Try goals like:
   inspect clipboard
   read this back: start my workday
   copy the file report.pdf to documents
+  take a screenshot
   what's in temp
   empty temp
   open chrome
