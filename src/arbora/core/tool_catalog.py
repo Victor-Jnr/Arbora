@@ -21,6 +21,9 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "list_recent",
             "inspect_user_temp",
             "clean_user_temp",
+            "preview_copy_move",
+            "copy_file",
+            "move_file",
         }
     ),
     "terminal": frozenset({"run_powershell"}),

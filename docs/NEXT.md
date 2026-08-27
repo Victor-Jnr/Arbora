@@ -52,8 +52,9 @@ Already in place:
 - newest-first listing of recent files in Downloads.
 - clipboard inspect (type/length; secrets withheld).
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
+- preview then copy or move one file (overwrite refused; move can undo).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P12).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P13).
 
 ---
 
@@ -128,6 +129,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 37 | **Recent files in Downloads** | ✅ Newest-first listing behind the broker |
 | 38 | **Clipboard inspect** | ✅ Type/length (optional preview); secrets withheld |
 | 39 | **Opt-in spoken confirmations** | ✅ TTS read-back of plan steps; broker-gated; no always-on mic |
+
+### P13 — Stage 3 organisation, desktop capture, and diagnostics
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 40 | **Copy/move file with preview** | ✅ Preview then copy or move one file; move records undo |
+| 41 | **Screenshot / window snapshot** | Capture a PNG behind the broker (screen or titled window) |
+| 42 | **Network / wifi inspect** | Read-only adapter, IP, and profile listing; no secrets |
 
 ## Non-negotiables (do not drift)
 
@@ -222,4 +231,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P12 plates 37–39 are done. Run `arbora validate` on tester machines, then continue Stage 3 from the root README.
+P13 plate 40 is done. Next: plate 41 (screenshot / window snapshot behind the broker).

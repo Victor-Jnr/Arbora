@@ -133,8 +133,29 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/050-clipboard-inspect.md` | Change doc for clipboard inspect |
 | `workflows/speak-confirmation.json` | Bundled TTS confirmation read-back pack |
 | `documentation/051-spoken-confirmations.md` | Change doc for opt-in spoken confirmations |
+| `workflows/copy-file.json` | Bundled preview→copy file workflow pack |
+| `documentation/052-copy-move-file.md` | Change doc for copy/move file journey |
 
 ---
+
+## 052 — Copy or move a file with preview (2026-08-24)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/files.py` | Added preview/copy/move actions; move records an undo batch |
+| `src/arbora/core/tool_catalog.py` | Allowed `files.preview_copy_move`, `copy_file`, `move_file` |
+| `src/arbora/core/planner.py` | Copy/move journey; undo last move reuses organise undo |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/copy-file.json` | Bundled copy-file pack |
+| `tests/test_file_undo.py` | Copy overwrite refusal; move undo roundtrip |
+| `tests/test_adapters_hardening.py` | Dry-run copy; missing source |
+| `tests/test_broker_and_planner.py` | Preview-then-copy/move plans; organise still wins |
+| `tests/test_workflow_packs.py` | Pack match for copy-file |
+| `docs/NEXT.md` | Added P13; marked plate 40 done |
+| `documentation/052-copy-move-file.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 052 |
+| `README.md` | Linked document 052 |
+| `CHANGELOG.md` | Added file roles and 052 section |
 
 ## 051 — Opt-in spoken confirmations (2026-08-22)
 

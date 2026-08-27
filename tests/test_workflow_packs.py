@@ -23,6 +23,7 @@ def test_load_bundled_workflow_packs():
     assert "list-recent-downloads" in ids
     assert "inspect-clipboard" in ids
     assert "speak-confirmation" in ids
+    assert "copy-file" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -144,6 +145,17 @@ def test_speak_confirmation_workflow_pack_matches():
     assert plan is not None
     assert plan.steps[0].action == "speak_text"
     assert plan.steps[0].sensitivity.value == "mutate"
+
+
+def test_copy_file_workflow_pack_matches():
+    pack = match_workflow_pack("run copy file pack")
+    assert pack is not None
+    assert pack.id == "copy-file"
+    plan = pack.to_plan("run copy file pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["preview_copy_move", "copy_file"]
+    assert plan.steps[0].sensitivity.value == "read"
+    assert plan.steps[1].sensitivity.value == "mutate"
 
 
 def test_git_status_workflow_pack_matches():
