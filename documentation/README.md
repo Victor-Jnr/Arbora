@@ -13,6 +13,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
 | 052 | [Copy or move a file with preview](052-copy-move-file.md) | 2026-08-24 | Preview then copy/move one file; move can undo |
 | 053 | [Screenshot / window snapshot](053-capture-screenshot.md) | 2026-08-24 | Broker-gated PNG capture of screen or titled window |
+| 054 | [Network / wifi inspect](054-inspect-network.md) | 2026-08-24 | Read-only adapters and IPv4; no Wi-Fi keys |
 | 051 | [Opt-in spoken confirmations](051-spoken-confirmations.md) | 2026-08-22 | TTS plan read-back; broker-gated; no always-on mic |
 | 050 | [Clipboard inspect](050-clipboard-inspect.md) | 2026-08-22 | Type/length inspect; secrets withheld |
 | 049 | [Recent files in Downloads](049-recent-files-downloads.md) | 2026-08-22 | Newest-first listing behind the broker |

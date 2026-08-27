@@ -54,6 +54,7 @@ Already in place:
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under the notes folder.
+- read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
 Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P13).
 
@@ -137,7 +138,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 40 | **Copy/move file with preview** | ✅ Preview then copy or move one file; move records undo |
 | 41 | **Screenshot / window snapshot** | ✅ Capture a PNG behind the broker (screen or titled window) |
-| 42 | **Network / wifi inspect** | Read-only adapter, IP, and profile listing; no secrets |
+| 42 | **Network / wifi inspect** | ✅ Read-only adapter, IP, and profile listing; no secrets |
 
 ## Non-negotiables (do not drift)
 
@@ -232,4 +233,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P13 plates 40–41 are done. Next: plate 42 (read-only network / wifi inspect).
+P13 plates 40–42 are done. Run `arbora validate` on tester machines, then continue Stage 3 from the root README.
