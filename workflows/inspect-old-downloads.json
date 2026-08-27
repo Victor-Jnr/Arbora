@@ -1,0 +1,20 @@
+{
+  "id": "inspect-old-downloads",
+  "name": "Inspect old Downloads",
+  "description": "Read-only listing of top-level Downloads files older than 30 days. Does not delete.",
+  "goal_phrases": [
+    "inspect old downloads pack",
+    "run inspect old downloads pack"
+  ],
+  "rationale": "Workflow pack: preview old Downloads files without deleting them.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "inspect_old_files",
+      "args": { "path": "~/Downloads", "older_than_days": 30, "max_results": 200 },
+      "summary": "List top-level Downloads files older than 30 days",
+      "sensitivity": "read",
+      "side_effects": ["Reads names, sizes, and modification times"]
+    }
+  ]
+}

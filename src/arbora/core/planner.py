@@ -118,6 +118,8 @@ class GoalPlanner:
             return self._save_clipboard_plan(text)
         if self._looks_like_copy_move(lower):
             return self._copy_move_plan(text)
+        if self._looks_like_old_downloads(lower):
+            return self._old_downloads_plan(text)
         if self._looks_like_save_note(lower):
             return self._save_note_plan(text)
         if self._looks_like_open_explorer(lower):
@@ -803,6 +805,62 @@ class GoalPlanner:
         return operation, self._resolve_transfer_path(source_token, is_source=True), self._resolve_transfer_path(
             dest_token, is_source=False
         )
+
+    def _old_downloads_plan(self, goal: str) -> Plan:
+        downloads = self._downloads_dir()
+        days = self._older_than_days_from_goal(goal)
+        lower = goal.lower()
+        delete = any(word in lower for word in ("empty", "clear", "delete", "purge", "clean", "remove"))
+        steps = [
+            ToolStep(
+                id=new_id("step_"),
+                adapter="files",
+                action="inspect_old_files",
+                args={"path": str(downloads), "older_than_days": days, "max_results": 200},
+                summary=f"Read-only: list top-level files in {downloads} older than {days} days",
+                sensitivity=Sensitivity.READ,
+                side_effects=("Reads names, sizes, and modification times",),
+            )
+        ]
+        rationale = (
+            "Old-Downloads journey — inspect first. "
+            f"Deleting top-level files older than {days} days needs a fresh hard confirmation. "
+            "Subfolders are never removed."
+        )
+        if delete:
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="delete_old_files",
+                    args={"path": str(downloads), "older_than_days": days, "max_results": 200},
+                    summary=f"Delete top-level files in Downloads older than {days} days",
+                    sensitivity=Sensitivity.DESTRUCTIVE,
+                    side_effects=("Permanently deletes matching top-level files",),
+                )
+            )
+        else:
+            rationale = (
+                "Old-Downloads journey — read-only listing of top-level files older than "
+                f"{days} days. Ask to delete them for a separate hard-confirm plan."
+            )
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=rationale,
+            steps=steps,
+        )
+
+    @staticmethod
+    def _older_than_days_from_goal(goal: str) -> int:
+        match = re.search(r"older than\s+(\d+)\s+days?", goal, flags=re.I)
+        if not match:
+            match = re.search(r"(\d+)\s+days?\s+old", goal, flags=re.I)
+        if not match:
+            match = re.search(r"older than\s+(\d+)", goal, flags=re.I)
+        if match:
+            return max(1, min(int(match.group(1)), 3650))
+        return 30
 
     def _resolve_transfer_path(self, token: str, *, is_source: bool) -> str:
         raw = (token or "").strip().strip("\"'")
@@ -1666,6 +1724,33 @@ class GoalPlanner:
             or "file" in lower
             or ":\\" in lower
             or "~/" in lower
+        )
+
+    @staticmethod
+    def _looks_like_old_downloads(lower: str) -> bool:
+        if "download" not in lower:
+            return False
+        if any(
+            word in lower
+            for word in ("organis", "organiz", "recent", "latest", "newest", "recycle", "clipboard")
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "old download",
+                "old files in download",
+                "old in download",
+                "downloads older",
+                "download older",
+                "older than",
+                "delete old",
+                "empty old",
+                "clean old",
+                "remove old",
+                "purge old",
+                "files older",
+            )
         )
 
     @staticmethod
