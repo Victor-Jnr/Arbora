@@ -11,7 +11,6 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 005 | [Harden Windows adapters](005-harden-windows-adapters.md) | 2026-08-05 | Shared PowerShell runner, aliases, focus, clearer errors |
 | 006 | [Browser adapter (Playwright)](006-browser-adapter-playwright.md) | 2026-08-07 | Navigate/extract/save brief via Chromium behind the broker |
 | 007 | [Tkinter desktop chat](007-tkinter-desktop-chat.md) | 2026-08-07 | Native plan→approve→execute chat window |
-| 049 | [Recent files in Downloads](049-recent-files-downloads.md) | 2026-08-22 | Newest-first listing behind the broker |
 | 048 | [Everyday app launch aliases](048-app-launch-aliases.md) | 2026-08-21 | Chrome / Edge / VS Code resolve on launch_app |
 | 047 | [Temp inspect and clean](047-temp-inspect-clean.md) | 2026-08-21 | Preview user TEMP; clean needs hard confirmation |
 | 046 | [Find files by name](046-find-files-by-name.md) | 2026-08-21 | Depth-capped filename search behind the broker |

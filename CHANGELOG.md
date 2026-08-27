@@ -127,28 +127,6 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `workflows/inspect-temp.json` | Bundled user TEMP inspect pack |
 | `documentation/047-temp-inspect-clean.md` | Change doc for TEMP inspect/clean |
 | `documentation/048-app-launch-aliases.md` | Change doc for everyday app launch aliases |
-| `workflows/list-recent-downloads.json` | Bundled newest-first Downloads listing pack |
-| `documentation/049-recent-files-downloads.md` | Change doc for recent-files journey |
-
----
-
-## 049 — Recent files in Downloads (2026-08-22)
-
-| File | Change |
-| --- | --- |
-| `src/arbora/adapters/files.py` | Added `list_recent` with depth/result caps and Windows-dir refusal |
-| `src/arbora/core/tool_catalog.py` | Allowed `files.list_recent` |
-| `src/arbora/core/planner.py` | Added recent/newest Downloads journey |
-| `src/arbora/cli/main.py` | Documented the example goal |
-| `workflows/list-recent-downloads.json` | Bundled list-recent-downloads pack |
-| `tests/test_adapters_hardening.py` | Newest-first order, dry-run, missing path |
-| `tests/test_broker_and_planner.py` | Read-only recent plan; list/find still win |
-| `tests/test_workflow_packs.py` | Pack match for list-recent-downloads |
-| `docs/NEXT.md` | Added P12; marked plate 37 done |
-| `documentation/049-recent-files-downloads.md` | Recorded this change set |
-| `documentation/README.md` | Indexed document 049 |
-| `README.md` | Linked document 049 |
-| `CHANGELOG.md` | Added file roles and 049 section |
 
 ---
 

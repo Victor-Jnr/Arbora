@@ -61,7 +61,6 @@ Try goals like:
   save a note about tomorrow's standup
   list downloads
   find invoice.pdf in downloads
-  recent files in downloads
   what's in temp
   empty temp
   open chrome
