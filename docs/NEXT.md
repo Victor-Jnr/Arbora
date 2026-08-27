@@ -51,12 +51,13 @@ Already in place:
 - everyday app aliases so “open chrome” launches the installed browser.
 - newest-first listing of recent files in Downloads.
 - clipboard inspect (type/length; secrets withheld).
+- save clipboard text to the notes folder (secrets/non-text refused).
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under the notes folder.
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P13).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P14).
 
 ---
 
@@ -139,6 +140,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 40 | **Copy/move file with preview** | ✅ Preview then copy or move one file; move records undo |
 | 41 | **Screenshot / window snapshot** | ✅ Capture a PNG behind the broker (screen or titled window) |
 | 42 | **Network / wifi inspect** | ✅ Read-only adapter, IP, and profile listing; no secrets |
+
+### P14 — Stage 3 clipboard notes, Downloads cleanup, and power
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 43 | **Save clipboard to notes** | ✅ Clipboard text to `notes_folder`; secrets/non-text refused |
+| 44 | **Empty old Downloads** | Preview top-level Downloads files older than N days, then delete only with hard confirmation |
+| 45 | **Battery / power inspect** | Read-only battery charge and AC/battery status; no secrets |
 
 ## Non-negotiables (do not drift)
 
@@ -233,4 +242,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P13 plates 40–42 are done. Run `arbora validate` on tester machines, then continue Stage 3 from the root README.
+P14 plate 43 is done. Next: plate 44 — empty old Downloads (preview, then hard-confirm delete).

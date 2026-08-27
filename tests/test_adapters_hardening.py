@@ -8,8 +8,10 @@ from unittest.mock import patch
 
 from arbora.adapters.desktop import (
     APP_ALIASES,
+    CLIPBOARD_SAVE_MAX_CHARS,
     DesktopAdapter,
     clipboard_looks_secret,
+    clipboard_save_payload,
     format_clipboard_report,
     parse_clipboard_snapshot,
     resolve_launch_target,
@@ -275,6 +277,63 @@ def test_inspect_clipboard_mocked_powershell():
         result = DesktopAdapter().execute("inspect_clipboard", {}, dry_run=False)
     assert result.ok
     assert "empty" in result.output.lower()
+
+
+def test_clipboard_save_payload_refuses_secrets_and_non_text():
+    text, error = clipboard_save_payload({"kind": "text", "text": "meeting notes"})
+    assert text == "meeting notes"
+    assert error == ""
+    secret, secret_error = clipboard_save_payload({"kind": "text", "text": "password=hunter2"})
+    assert secret is None
+    assert "secret" in secret_error.lower()
+    empty, empty_error = clipboard_save_payload({"kind": "empty"})
+    assert empty is None
+    assert "empty" in empty_error.lower()
+    image, image_error = clipboard_save_payload({"kind": "image"})
+    assert image is None
+    assert "image" in image_error.lower()
+    too_long, long_error = clipboard_save_payload(
+        {"kind": "text", "text": "n" * (CLIPBOARD_SAVE_MAX_CHARS + 1)}
+    )
+    assert too_long is None
+    assert str(CLIPBOARD_SAVE_MAX_CHARS) in long_error
+
+
+def test_save_clipboard_text_requires_path():
+    result = DesktopAdapter().execute("save_clipboard_text", {}, dry_run=True)
+    assert result.ok is False
+    assert "path" in (result.error or "").lower()
+
+
+def test_save_clipboard_text_dry_run(tmp_path: Path):
+    target = tmp_path / "clip.txt"
+    result = DesktopAdapter().execute("save_clipboard_text", {"path": str(target)}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert not target.exists()
+    assert "secret" in result.output.lower() or "unless" in result.output.lower()
+
+
+def test_save_clipboard_text_mocked_write(tmp_path: Path):
+    target = tmp_path / "notes" / "clip.txt"
+    fake = ShellOutcome(ok=True, stdout="KIND=text\nLENGTH=11\nTEXT_BEGIN\nhello notes", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("save_clipboard_text", {"path": str(target)}, dry_run=False)
+    assert result.ok
+    assert target.read_text(encoding="utf-8") == "hello notes"
+
+
+def test_save_clipboard_text_mocked_secret_does_not_write(tmp_path: Path):
+    target = tmp_path / "clip.txt"
+    fake = ShellOutcome(ok=True, stdout="KIND=text\nLENGTH=16\nTEXT_BEGIN\npassword=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("save_clipboard_text", {"path": str(target)}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+    assert not target.exists()
 
 
 def test_speak_text_requires_text():

@@ -234,6 +234,21 @@ def test_show_clipboard_text_sets_reveal():
     assert listed.steps[0].action == "list_directory"
 
 
+def test_save_clipboard_to_notes_is_mutate_not_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("save clipboard to notes")
+    assert [step.action for step in plan.steps] == ["ensure_directory", "save_clipboard_text"]
+    assert all(step.sensitivity == Sensitivity.MUTATE for step in plan.steps)
+    assert str(plan.steps[-1].args["path"]).endswith(".txt")
+    assert "clipboard-" in str(plan.steps[-1].args["path"])
+    assert not plan.has_hard_confirmation_steps
+    inspect = runtime.planner.plan("inspect clipboard")
+    assert [step.action for step in inspect.steps] == ["inspect_clipboard"]
+    note = runtime.planner.plan("save a note about tomorrow's standup")
+    assert any(step.action == "write_text" for step in note.steps)
+    assert not any(step.action == "save_clipboard_text" for step in note.steps)
+
+
 def test_copy_file_journey_previews_then_copies():
     runtime = _runtime()
     plan = runtime.planner.plan("copy the file report.pdf to documents")

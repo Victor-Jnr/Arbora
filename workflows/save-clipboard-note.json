@@ -1,0 +1,28 @@
+{
+  "id": "save-clipboard-note",
+  "name": "Save clipboard to notes",
+  "description": "Write clipboard text to the notes folder. Secrets, images, and file lists are refused.",
+  "goal_phrases": [
+    "save clipboard note pack",
+    "run save clipboard note pack"
+  ],
+  "rationale": "Workflow pack: save clipboard text to a local notes file after broker approval.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "ensure_directory",
+      "args": { "path": "~/ArboraNotes" },
+      "summary": "Ensure notes folder exists",
+      "sensitivity": "mutate",
+      "side_effects": ["May create a directory"]
+    },
+    {
+      "adapter": "desktop",
+      "action": "save_clipboard_text",
+      "args": { "path": "~/ArboraNotes/clipboard-from-pack.txt" },
+      "summary": "Save clipboard text to the notes folder",
+      "sensitivity": "mutate",
+      "side_effects": ["Reads the clipboard and may create a local text file"]
+    }
+  ]
+}

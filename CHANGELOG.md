@@ -139,8 +139,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/053-capture-screenshot.md` | Change doc for screenshot / window snapshot |
 | `workflows/inspect-network.json` | Bundled read-only network inspect pack |
 | `documentation/054-inspect-network.md` | Change doc for network / wifi inspect |
+| `workflows/save-clipboard-note.json` | Bundled save-clipboard-to-notes pack |
+| `documentation/055-save-clipboard-to-notes.md` | Change doc for save clipboard to notes |
 
 ---
+
+## 055 — Save clipboard to notes (2026-08-27)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `save_clipboard_text` (refuses secrets, images, file lists) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.save_clipboard_text` |
+| `src/arbora/core/planner.py` | Save-clipboard journey writes a timestamped notes file |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/save-clipboard-note.json` | Bundled save-clipboard-note pack |
+| `tests/test_adapters_hardening.py` | Payload refusals, dry-run, mocked write and secret skip |
+| `tests/test_broker_and_planner.py` | Save vs inspect vs save-note journeys |
+| `tests/test_workflow_packs.py` | Pack match for save-clipboard-note |
+| `docs/NEXT.md` | Added P14; marked plate 43 done |
+| `documentation/055-save-clipboard-to-notes.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 055 |
+| `README.md` | Linked document 055 |
+| `CHANGELOG.md` | Added file roles and 055 section |
 
 ## 054 — Network / wifi inspect (2026-08-24)
 
