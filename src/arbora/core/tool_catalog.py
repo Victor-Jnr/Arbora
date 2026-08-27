@@ -13,6 +13,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "speak_text",
             "capture_screenshot",
             "inspect_network",
+            "inspect_battery",
         }
     ),
     "files": frozenset(

@@ -1,0 +1,20 @@
+{
+  "id": "inspect-battery",
+  "name": "Inspect battery",
+  "description": "Read-only battery charge and chassis/power status. No serials or powercfg reports.",
+  "goal_phrases": [
+    "inspect battery pack",
+    "run inspect battery pack"
+  ],
+  "rationale": "Workflow pack: read-only local battery and power status.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_battery",
+      "args": {},
+      "summary": "List battery charge and AC/chassis status",
+      "sensitivity": "read",
+      "side_effects": ["Reads Win32_Battery / computer-system chassis type"]
+    }
+  ]
+}

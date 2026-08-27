@@ -82,8 +82,22 @@ def test_wifi_status_is_read_only_inspect():
     assert not plan.has_hard_confirmation_steps
     diagnose = runtime.planner.plan("diagnose wifi")
     assert any(step.action == "inspect_network" for step in diagnose.steps)
+    assert any(step.action == "inspect_battery" for step in diagnose.steps)
     assert len(diagnose.steps) > 1
     assert all(step.sensitivity == Sensitivity.READ for step in diagnose.steps)
+
+
+def test_battery_status_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("battery status")
+    assert [step.action for step in plan.steps] == ["inspect_battery"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    diagnose = runtime.planner.plan("diagnose battery")
+    assert any(step.action == "inspect_battery" for step in diagnose.steps)
+    assert len(diagnose.steps) > 1
+    wifi = runtime.planner.plan("wifi status")
+    assert [step.action for step in wifi.steps] == ["inspect_network"]
 
 
 def test_format_table_is_not_treated_as_destructive():

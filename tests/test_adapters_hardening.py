@@ -12,7 +12,9 @@ from arbora.adapters.desktop import (
     DesktopAdapter,
     clipboard_looks_secret,
     clipboard_save_payload,
+    format_battery_report,
     format_clipboard_report,
+    parse_battery_snapshot,
     parse_clipboard_snapshot,
     resolve_launch_target,
 )
@@ -475,6 +477,53 @@ def test_inspect_network_withholds_key_like_output():
         result = DesktopAdapter().execute("inspect_network", {}, dry_run=False)
     assert result.ok is False
     assert "key" in (result.error or "").lower()
+
+
+def test_inspect_battery_dry_run():
+    result = DesktopAdapter().execute("inspect_battery", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "battery" in result.output.lower()
+    assert "powercfg" in result.output.lower() or "serial" in result.output.lower()
+
+
+def test_format_battery_report_ac_only_and_charging():
+    empty = parse_battery_snapshot("PCSystemType=1\nCOUNT=0")
+    report = format_battery_report(empty)
+    assert "desktop" in report.lower()
+    assert "no battery" in report.lower()
+    charged = parse_battery_snapshot(
+        "PCSystemType=2\nCOUNT=1\nBATTERY_BEGIN\nNAME=SimBattery\nSTATUS=6\nPERCENT=84\nRUNTIME_MIN=95"
+    )
+    live = format_battery_report(charged)
+    assert "84%" in live
+    assert "Charging" in live
+    assert "SimBattery" in live
+    assert "95 min" in live
+    sentinel = parse_battery_snapshot(
+        "PCSystemType=2\nCOUNT=1\nBATTERY_BEGIN\nNAME=SimBattery\nSTATUS=3\nPERCENT=100\nRUNTIME_MIN=71582788"
+    )
+    full = format_battery_report(sentinel)
+    assert "71582788" not in full
+
+
+def test_inspect_battery_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="PCSystemType=1\nCOUNT=0", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_battery", {}, dry_run=False)
+    assert result.ok
+    assert "no battery" in result.output.lower()
+
+
+def test_inspect_battery_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_battery", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
 
 
 def test_terminal_timeout_surface():

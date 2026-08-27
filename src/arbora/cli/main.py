@@ -70,6 +70,7 @@ Try goals like:
   copy the file report.pdf to documents
   take a screenshot
   wifi status
+  battery status
   what's in temp
   empty temp
   open chrome

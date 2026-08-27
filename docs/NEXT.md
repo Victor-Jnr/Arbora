@@ -53,6 +53,7 @@ Already in place:
 - clipboard inspect (type/length; secrets withheld).
 - save clipboard text to the notes folder (secrets/non-text refused).
 - preview then delete top-level Downloads files older than N days (hard confirm).
+- read-only battery charge and AC/chassis status.
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under the notes folder.
@@ -148,7 +149,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 43 | **Save clipboard to notes** | ✅ Clipboard text to `notes_folder`; secrets/non-text refused |
 | 44 | **Empty old Downloads** | ✅ Preview top-level Downloads files older than N days, then delete only with hard confirmation |
-| 45 | **Battery / power inspect** | Read-only battery charge and AC/battery status; no secrets |
+| 45 | **Battery / power inspect** | ✅ Read-only battery charge and AC/battery status; no secrets |
 
 ## Non-negotiables (do not drift)
 
@@ -243,4 +244,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P14 plate 44 is done. Next: plate 45 — battery / power inspect (read-only).
+P14 plates 43–45 are done. Run `arbora validate` on tester machines, then continue Stage 3 from the root README.
