@@ -16,7 +16,6 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_recycle_bin",
             "empty_recycle_bin",
             "search_by_name",
-            "list_recent",
             "inspect_user_temp",
             "clean_user_temp",
         }

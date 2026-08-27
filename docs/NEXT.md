@@ -49,9 +49,8 @@ Already in place:
 - depth-capped filename search (`find invoice.pdf in downloads`);
 - user TEMP inspect, with clean only after hard confirmation;
 - everyday app aliases so “open chrome” launches the installed browser.
-- newest-first listing of recent files in Downloads.
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P12).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P11).
 
 ---
 
@@ -118,14 +117,6 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 34 | **Find files by name** | ✅ Depth-capped filename search behind the broker |
 | 35 | **Temp inspect / clean** | ✅ Preview user TEMP files, then delete only with hard confirmation |
 | 36 | **Everyday app launch aliases** | ✅ Chrome / Edge / VS Code (and similar) resolve on `launch_app` |
-
-### P12 — Stage 3 organisation, clipboard, and voice
-
-| # | Plate | Done when |
-| --- | --- | --- |
-| 37 | **Recent files in Downloads** | ✅ Newest-first listing behind the broker |
-| 38 | **Clipboard inspect** | Type/length (optional preview); secrets withheld |
-| 39 | **Opt-in spoken confirmations** | TTS read-back of plan steps; broker-gated; no always-on mic |
 
 ## Non-negotiables (do not drift)
 
@@ -220,4 +211,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P12 plate 37 is done. Next: plate 38 clipboard inspect (read-only type/length, secrets withheld).
+P11 plates 34–36 are done. Run `arbora validate` on tester machines, then continue Stage 3 from the root README.
