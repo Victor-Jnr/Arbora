@@ -15,8 +15,59 @@ class VoiceResult:
     confidence: float | None = None
 
 
+MAX_SPEAK_CHARS = 400
+
+
 def voice_input_available() -> bool:
     return sys.platform == "win32"
+
+
+def voice_output_available() -> bool:
+    return sys.platform == "win32"
+
+
+def _ps_quote(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def sanitize_speech_text(text: str) -> str:
+    """Collapse whitespace and cap length so TTS cannot run away."""
+    collapsed = " ".join((text or "").split())
+    if len(collapsed) > MAX_SPEAK_CHARS:
+        return collapsed[:MAX_SPEAK_CHARS].rstrip() + "…"
+    return collapsed
+
+
+def speak_text(text: str) -> VoiceResult:
+    """Speak one phrase with the default Windows voice. Does not use the microphone."""
+    if not voice_output_available():
+        return VoiceResult(False, error="Spoken output is Windows-only in this prototype.")
+    spoken = sanitize_speech_text(text)
+    if not spoken:
+        return VoiceResult(False, error="speak_text requires non-empty text.")
+    quoted = _ps_quote(spoken)
+    script = f"""
+$ErrorActionPreference = "Stop"
+Add-Type -AssemblyName System.Speech
+$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$synth.Speak({quoted})
+"""
+    try:
+        proc = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", script],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return VoiceResult(False, error="Spoken output timed out.")
+    except OSError as exc:
+        return VoiceResult(False, error=str(exc))
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout or "Spoken output failed").strip()
+        return VoiceResult(False, error=err)
+    return VoiceResult(True, text=spoken)
 
 
 def listen_once(timeout_seconds: int = 8) -> VoiceResult:

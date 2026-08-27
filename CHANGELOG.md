@@ -131,6 +131,35 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/049-recent-files-downloads.md` | Change doc for recent-files journey |
 | `workflows/inspect-clipboard.json` | Bundled clipboard type/length inspect pack |
 | `documentation/050-clipboard-inspect.md` | Change doc for clipboard inspect |
+| `workflows/speak-confirmation.json` | Bundled TTS confirmation read-back pack |
+| `documentation/051-spoken-confirmations.md` | Change doc for opt-in spoken confirmations |
+
+---
+
+## 051 — Opt-in spoken confirmations (2026-08-22)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/voice/windows.py` | Added TTS `speak_text` (no microphone) |
+| `src/arbora/voice/__init__.py` | Exported speak helpers |
+| `src/arbora/adapters/desktop.py` | Added `speak_text` adapter action |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.speak_text` |
+| `src/arbora/core/planner.py` | Read-back journey; optional prepend when preference is on |
+| `src/arbora/preferences/store.py` | Added opt-in `spoken_confirmations` (default off) |
+| `src/arbora/cli/session.py` | Wired the preference into the planner |
+| `src/arbora/cli/prefs.py` | Documented the new preference key |
+| `src/arbora/cli/main.py` | Documented the example goal and `/prefs` key |
+| `workflows/speak-confirmation.json` | Bundled speak-confirmation pack |
+| `tests/test_voice_windows.py` | Synthesizer path; no mic; empty text |
+| `tests/test_adapters_hardening.py` | Dry-run speak and missing text |
+| `tests/test_broker_and_planner.py` | Read-back vs workday; preference prepend |
+| `tests/test_preferences.py` | Preference roundtrip and CLI list |
+| `tests/test_workflow_packs.py` | Pack match for speak-confirmation |
+| `docs/NEXT.md` | Marked P12 plate 39 done |
+| `documentation/051-spoken-confirmations.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 051 |
+| `README.md` | Linked document 051 |
+| `CHANGELOG.md` | Added file roles and 051 section |
 
 ---
 

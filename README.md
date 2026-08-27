@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 051 | [Opt-in spoken confirmations](documentation/051-spoken-confirmations.md) |
 | 050 | [Clipboard inspect](documentation/050-clipboard-inspect.md) |
 | 049 | [Recent files in Downloads](documentation/049-recent-files-downloads.md) |
 | 048 | [Everyday app launch aliases](documentation/048-app-launch-aliases.md) |

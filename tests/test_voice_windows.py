@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from arbora.voice.windows import listen_once, voice_input_available
+from arbora.voice.windows import listen_once, sanitize_speech_text, speak_text, voice_input_available, voice_output_available
 
 
 def test_voice_input_available_on_windows():
@@ -54,3 +54,35 @@ def test_listen_once_non_windows():
         result = listen_once()
     assert result.ok is False
     assert "Windows-only" in (result.error or "")
+
+
+def test_sanitize_speech_text_collapses_and_caps():
+    assert sanitize_speech_text("  hello   world  ") == "hello world"
+    out = sanitize_speech_text("a" * 500)
+    assert out.endswith("…")
+    assert len(out) == 401
+
+
+def test_speak_text_uses_synthesizer_not_microphone():
+    fake = type("P", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+    with patch("arbora.voice.windows.sys.platform", "win32"), patch(
+        "arbora.voice.windows.subprocess.run", return_value=fake
+    ) as run:
+        result = speak_text("Please review the plan.")
+    assert result.ok is True
+    assert result.text == "Please review the plan."
+    script = run.call_args.args[0][-1]
+    assert "SpeechSynthesizer" in script
+    assert "SetInputToDefaultAudioDevice" not in script
+    assert "SpeechRecognitionEngine" not in script
+
+
+def test_speak_text_empty_and_non_windows():
+    with patch("arbora.voice.windows.sys.platform", "win32"):
+        empty = speak_text("   ")
+    assert empty.ok is False
+    with patch("arbora.voice.windows.sys.platform", "linux"):
+        result = speak_text("hello")
+    assert result.ok is False
+    assert "Windows-only" in (result.error or "")
+    assert voice_output_available() in {True, False}

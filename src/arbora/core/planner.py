@@ -18,6 +18,7 @@ from typing import Any
 from arbora.core.tool_catalog import ALLOWED_ACTIONS
 from arbora.core.types import Plan, Sensitivity, ToolStep, new_id
 from arbora.providers.base import ModelProvider
+from arbora.voice.windows import sanitize_speech_text
 from arbora.workflows.packs import match_workflow_pack
 
 SENSITIVITY_VALUES = {item.value: item for item in Sensitivity}
@@ -72,6 +73,7 @@ class GoalPlanner:
         projects_root: Path | None = None,
         downloads_root: Path | None = None,
         notes_root: Path | None = None,
+        spoken_confirmations: bool = False,
     ) -> None:
         self._provider = provider
         self._workday_root = workday_root
@@ -79,6 +81,7 @@ class GoalPlanner:
         self._projects_root = projects_root
         self._downloads_root = downloads_root
         self._notes_root = notes_root
+        self._spoken_confirmations = spoken_confirmations
 
     def _downloads_dir(self) -> Path:
         return self._downloads_root or Path.home() / "Downloads"
@@ -87,9 +90,14 @@ class GoalPlanner:
         return self._notes_root or Path.home() / "ArboraNotes"
 
     def plan(self, goal: str) -> Plan:
+        return self._maybe_add_spoken_confirmation(self._draft_plan(goal))
+
+    def _draft_plan(self, goal: str) -> Plan:
         text = goal.strip()
         lower = text.lower()
 
+        if self._looks_like_spoken_confirmation(lower):
+            return self._spoken_confirmation_plan(text)
         if self._looks_like_workday_start(lower):
             return self._workday_start_plan(text)
         if self._looks_like_workday_shutdown(lower):
@@ -1005,6 +1013,71 @@ class GoalPlanner:
             ],
         )
 
+    def _spoken_confirmation_plan(self, goal: str) -> Plan:
+        spoken = sanitize_speech_text(self._spoken_text_from_goal(goal))
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Spoken confirmation journey — read back a short phrase through the speakers. "
+                "Does not listen on the microphone. Still requires broker approval."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="speak_text",
+                    args={"text": spoken},
+                    summary="Speak a short confirmation read-back",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Plays speech through the default Windows voice",),
+                )
+            ],
+        )
+
+    def _maybe_add_spoken_confirmation(self, plan: Plan) -> Plan:
+        if not self._spoken_confirmations:
+            return plan
+        if any(step.action == "speak_text" for step in plan.steps):
+            return plan
+        spoken = sanitize_speech_text(self._spoken_confirmation_text(plan))
+        plan.steps.insert(
+            0,
+            ToolStep(
+                id=new_id("step_"),
+                adapter="desktop",
+                action="speak_text",
+                args={"text": spoken},
+                summary="Speak a short read-back of this plan",
+                sensitivity=Sensitivity.MUTATE,
+                side_effects=("Plays speech through the default Windows voice",),
+            ),
+        )
+        return plan
+
+    @staticmethod
+    def _spoken_confirmation_text(plan: Plan) -> str:
+        parts = [f"Plan for {plan.goal}."]
+        for index, step in enumerate(plan.steps, start=1):
+            parts.append(f"Step {index}: {step.summary}.")
+            if step.requires_hard_confirmation():
+                parts.append("This step needs hard confirmation.")
+        return " ".join(parts)
+
+    @staticmethod
+    def _spoken_text_from_goal(goal: str) -> str:
+        match = re.search(
+            r"(?:read (?:this|that|it) back|read back|speak(?: this| that| confirmation)?|"
+            r"say this|spoken confirmation|read the plan|speak the plan)\s*[:\-]?\s*(.*)$",
+            goal,
+            flags=re.IGNORECASE,
+        )
+        if match:
+            token = match.group(1).strip().strip("\"'")
+            if token:
+                return token
+        return "Please review the Arbora plan on screen before it runs."
+
     def _list_files_plan(self, goal: str) -> Plan:
         path = self._folder_path_from_goal(goal)
         return Plan(
@@ -1180,6 +1253,24 @@ class GoalPlanner:
                     side_effects=("Closes Playwright Chromium",),
                 ),
             ],
+        )
+
+    @staticmethod
+    def _looks_like_spoken_confirmation(lower: str) -> bool:
+        return any(
+            phrase in lower
+            for phrase in (
+                "read this back",
+                "read that back",
+                "read it back",
+                "read back",
+                "speak confirmation",
+                "spoken confirmation",
+                "speak this",
+                "say this",
+                "read the plan",
+                "speak the plan",
+            )
         )
 
     @staticmethod
