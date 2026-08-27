@@ -75,6 +75,10 @@ DEFAULT_SEARCH_MAX_RESULTS = 50
 DEFAULT_RECENT_MAX_DEPTH = 2
 DEFAULT_RECENT_MAX_RESULTS = 20
 DEFAULT_RECENT_WALK_CAP = 2000
+DEFAULT_OLD_DAYS = 30
+DEFAULT_OLD_MAX_RESULTS = 200
+MIN_OLD_DAYS = 1
+MAX_OLD_DAYS = 3650
 
 
 def is_protected_search_root(path: Path) -> bool:
@@ -199,6 +203,76 @@ def list_recent_files(
     walk(root, 0)
     found.sort(key=lambda row: row[1], reverse=True)
     return found[:max_results]
+
+
+def clamp_older_than_days(raw: Any, default: int = DEFAULT_OLD_DAYS) -> int:
+    try:
+        days = int(raw)
+    except (TypeError, ValueError):
+        days = default
+    return max(MIN_OLD_DAYS, min(days, MAX_OLD_DAYS))
+
+
+def is_protected_delete_root(path: Path) -> bool:
+    """Refuse Windows directory walks and drive-root deletes."""
+    return is_protected_search_root(path) or _is_drive_root(path)
+
+
+def list_old_files(
+    root: Path,
+    *,
+    older_than_days: int,
+    max_results: int = DEFAULT_OLD_MAX_RESULTS,
+) -> list[tuple[Path, float, int]]:
+    """Return (path, mtime, size) for top-level files older than N days, oldest first."""
+    days = clamp_older_than_days(older_than_days)
+    if max_results < 1:
+        return []
+    if is_protected_delete_root(root):
+        return []
+    if not root.exists() or not root.is_dir():
+        return []
+    cutoff = datetime.now().timestamp() - days * 86400
+    found: list[tuple[Path, float, int]] = []
+    try:
+        entries = list(root.iterdir())
+    except (PermissionError, OSError):
+        return []
+    for entry in entries:
+        try:
+            if entry.is_symlink() or not entry.is_file():
+                continue
+            stat = entry.stat()
+            if stat.st_mtime <= cutoff:
+                found.append((entry, stat.st_mtime, stat.st_size))
+        except OSError:
+            continue
+    found.sort(key=lambda row: row[1])
+    return found[:max_results]
+
+
+def format_old_files_report(
+    root: Path,
+    rows: list[tuple[Path, float, int]],
+    *,
+    older_than_days: int,
+    max_results: int,
+) -> str:
+    lines = [
+        (
+            f"Top-level files in {root} older than {older_than_days} day(s) "
+            f"(oldest first, cap {max_results})"
+        )
+    ]
+    if not rows:
+        lines.append("(no matching files)")
+        return "\n".join(lines)
+    for item, mtime, size in rows:
+        stamp = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d")
+        lines.append(f"  {item.name}  {stamp}  {_format_size(size)}")
+    if len(rows) >= max_results:
+        lines.append(f"... stopped at {max_results} files")
+    return "\n".join(lines)
 
 
 def user_temp_dir() -> Path:
@@ -344,6 +418,46 @@ class FilesAdapter:
                 str(args.get("source", "")),
                 str(args.get("destination", "")),
                 operation="move",
+                dry_run=dry_run,
+            )
+        if action == "inspect_old_files":
+            raw = str(args.get("path", "")).strip()
+            if not raw:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="inspect_old_files requires args.path",
+                    dry_run=dry_run,
+                )
+            try:
+                max_results = int(args.get("max_results", DEFAULT_OLD_MAX_RESULTS) or DEFAULT_OLD_MAX_RESULTS)
+            except (TypeError, ValueError):
+                max_results = DEFAULT_OLD_MAX_RESULTS
+            return self._inspect_old_files(
+                resolve_user_path(raw),
+                older_than_days=clamp_older_than_days(args.get("older_than_days", DEFAULT_OLD_DAYS)),
+                max_results=max_results,
+                dry_run=dry_run,
+            )
+        if action == "delete_old_files":
+            raw = str(args.get("path", "")).strip()
+            if not raw:
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="delete_old_files requires args.path",
+                    dry_run=dry_run,
+                )
+            try:
+                max_results = int(args.get("max_results", DEFAULT_OLD_MAX_RESULTS) or DEFAULT_OLD_MAX_RESULTS)
+            except (TypeError, ValueError):
+                max_results = DEFAULT_OLD_MAX_RESULTS
+            return self._delete_old_files(
+                resolve_user_path(raw),
+                older_than_days=clamp_older_than_days(args.get("older_than_days", DEFAULT_OLD_DAYS)),
+                max_results=max_results,
                 dry_run=dry_run,
             )
         return StepResult(
@@ -519,6 +633,100 @@ class FilesAdapter:
                 stamp = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
                 lines.append(f"  {stamp}  {_format_size(size):>8}  {rel}")
         return StepResult(step_id=new_id("res_"), ok=True, output="\n".join(lines))
+
+    def _inspect_old_files(
+        self,
+        path: Path,
+        *,
+        older_than_days: int,
+        max_results: int,
+        dry_run: bool,
+    ) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would list top-level files in {path} "
+                    f"older than {older_than_days} day(s) (cap {max_results})"
+                ),
+                dry_run=True,
+            )
+        if is_protected_delete_root(path):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Refusing to inspect old files in a protected path: {path}",
+            )
+        if not path.exists():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Path does not exist: {path}",
+            )
+        if not path.is_dir():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Not a directory: {path}",
+            )
+        rows = list_old_files(path, older_than_days=older_than_days, max_results=max_results)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_old_files_report(
+                path, rows, older_than_days=older_than_days, max_results=max_results
+            ),
+        )
+
+    def _delete_old_files(
+        self,
+        path: Path,
+        *,
+        older_than_days: int,
+        max_results: int,
+        dry_run: bool,
+    ) -> StepResult:
+        if is_protected_delete_root(path):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Refusing to delete old files in a protected path: {path}",
+                dry_run=dry_run,
+            )
+        rows = list_old_files(path, older_than_days=older_than_days, max_results=max_results)
+        if dry_run:
+            names = ", ".join(item.name for item, _mtime, _size in rows[:20]) or "(none)"
+            extra = f"; +{len(rows) - 20} more" if len(rows) > 20 else ""
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would delete {len(rows)} top-level file(s) in {path} "
+                    f"older than {older_than_days} day(s): {names}{extra}"
+                ),
+                dry_run=True,
+            )
+        deleted = 0
+        skipped = 0
+        for item, _mtime, _size in rows:
+            try:
+                item.unlink()
+                deleted += 1
+            except OSError:
+                skipped += 1
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=(
+                f"Deleted {deleted} top-level file(s) in {path} older than "
+                f"{older_than_days} day(s); skipped {skipped}"
+            ),
+        )
 
     def _prepare_copy_move(
         self, source_raw: str, destination_raw: str, operation: str, *, dry_run: bool

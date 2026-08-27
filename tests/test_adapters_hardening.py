@@ -16,7 +16,15 @@ from arbora.adapters.desktop import (
     parse_clipboard_snapshot,
     resolve_launch_target,
 )
-from arbora.adapters.files import FilesAdapter, list_recent_files, resolve_user_path, search_files_by_name, user_temp_dir
+from arbora.adapters.files import (
+    FilesAdapter,
+    is_protected_delete_root,
+    list_old_files,
+    list_recent_files,
+    resolve_user_path,
+    search_files_by_name,
+    user_temp_dir,
+)
 from arbora.adapters.powershell import ShellOutcome, ps_quote, run_powershell
 from arbora.adapters.terminal import TerminalAdapter
 
@@ -184,6 +192,81 @@ def test_list_recent_files_orders_by_mtime(tmp_path: Path):
     assert listed.ok
     assert "newer.txt" in listed.output
     assert listed.output.index("newer.txt") < listed.output.index("older.txt")
+
+
+def test_inspect_old_files_requires_path():
+    result = FilesAdapter().execute("inspect_old_files", {}, dry_run=True)
+    assert result.ok is False
+    assert "path" in (result.error or "").lower()
+
+
+def test_inspect_old_files_dry_run(tmp_path: Path):
+    result = FilesAdapter().execute(
+        "inspect_old_files",
+        {"path": str(tmp_path), "older_than_days": 30},
+        dry_run=True,
+    )
+    assert result.ok and result.dry_run
+    assert "30" in result.output
+
+
+def test_list_old_files_top_level_only(tmp_path: Path):
+    keep = tmp_path / "fresh.txt"
+    doomed = tmp_path / "stale.txt"
+    nested_dir = tmp_path / "bucket"
+    nested_dir.mkdir()
+    nested = nested_dir / "old-nested.txt"
+    keep.write_text("new", encoding="utf-8")
+    doomed.write_text("old", encoding="utf-8")
+    nested.write_text("nested", encoding="utf-8")
+    os.utime(doomed, (1_000_000, 1_000_000))
+    os.utime(nested, (1_000_000, 1_000_000))
+    rows = list_old_files(tmp_path, older_than_days=30, max_results=50)
+    names = [item.name for item, _mtime, _size in rows]
+    assert names == ["stale.txt"]
+    listed = FilesAdapter().execute(
+        "inspect_old_files",
+        {"path": str(tmp_path), "older_than_days": 30},
+        dry_run=False,
+    )
+    assert listed.ok
+    assert "stale.txt" in listed.output
+    assert "fresh.txt" not in listed.output
+    assert "old-nested.txt" not in listed.output
+
+
+def test_delete_old_files_dry_run_and_apply(tmp_path: Path):
+    keep = tmp_path / "fresh.txt"
+    doomed = tmp_path / "stale.txt"
+    keep.write_text("new", encoding="utf-8")
+    doomed.write_text("old", encoding="utf-8")
+    os.utime(doomed, (1_000_000, 1_000_000))
+    dry = FilesAdapter().execute(
+        "delete_old_files",
+        {"path": str(tmp_path), "older_than_days": 30},
+        dry_run=True,
+    )
+    assert dry.ok and dry.dry_run
+    assert doomed.exists()
+    deleted = FilesAdapter().execute(
+        "delete_old_files",
+        {"path": str(tmp_path), "older_than_days": 30},
+        dry_run=False,
+    )
+    assert deleted.ok
+    assert not doomed.exists()
+    assert keep.exists()
+
+
+def test_delete_old_files_refuses_drive_root():
+    assert is_protected_delete_root(Path("C:\\"))
+    result = FilesAdapter().execute(
+        "delete_old_files",
+        {"path": "C:\\", "older_than_days": 30},
+        dry_run=True,
+    )
+    assert result.ok is False
+    assert "protected" in (result.error or "").lower()
 
 
 def test_copy_file_dry_run_and_missing_source(tmp_path: Path):

@@ -33,6 +33,8 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "preview_copy_move",
             "copy_file",
             "move_file",
+            "inspect_old_files",
+            "delete_old_files",
         }
     ),
     "terminal": frozenset({"run_powershell"}),

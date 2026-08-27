@@ -270,6 +270,29 @@ def test_move_file_journey_and_undo_phrase():
     assert [step.action for step in undo.steps] == ["undo_last_organise"]
 
 
+def test_old_downloads_inspect_is_read_only():
+    runtime = _runtime()
+    plan = runtime.planner.plan("old files in downloads")
+    assert [step.action for step in plan.steps] == ["inspect_old_files"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert plan.steps[0].args["older_than_days"] == 30
+    assert not plan.has_hard_confirmation_steps
+    recent = runtime.planner.plan("recent files in downloads")
+    assert recent.steps[0].action == "list_recent"
+    organise = runtime.planner.plan("organise my downloads")
+    assert organise.steps[-1].action == "apply_organise"
+
+
+def test_delete_old_downloads_requires_hard_confirm():
+    runtime = _runtime()
+    plan = runtime.planner.plan("delete downloads older than 7 days")
+    assert [step.action for step in plan.steps] == ["inspect_old_files", "delete_old_files"]
+    assert plan.steps[0].args["older_than_days"] == 7
+    assert plan.steps[1].args["older_than_days"] == 7
+    assert plan.steps[-1].sensitivity == Sensitivity.DESTRUCTIVE
+    assert plan.has_hard_confirmation_steps is True
+
+
 def test_screenshot_journey_writes_png_under_notes():
     runtime = _runtime()
     plan = runtime.planner.plan("take a screenshot")

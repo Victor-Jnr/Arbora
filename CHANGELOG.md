@@ -141,8 +141,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/054-inspect-network.md` | Change doc for network / wifi inspect |
 | `workflows/save-clipboard-note.json` | Bundled save-clipboard-to-notes pack |
 | `documentation/055-save-clipboard-to-notes.md` | Change doc for save clipboard to notes |
+| `workflows/inspect-old-downloads.json` | Bundled old-Downloads inspect pack |
+| `documentation/056-empty-old-downloads.md` | Change doc for empty old Downloads |
 
 ---
+
+## 056 — Empty old Downloads (2026-08-27)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/files.py` | Added `inspect_old_files` / `delete_old_files` (top-level, age-capped) |
+| `src/arbora/core/tool_catalog.py` | Allowed `files.inspect_old_files` and `files.delete_old_files` |
+| `src/arbora/core/planner.py` | Old-Downloads inspect vs hard-confirm delete journey |
+| `src/arbora/cli/main.py` | Documented the example goals |
+| `workflows/inspect-old-downloads.json` | Bundled inspect-old-downloads pack |
+| `tests/test_adapters_hardening.py` | Age filter, top-level only, dry-run, drive-root refusal |
+| `tests/test_broker_and_planner.py` | Inspect vs delete; organise/recent still win |
+| `tests/test_workflow_packs.py` | Pack match for inspect-old-downloads |
+| `docs/NEXT.md` | Marked P14 plate 44 done |
+| `documentation/056-empty-old-downloads.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 056 |
+| `README.md` | Linked document 056 |
+| `CHANGELOG.md` | Added file roles and 056 section |
 
 ## 055 — Save clipboard to notes (2026-08-27)
 
