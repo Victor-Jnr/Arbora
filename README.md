@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 057 | [Battery / power inspect](documentation/057-inspect-battery.md) |
 | 056 | [Empty old Downloads](documentation/056-empty-old-downloads.md) |
 | 055 | [Save clipboard to notes](documentation/055-save-clipboard-to-notes.md) |
 | 054 | [Network / wifi inspect](documentation/054-inspect-network.md) |

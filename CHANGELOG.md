@@ -143,8 +143,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/055-save-clipboard-to-notes.md` | Change doc for save clipboard to notes |
 | `workflows/inspect-old-downloads.json` | Bundled old-Downloads inspect pack |
 | `documentation/056-empty-old-downloads.md` | Change doc for empty old Downloads |
+| `workflows/inspect-battery.json` | Bundled read-only battery inspect pack |
+| `documentation/057-inspect-battery.md` | Change doc for battery / power inspect |
 
 ---
+
+## 057 — Battery / power inspect (2026-08-27)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_battery` (charge, status, chassis; no serials) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_battery` |
+| `src/arbora/core/planner.py` | Battery-status journey; diagnose plans include the inspect step |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-battery.json` | Bundled inspect-battery pack |
+| `tests/test_adapters_hardening.py` | Dry-run; AC-only vs charging format; secret-like output withheld |
+| `tests/test_broker_and_planner.py` | Battery-status plan; diagnose still a full diagnostic |
+| `tests/test_workflow_packs.py` | Pack match for inspect-battery |
+| `docs/NEXT.md` | Marked P14 plate 45 done |
+| `documentation/057-inspect-battery.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 057 |
+| `README.md` | Linked document 057 |
+| `CHANGELOG.md` | Added file roles and 057 section |
 
 ## 056 — Empty old Downloads (2026-08-27)
 

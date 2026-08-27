@@ -245,6 +245,122 @@ def clipboard_save_payload(snapshot: dict[str, Any]) -> tuple[str | None, str]:
     return text.replace("\r\n", "\n"), ""
 
 
+_BATTERY_STATUS_LABELS = {
+    1: "Other",
+    2: "Unknown",
+    3: "Fully charged",
+    4: "Low",
+    5: "Critical",
+    6: "Charging",
+    7: "Charging and high",
+    8: "Charging and low",
+    9: "Charging and critical",
+    10: "Undefined",
+    11: "Partially charged",
+}
+
+_PC_SYSTEM_TYPE_LABELS = {
+    1: "Desktop",
+    2: "Mobile / laptop",
+    3: "Workstation",
+    4: "Enterprise server",
+    5: "SOHO server",
+    6: "Appliance PC",
+    7: "Performance server",
+    8: "Slate / tablet",
+}
+
+_BATTERY_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Write-Output '=== Power ==='; "
+    "try { "
+    "  $cs = Get-CimInstance -ClassName Win32_ComputerSystem; "
+    "  Write-Output ('PCSystemType=' + $cs.PCSystemType); "
+    "} catch { Write-Output 'PCSystemType='; }; "
+    "Write-Output '=== Battery ==='; "
+    "$bats = @(Get-CimInstance -ClassName Win32_Battery); "
+    "Write-Output ('COUNT=' + @($bats).Count); "
+    "$bats | Select-Object -First 4 | ForEach-Object { "
+    "  Write-Output 'BATTERY_BEGIN'; "
+    "  Write-Output ('NAME=' + $_.Name); "
+    "  Write-Output ('STATUS=' + $_.BatteryStatus); "
+    "  Write-Output ('PERCENT=' + $_.EstimatedChargeRemaining); "
+    "  Write-Output ('RUNTIME_MIN=' + $_.EstimatedRunTime); "
+    "}"
+)
+
+
+def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse the structured Win32_Battery snapshot written by PowerShell."""
+    pc_type: int | None = None
+    count = 0
+    batteries: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for line in (stdout or "").splitlines():
+        if line == "BATTERY_BEGIN":
+            current = {"name": "", "status": None, "percent": None, "runtime_min": None}
+            batteries.append(current)
+            continue
+        if line.startswith("PCSystemType="):
+            raw = line.split("=", 1)[1].strip()
+            try:
+                pc_type = int(raw) if raw else None
+            except ValueError:
+                pc_type = None
+        elif line.startswith("COUNT="):
+            try:
+                count = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                count = 0
+        elif current is not None and line.startswith("NAME="):
+            current["name"] = line.split("=", 1)[1].strip()
+        elif current is not None and line.startswith("STATUS="):
+            try:
+                current["status"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["status"] = None
+        elif current is not None and line.startswith("PERCENT="):
+            try:
+                current["percent"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["percent"] = None
+        elif current is not None and line.startswith("RUNTIME_MIN="):
+            try:
+                current["runtime_min"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["runtime_min"] = None
+    if not count:
+        count = len(batteries)
+    return {"pc_system_type": pc_type, "count": count, "batteries": batteries}
+
+
+def format_battery_report(snapshot: dict[str, Any]) -> str:
+    pc_type = snapshot.get("pc_system_type")
+    chassis = _PC_SYSTEM_TYPE_LABELS.get(int(pc_type), "Unknown chassis") if pc_type is not None else "Unknown chassis"
+    lines = [f"Power: {chassis} (PCSystemType={pc_type if pc_type is not None else 'n/a'})"]
+    batteries = list(snapshot.get("batteries") or [])
+    count = int(snapshot.get("count") or len(batteries))
+    if count < 1 and not batteries:
+        lines.append("No battery reported (desktop / AC-only).")
+        return "\n".join(lines)
+    lines.append(f"Battery count: {count}")
+    for item in batteries:
+        name = str(item.get("name") or "Battery")
+        status = item.get("status")
+        status_label = _BATTERY_STATUS_LABELS.get(int(status), "Unknown") if status is not None else "Unknown"
+        percent = item.get("percent")
+        if isinstance(percent, int) and 0 <= percent <= 100:
+            charge = f"{percent}%"
+        else:
+            charge = "unknown %"
+        parts = [name, f"charge={charge}", f"status={status_label}"]
+        runtime = item.get("runtime_min")
+        if isinstance(runtime, int) and 1 <= runtime <= 10_000:
+            parts.append(f"runtime={runtime} min")
+        lines.append("  " + "; ".join(parts))
+    return "\n".join(lines)
+
+
 def _clipboard_arg_reveal(args: dict[str, Any]) -> bool:
     value = args.get("reveal", False)
     if isinstance(value, bool):
@@ -309,6 +425,8 @@ class DesktopAdapter:
             )
         if action == "inspect_network":
             return self._inspect_network(dry_run=dry_run)
+        if action == "inspect_battery":
+            return self._inspect_battery(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -690,3 +808,37 @@ class DesktopAdapter:
                 error="Refusing to return output that looks like a Wi-Fi key",
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=text)
+
+    def _inspect_battery(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read battery charge and AC/chassis status "
+                    "(no serials, passwords, or powercfg reports)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_BATTERY_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Battery inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_battery_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_battery_report(snapshot))

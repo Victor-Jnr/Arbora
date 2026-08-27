@@ -106,6 +106,8 @@ class GoalPlanner:
             return self._largest_folders_plan(text)
         if self._looks_like_network_status(lower):
             return self._network_status_plan(text)
+        if self._looks_like_battery_status(lower):
+            return self._battery_status_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -509,6 +511,27 @@ class GoalPlanner:
             ],
         )
 
+    def _battery_status_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Battery inspect journey — read-only charge and chassis/power status. "
+                "Does not change power settings, run powercfg reports, or show serials."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_battery",
+                    args={},
+                    summary="Read-only: battery charge and AC/chassis status",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Win32_Battery / computer-system chassis type",),
+                )
+            ],
+        )
+
     def _diagnostic_plan(self, goal: str) -> Plan:
         return Plan(
             id=new_id("plan_"),
@@ -579,6 +602,15 @@ class GoalPlanner:
                     summary="Read-only: network adapters, IPv4, and connection profiles",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads local adapter and IP configuration; no Wi-Fi keys",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_battery",
+                    args={},
+                    summary="Read-only: battery charge and AC/chassis status",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Win32_Battery / computer-system chassis type",),
                 ),
                 ToolStep(
                     id=new_id("step_"),
@@ -1640,6 +1672,29 @@ class GoalPlanner:
                 "network status",
                 "wifi adapters",
                 "connection profile",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_battery_status(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "battery status",
+                "battery level",
+                "battery percent",
+                "battery percentage",
+                "battery remaining",
+                "power status",
+                "power supply",
+                "on battery",
+                "inspect battery",
+                "laptop battery",
+                "how much battery",
+                "charging status",
+                "is my laptop charging",
             )
         )
 
