@@ -26,6 +26,7 @@ def test_load_bundled_workflow_packs():
     assert "copy-file" in ids
     assert "take-screenshot" in ids
     assert "inspect-network" in ids
+    assert "save-clipboard-note" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -179,6 +180,17 @@ def test_inspect_network_workflow_pack_matches():
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_network"]
     assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_save_clipboard_note_workflow_pack_matches():
+    pack = match_workflow_pack("run save clipboard note pack")
+    assert pack is not None
+    assert pack.id == "save-clipboard-note"
+    plan = pack.to_plan("run save clipboard note pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["ensure_directory", "save_clipboard_text"]
+    assert plan.steps[-1].adapter == "desktop"
+    assert plan.steps[-1].sensitivity.value == "mutate"
 
 
 def test_git_status_workflow_pack_matches():

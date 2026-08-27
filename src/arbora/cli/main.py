@@ -63,6 +63,7 @@ Try goals like:
   find invoice.pdf in downloads
   recent files in downloads
   inspect clipboard
+  save clipboard to notes
   read this back: start my workday
   copy the file report.pdf to documents
   take a screenshot

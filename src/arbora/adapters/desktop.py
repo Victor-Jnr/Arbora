@@ -93,6 +93,7 @@ def resolve_launch_target(name: str) -> str:
 
 
 CLIPBOARD_PREVIEW_CHARS = 120
+CLIPBOARD_SAVE_MAX_CHARS = 20_000
 
 _SECRET_MARKERS = (
     "password=",
@@ -219,6 +220,31 @@ def format_clipboard_report(snapshot: dict[str, Any], *, reveal: bool) -> str:
     return f"Clipboard text ({length} chars):\n{preview}"
 
 
+def clipboard_save_payload(snapshot: dict[str, Any]) -> tuple[str | None, str]:
+    """Return (text, error). Text is None when the clipboard must not be written to disk."""
+    kind = str(snapshot.get("kind") or "empty")
+    if kind == "empty":
+        return None, "Clipboard is empty; nothing to save"
+    if kind == "image":
+        return None, "Clipboard holds an image; save clipboard to notes only writes text"
+    if kind == "files":
+        return None, "Clipboard holds file paths; save clipboard to notes only writes text"
+    text = str(snapshot.get("text") or "")
+    if not text.strip():
+        return None, "Clipboard text is empty; nothing to save"
+    if clipboard_looks_secret(text):
+        return None, (
+            "Refusing to save clipboard text because it looks like a secret "
+            "(password, token, or key)"
+        )
+    if len(text) > CLIPBOARD_SAVE_MAX_CHARS:
+        return None, (
+            f"Clipboard text is {len(text)} chars; "
+            f"refusing to save more than {CLIPBOARD_SAVE_MAX_CHARS}"
+        )
+    return text.replace("\r\n", "\n"), ""
+
+
 def _clipboard_arg_reveal(args: dict[str, Any]) -> bool:
     value = args.get("reveal", False)
     if isinstance(value, bool):
@@ -271,6 +297,8 @@ class DesktopAdapter:
             )
         if action == "inspect_clipboard":
             return self._inspect_clipboard(reveal=_clipboard_arg_reveal(args), dry_run=dry_run)
+        if action == "save_clipboard_text":
+            return self._save_clipboard_text(str(args.get("path", "")), dry_run=dry_run)
         if action == "speak_text":
             return self._speak_text(str(args.get("text", "")), dry_run=dry_run)
         if action == "capture_screenshot":
@@ -449,6 +477,61 @@ class DesktopAdapter:
             ok=True,
             output=format_clipboard_report(snapshot, reveal=reveal),
         )
+
+    def _save_clipboard_text(self, path_raw: str, *, dry_run: bool) -> StepResult:
+        target = path_raw.strip()
+        if not target:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="save_clipboard_text requires args.path",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would save clipboard text to {target} "
+                    "unless empty, non-text, or secret-like"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_CLIPBOARD_PS, timeout_seconds=15)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Failed to read the clipboard",
+            )
+        snapshot = parse_clipboard_snapshot(outcome.stdout)
+        text, error = clipboard_save_payload(snapshot)
+        if text is None:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=error)
+        path = Path(target).expanduser()
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        except PermissionError:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Permission denied writing: {path}",
+            )
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to write {path}: {exc}",
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=f"Saved clipboard text to {path}")
 
     def _speak_text(self, text: str, *, dry_run: bool) -> StepResult:
         spoken = sanitize_speech_text(text)

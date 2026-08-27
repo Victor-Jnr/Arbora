@@ -114,6 +114,8 @@ class GoalPlanner:
             return self._organise_downloads_plan(text)
         if self._looks_like_undo_organise(lower):
             return self._undo_organise_plan(text)
+        if self._looks_like_save_clipboard(lower):
+            return self._save_clipboard_plan(text)
         if self._looks_like_copy_move(lower):
             return self._copy_move_plan(text)
         if self._looks_like_save_note(lower):
@@ -1159,6 +1161,40 @@ class GoalPlanner:
             ],
         )
 
+    def _save_clipboard_plan(self, goal: str) -> Plan:
+        notes_root = self._notes_dir()
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        note_path = notes_root / f"clipboard-{stamp}.txt"
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Save-clipboard journey — write clipboard text to a timestamped file in the notes folder. "
+                "Empty, image, file-list, and password/token-like clipboard contents are refused. "
+                "Still requires broker approval."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(notes_root)},
+                    summary=f"Ensure notes folder exists at {notes_root}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="save_clipboard_text",
+                    args={"path": str(note_path)},
+                    summary=f"Save clipboard text to {note_path.name}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Reads the clipboard and may create a local text file",),
+                ),
+            ],
+        )
+
     def _clipboard_plan(self, goal: str) -> Plan:
         lower = goal.lower()
         reveal = any(
@@ -1747,6 +1783,27 @@ class GoalPlanner:
         if not re.search(r"\b(open|launch|start)\b", lower):
             return False
         return GoalPlanner._app_alias_from_goal(lower) is not None
+
+    @staticmethod
+    def _looks_like_save_clipboard(lower: str) -> bool:
+        if "clipboard" not in lower:
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "save clipboard",
+                "save the clipboard",
+                "save my clipboard",
+                "clipboard to notes",
+                "clipboard to a note",
+                "clipboard into a note",
+                "clipboard as a note",
+                "paste clipboard",
+                "write clipboard",
+                "copy clipboard",
+                "note from clipboard",
+            )
+        )
 
     @staticmethod
     def _looks_like_clipboard(lower: str) -> bool:

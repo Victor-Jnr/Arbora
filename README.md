@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 055 | [Save clipboard to notes](documentation/055-save-clipboard-to-notes.md) |
 | 054 | [Network / wifi inspect](documentation/054-inspect-network.md) |
 | 053 | [Screenshot / window snapshot](documentation/053-capture-screenshot.md) |
 | 052 | [Copy or move a file with preview](documentation/052-copy-move-file.md) |
