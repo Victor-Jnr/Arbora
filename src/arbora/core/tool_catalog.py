@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
-    "desktop": frozenset({"list_running_apps", "launch_app", "focus_window"}),
+    "desktop": frozenset({"list_running_apps", "launch_app", "focus_window", "inspect_clipboard"}),
     "files": frozenset(
         {
             "list_directory",

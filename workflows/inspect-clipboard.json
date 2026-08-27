@@ -1,0 +1,20 @@
+{
+  "id": "inspect-clipboard",
+  "name": "Inspect clipboard",
+  "description": "Read-only clipboard type and length; content withheld by default.",
+  "goal_phrases": [
+    "inspect clipboard pack",
+    "run inspect clipboard pack"
+  ],
+  "rationale": "Workflow pack: inspect clipboard metadata without dumping secrets.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_clipboard",
+      "args": { "reveal": false },
+      "summary": "Inspect clipboard type and length (content withheld)",
+      "sensitivity": "read",
+      "side_effects": ["Reads the Windows clipboard"]
+    }
+  ]
+}

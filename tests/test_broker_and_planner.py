@@ -204,6 +204,24 @@ def test_recent_downloads_does_not_steal_list_or_find():
     assert recent.steps[0].action == "list_recent"
 
 
+def test_clipboard_inspect_is_read_only_and_withholds():
+    runtime = _runtime()
+    plan = runtime.planner.plan("inspect clipboard")
+    assert [step.action for step in plan.steps] == ["inspect_clipboard"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert plan.steps[0].args.get("reveal") is False
+    assert not plan.has_hard_confirmation_steps
+
+
+def test_show_clipboard_text_sets_reveal():
+    runtime = _runtime()
+    plan = runtime.planner.plan("show clipboard text")
+    assert plan.steps[0].action == "inspect_clipboard"
+    assert plan.steps[0].args.get("reveal") is True
+    listed = runtime.planner.plan("what's in downloads")
+    assert listed.steps[0].action == "list_directory"
+
+
 def test_run_tests_journey_uses_pytest():
     runtime = _runtime()
     plan = runtime.planner.plan("run pytest")
