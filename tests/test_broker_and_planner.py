@@ -243,6 +243,22 @@ def test_move_file_journey_and_undo_phrase():
     assert [step.action for step in undo.steps] == ["undo_last_organise"]
 
 
+def test_screenshot_journey_writes_png_under_notes():
+    runtime = _runtime()
+    plan = runtime.planner.plan("take a screenshot")
+    assert [step.action for step in plan.steps] == ["ensure_directory", "capture_screenshot"]
+    assert plan.steps[0].sensitivity == Sensitivity.MUTATE
+    assert plan.steps[1].sensitivity == Sensitivity.MUTATE
+    assert str(plan.steps[1].args["path"]).endswith(".png")
+    assert "screenshots" in str(plan.steps[1].args["path"])
+    assert not plan.has_hard_confirmation_steps
+    windowed = runtime.planner.plan("screenshot of notepad")
+    assert windowed.steps[-1].args.get("window_title")
+    assert "notepad" in str(windowed.steps[-1].args.get("window_title")).lower()
+    research = runtime.planner.plan("research https://example.com and save a brief")
+    assert any(step.adapter == "browser" for step in research.steps)
+
+
 def test_read_this_back_is_speak_not_workday():
     runtime = _runtime()
     plan = runtime.planner.plan("read this back: start my workday")

@@ -1,0 +1,29 @@
+{
+  "id": "take-screenshot",
+  "name": "Take a screenshot",
+  "description": "Capture the primary screen to a PNG under the notes screenshots folder.",
+  "goal_phrases": [
+    "screenshot pack",
+    "run screenshot pack",
+    "take screenshot pack"
+  ],
+  "rationale": "Workflow pack: capture the primary screen to a local PNG behind the broker.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "ensure_directory",
+      "args": { "path": "~/ArboraNotes/screenshots" },
+      "summary": "Ensure the screenshots folder exists",
+      "sensitivity": "mutate",
+      "side_effects": ["May create a directory"]
+    },
+    {
+      "adapter": "desktop",
+      "action": "capture_screenshot",
+      "args": { "path": "~/ArboraNotes/screenshots/screenshot.png" },
+      "summary": "Capture the primary screen to screenshot.png",
+      "sensitivity": "mutate",
+      "side_effects": ["Writes a PNG image on disk"]
+    }
+  ]
+}

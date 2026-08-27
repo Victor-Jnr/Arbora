@@ -128,6 +128,8 @@ class GoalPlanner:
             return self._launch_app_plan(text)
         if self._looks_like_clipboard(lower):
             return self._clipboard_plan(text)
+        if self._looks_like_screenshot(lower):
+            return self._screenshot_plan(text)
         if self._looks_like_recent_files(lower):
             return self._recent_files_plan(text)
         if self._looks_like_list_files(lower):
@@ -1046,6 +1048,63 @@ class GoalPlanner:
             ],
         )
 
+    def _screenshot_plan(self, goal: str) -> Plan:
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        folder = self._notes_dir() / "screenshots"
+        path = folder / f"screenshot-{stamp}.png"
+        window_title = self._screenshot_window_from_goal(goal)
+        capture_args: dict[str, Any] = {"path": str(path)}
+        if window_title:
+            capture_args["window_title"] = window_title
+        capture_summary = (
+            f"Capture the '{window_title}' window to {path.name}"
+            if window_title
+            else f"Capture the primary screen to {path.name}"
+        )
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Screenshot journey — write one PNG under the notes/screenshots folder. "
+                "Still requires broker approval. Does not upload the image."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(folder)},
+                    summary=f"Ensure screenshots folder exists at {folder}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="capture_screenshot",
+                    args=capture_args,
+                    summary=capture_summary,
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Writes a PNG image on disk",),
+                ),
+            ],
+        )
+
+    @staticmethod
+    def _screenshot_window_from_goal(goal: str) -> str:
+        match = re.search(
+            r"(?:of|named|called|window)\s+(?:the\s+)?(.+?)(?:\s+window)?$",
+            goal.strip(),
+            flags=re.I,
+        )
+        if not match:
+            return ""
+        token = match.group(1).strip().strip("\"'")
+        token = re.sub(r"\bwindow\b", "", token, flags=re.I).strip()
+        if token.lower() in {"screen", "desktop", "primary screen", "the screen", "my screen"}:
+            return ""
+        return token
+
     def _recent_files_plan(self, goal: str) -> Plan:
         path = self._folder_path_from_goal(goal)
         return Plan(
@@ -1634,6 +1693,29 @@ class GoalPlanner:
     @staticmethod
     def _looks_like_clipboard(lower: str) -> bool:
         return "clipboard" in lower
+
+    @staticmethod
+    def _looks_like_screenshot(lower: str) -> bool:
+        if any(
+            word in lower
+            for word in ("http://", "https://", "research", "brief", "web page", "browser", "clipboard")
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "screenshot",
+                "screen shot",
+                "screen-shot",
+                "capture the screen",
+                "capture my screen",
+                "capture the window",
+                "capture window",
+                "snapshot the screen",
+                "snapshot the window",
+                "take a snapshot of the screen",
+            )
+        )
 
     @staticmethod
     def _looks_like_recent_files(lower: str) -> bool:

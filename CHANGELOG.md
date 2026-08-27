@@ -135,8 +135,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/051-spoken-confirmations.md` | Change doc for opt-in spoken confirmations |
 | `workflows/copy-file.json` | Bundled preview→copy file workflow pack |
 | `documentation/052-copy-move-file.md` | Change doc for copy/move file journey |
+| `workflows/take-screenshot.json` | Bundled primary-screen PNG capture pack |
+| `documentation/053-capture-screenshot.md` | Change doc for screenshot / window snapshot |
 
 ---
+
+## 053 — Screenshot / window snapshot (2026-08-24)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `capture_screenshot` for primary screen or titled window |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.capture_screenshot` |
+| `src/arbora/core/planner.py` | Screenshot journey writes PNG under notes/screenshots |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/take-screenshot.json` | Bundled take-screenshot pack |
+| `tests/test_adapters_hardening.py` | Dry-run capture; missing path |
+| `tests/test_broker_and_planner.py` | Screenshot plan; research still wins on URLs |
+| `tests/test_workflow_packs.py` | Pack match for take-screenshot |
+| `docs/NEXT.md` | Marked P13 plate 41 done |
+| `documentation/053-capture-screenshot.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 053 |
+| `README.md` | Linked document 053 |
+| `CHANGELOG.md` | Added file roles and 053 section |
 
 ## 052 — Copy or move a file with preview (2026-08-24)
 

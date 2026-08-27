@@ -289,6 +289,26 @@ def test_speak_text_dry_run():
     assert "Please review the plan." in result.output
 
 
+def test_capture_screenshot_requires_path():
+    result = DesktopAdapter().execute("capture_screenshot", {}, dry_run=True)
+    assert result.ok is False
+    assert "path" in (result.error or "").lower()
+
+
+def test_capture_screenshot_dry_run(tmp_path: Path):
+    target = tmp_path / "shot.png"
+    screen = DesktopAdapter().execute("capture_screenshot", {"path": str(target)}, dry_run=True)
+    assert screen.ok and screen.dry_run
+    assert not target.exists()
+    windowed = DesktopAdapter().execute(
+        "capture_screenshot",
+        {"path": str(target), "window_title": "Notepad"},
+        dry_run=True,
+    )
+    assert windowed.ok and windowed.dry_run
+    assert "Notepad" in windowed.output
+
+
 def test_terminal_timeout_surface():
     adapter = TerminalAdapter()
     fake = ShellOutcome(ok=False, stdout="", stderr="", timed_out=True, error="PowerShell timed out after 1s")

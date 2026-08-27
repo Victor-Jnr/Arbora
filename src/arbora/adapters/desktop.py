@@ -273,6 +273,12 @@ class DesktopAdapter:
             return self._inspect_clipboard(reveal=_clipboard_arg_reveal(args), dry_run=dry_run)
         if action == "speak_text":
             return self._speak_text(str(args.get("text", "")), dry_run=dry_run)
+        if action == "capture_screenshot":
+            return self._capture_screenshot(
+                str(args.get("path", "")),
+                str(args.get("window_title", args.get("title_contains", ""))),
+                dry_run=dry_run,
+            )
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -471,3 +477,84 @@ class DesktopAdapter:
                 error=result.error or "Spoken output failed",
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=f"Spoke: {result.text}")
+
+    def _capture_screenshot(self, path_raw: str, window_title: str, *, dry_run: bool) -> StepResult:
+        target = path_raw.strip()
+        needle = window_title.strip()
+        if not target:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="capture_screenshot requires args.path",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            scope = f"window matching '{needle}'" if needle else "the primary screen"
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"[dry-run] Would capture {scope} to {target}",
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        quoted_path = ps_quote(target)
+        if needle:
+            quoted_title = ps_quote(needle)
+            command = (
+                "Add-Type -AssemblyName System.Windows.Forms; "
+                "Add-Type -AssemblyName System.Drawing; "
+                "Add-Type -TypeDefinition @'\n"
+                "using System;\n"
+                "using System.Runtime.InteropServices;\n"
+                "public class ArboraShot {\n"
+                "  [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }\n"
+                "  [DllImport(\"user32.dll\")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);\n"
+                "}\n"
+                "'@ -ErrorAction SilentlyContinue; "
+                f"$needle = {quoted_title}; "
+                "$proc = Get-Process | Where-Object { "
+                "  $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -and "
+                "  $_.MainWindowTitle -like ('*' + $needle + '*') "
+                "} | Select-Object -First 1; "
+                "if (-not $proc) { Write-Error \"No window matched '$needle'\"; exit 1 }; "
+                "$rect = New-Object ArboraShot+RECT; "
+                "[void][ArboraShot]::GetWindowRect($proc.MainWindowHandle, [ref]$rect); "
+                "$w = [Math]::Max(1, $rect.Right - $rect.Left); "
+                "$h = [Math]::Max(1, $rect.Bottom - $rect.Top); "
+                "$bmp = New-Object System.Drawing.Bitmap $w, $h; "
+                "$g = [System.Drawing.Graphics]::FromImage($bmp); "
+                "$g.CopyFromScreen($rect.Left, $rect.Top, 0, 0, (New-Object System.Drawing.Size $w, $h)); "
+                f"$path = {quoted_path}; "
+                "$dir = Split-Path -Parent $path; "
+                "if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }; "
+                "$bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png); "
+                "$g.Dispose(); $bmp.Dispose(); "
+                "Write-Output (\"Saved window screenshot: $path title=$($proc.MainWindowTitle)\")"
+            )
+        else:
+            command = (
+                "Add-Type -AssemblyName System.Windows.Forms; "
+                "Add-Type -AssemblyName System.Drawing; "
+                "$b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds; "
+                "$bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height; "
+                "$g = [System.Drawing.Graphics]::FromImage($bmp); "
+                "$g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size); "
+                f"$path = {quoted_path}; "
+                "$dir = Split-Path -Parent $path; "
+                "if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }; "
+                "$bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png); "
+                "$g.Dispose(); $bmp.Dispose(); "
+                "Write-Output (\"Saved screenshot: $path\")"
+            )
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Screenshot capture failed",
+            )
+        return StepResult(step_id=new_id("res_"), ok=True, output=outcome.stdout or f"Saved screenshot: {target}")
