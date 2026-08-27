@@ -183,6 +183,27 @@ def test_open_chrome_does_not_steal_explorer_or_workday():
     assert workday.steps[0].action == "list_running_apps"
 
 
+def test_recent_files_journey_is_read_only():
+    runtime = _runtime()
+    plan = runtime.planner.plan("recent files in downloads")
+    assert [step.action for step in plan.steps] == ["list_recent"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert plan.steps[0].args["max_depth"] == 2
+    assert plan.steps[0].args["max_results"] == 20
+    assert "Downloads" in plan.steps[0].args["path"] or "downloads" in plan.steps[0].args["path"].lower()
+    assert not plan.has_hard_confirmation_steps
+
+
+def test_recent_downloads_does_not_steal_list_or_find():
+    runtime = _runtime()
+    listed = runtime.planner.plan("list files in ~/Downloads")
+    assert listed.steps[0].action == "list_directory"
+    found = runtime.planner.plan("find invoice.pdf in downloads")
+    assert found.steps[0].action == "search_by_name"
+    recent = runtime.planner.plan("what did i download")
+    assert recent.steps[0].action == "list_recent"
+
+
 def test_run_tests_journey_uses_pytest():
     runtime = _runtime()
     plan = runtime.planner.plan("run pytest")

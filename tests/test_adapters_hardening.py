@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest.mock import patch
 
 from arbora.adapters.desktop import APP_ALIASES, DesktopAdapter, resolve_launch_target
-from arbora.adapters.files import FilesAdapter, resolve_user_path, search_files_by_name, user_temp_dir
+from arbora.adapters.files import FilesAdapter, list_recent_files, resolve_user_path, search_files_by_name, user_temp_dir
 from arbora.adapters.powershell import ShellOutcome, ps_quote, run_powershell
 from arbora.adapters.terminal import TerminalAdapter
 
@@ -134,6 +135,46 @@ def test_search_files_by_name_matches_nested(tmp_path: Path):
     )
     assert listed.ok
     assert "invoice.pdf" in listed.output
+
+
+def test_list_recent_requires_path():
+    adapter = FilesAdapter()
+    result = adapter.execute("list_recent", {}, dry_run=True)
+    assert result.ok is False
+    assert "path" in (result.error or "").lower()
+
+
+def test_list_recent_dry_run(tmp_path: Path):
+    adapter = FilesAdapter()
+    result = adapter.execute("list_recent", {"path": str(tmp_path)}, dry_run=True)
+    assert result.ok
+    assert result.dry_run
+    assert "newest" in result.output.lower()
+
+
+def test_list_recent_files_orders_by_mtime(tmp_path: Path):
+    older = tmp_path / "older.txt"
+    newer = tmp_path / "newer.txt"
+    nested = tmp_path / "sub"
+    nested.mkdir()
+    nested_file = nested / "nested.txt"
+    older.write_text("a", encoding="utf-8")
+    newer.write_text("b", encoding="utf-8")
+    nested_file.write_text("c", encoding="utf-8")
+    os.utime(older, (1_000_000, 1_000_000))
+    os.utime(nested_file, (2_000_000, 2_000_000))
+    os.utime(newer, (3_000_000, 3_000_000))
+    rows = list_recent_files(tmp_path, max_depth=2, max_results=10)
+    names = [item.name for item, _mtime, _size in rows]
+    assert names[0] == "newer.txt"
+    assert "nested.txt" in names
+    shallow = list_recent_files(tmp_path, max_depth=0, max_results=10)
+    shallow_names = [item.name for item, _mtime, _size in shallow]
+    assert "nested.txt" not in shallow_names
+    listed = FilesAdapter().execute("list_recent", {"path": str(tmp_path)}, dry_run=False)
+    assert listed.ok
+    assert "newer.txt" in listed.output
+    assert listed.output.index("newer.txt") < listed.output.index("older.txt")
 
 
 def test_inspect_user_temp_dry_run(monkeypatch, tmp_path: Path):
