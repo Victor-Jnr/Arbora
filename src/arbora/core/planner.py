@@ -116,6 +116,8 @@ class GoalPlanner:
             return self._temp_plan(text)
         if self._looks_like_launch_app(lower):
             return self._launch_app_plan(text)
+        if self._looks_like_recent_files(lower):
+            return self._recent_files_plan(text)
         if self._looks_like_list_files(lower):
             return self._list_files_plan(text)
         if self._looks_like_research(lower, text):
@@ -947,6 +949,28 @@ class GoalPlanner:
             ],
         )
 
+    def _recent_files_plan(self, goal: str) -> Plan:
+        path = self._folder_path_from_goal(goal)
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Recent-files journey — read-only newest-first listing with a depth cap. "
+                "Does not open, move, or delete files."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="list_recent",
+                    args={"path": path, "max_depth": 2, "max_results": 20},
+                    summary=f"List newest files in {path}",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads file names, sizes, and modification times",),
+                )
+            ],
+        )
+
     def _list_files_plan(self, goal: str) -> Plan:
         path = self._folder_path_from_goal(goal)
         return Plan(
@@ -1374,7 +1398,29 @@ class GoalPlanner:
         return GoalPlanner._app_alias_from_goal(lower) is not None
 
     @staticmethod
+    def _looks_like_recent_files(lower: str) -> bool:
+        if any(word in lower for word in ("history", "goal", "recycle", "clipboard", "temp")):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "recent files",
+                "recent downloads",
+                "latest files",
+                "latest downloads",
+                "newest files",
+                "newest downloads",
+                "what did i download",
+                "recently downloaded",
+                "list recent",
+                "show recent",
+            )
+        )
+
+    @staticmethod
     def _looks_like_list_files(lower: str) -> bool:
+        if "clipboard" in lower or "recent" in lower or "latest" in lower:
+            return False
         return any(phrase in lower for phrase in ("list files", "show files", "what's in", "whats in"))
 
     @staticmethod
