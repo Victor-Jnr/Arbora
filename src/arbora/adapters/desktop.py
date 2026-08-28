@@ -6,6 +6,7 @@ import os
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from arbora.adapters.powershell import ps_quote, require_windows, run_powershell
 from arbora.core.types import StepResult, new_id
@@ -94,6 +95,17 @@ def resolve_launch_target(name: str) -> str:
 
 CLIPBOARD_PREVIEW_CHARS = 120
 CLIPBOARD_SAVE_MAX_CHARS = 20_000
+BROWSER_URL_MAX_CHARS = 2_000
+INSTALLED_BROWSER_ALIASES = frozenset(
+    {
+        "chrome",
+        "google chrome",
+        "edge",
+        "microsoft edge",
+        "msedge",
+        "firefox",
+    }
+)
 
 _SECRET_MARKERS = (
     "password=",
@@ -361,6 +373,51 @@ def format_battery_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def is_safe_http_url(url: str) -> bool:
+    """True for http(s) URLs with a host and no embedded credentials."""
+    raw = (url or "").strip()
+    if not raw or len(raw) > BROWSER_URL_MAX_CHARS:
+        return False
+    if any(ch.isspace() for ch in raw):
+        return False
+    parsed = urlparse(raw)
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    if parsed.username or parsed.password:
+        return False
+    host = (parsed.hostname or "").strip().strip(".")
+    return bool(host)
+
+
+def installed_browser_alias(name: str) -> str | None:
+    lowered = name.strip().lower()
+    if lowered in INSTALLED_BROWSER_ALIASES:
+        if lowered in {"google chrome"}:
+            return "chrome"
+        if lowered in {"microsoft edge", "msedge"}:
+            return "edge"
+        return lowered
+    return None
+
+
+def open_in_browser_script(target: str, url: str) -> str:
+    """Start-Process the installed browser with one http(s) URL argument."""
+    quoted_target = ps_quote(target)
+    quoted_url = ps_quote(url)
+    return (
+        f"$target = {quoted_target}; "
+        f"$url = {quoted_url}; "
+        "$cmd = Get-Command -Name $target -ErrorAction SilentlyContinue; "
+        "if ($cmd) { $target = $cmd.Source }; "
+        "try { "
+        "  Start-Process -FilePath $target -ArgumentList @($url) -ErrorAction Stop | Out-Null; "
+        "  Write-Output \"Opened $url in $target\" "
+        "} catch { "
+        "  Write-Error $_.Exception.Message; exit 1 "
+        "}"
+    )
+
+
 def close_window_script(needle: str) -> str:
     """PowerShell that posts WM_CLOSE via CloseMainWindow — never taskkill."""
     quoted = ps_quote(needle)
@@ -447,6 +504,12 @@ class DesktopAdapter:
         if action == "close_window":
             return self._close_window(
                 str(args.get("title_contains", args.get("name", ""))),
+                dry_run=dry_run,
+            )
+        if action == "open_in_browser":
+            return self._open_in_browser(
+                str(args.get("url", "")),
+                str(args.get("name", args.get("browser", ""))),
                 dry_run=dry_run,
             )
         return StepResult(
@@ -909,4 +972,60 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=outcome.stdout or f"Sent WM_CLOSE to window matching '{needle}'",
+        )
+
+    def _open_in_browser(self, url: str, name: str, *, dry_run: bool) -> StepResult:
+        raw_url = url.strip()
+        alias = installed_browser_alias(name)
+        if not raw_url:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="open_in_browser requires args.url",
+                dry_run=dry_run,
+            )
+        if alias is None:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="open_in_browser requires args.name (chrome, edge, or firefox)",
+                dry_run=dry_run,
+            )
+        if not is_safe_http_url(raw_url):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="open_in_browser only accepts http(s) URLs without credentials",
+                dry_run=dry_run,
+            )
+        target = resolve_launch_target(alias)
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would open {raw_url} in installed {alias} "
+                    f"({target}; Start-Process, not Playwright)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        command = open_in_browser_script(target, raw_url)
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or f"Failed to open URL in {alias}",
+            )
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=outcome.stdout or f"Opened {raw_url} in {alias}",
         )

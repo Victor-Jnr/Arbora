@@ -1,0 +1,23 @@
+{
+  "id": "open-url-installed-browser",
+  "name": "Open URL in Chrome",
+  "description": "Start-Process installed Chrome with one https URL. Not Playwright.",
+  "goal_phrases": [
+    "open url in chrome pack",
+    "run open url in chrome pack"
+  ],
+  "rationale": "Workflow pack: open https://example.com in the installed Chrome browser.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "open_in_browser",
+      "args": {
+        "url": "https://example.com",
+        "name": "chrome"
+      },
+      "summary": "Open https://example.com in installed chrome",
+      "sensitivity": "mutate",
+      "side_effects": ["Starts the installed browser with one URL argument"]
+    }
+  ]
+}

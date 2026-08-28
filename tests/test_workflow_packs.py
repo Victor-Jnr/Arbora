@@ -228,6 +228,19 @@ def test_close_window_workflow_pack_matches():
     assert plan.steps[0].args.get("title_contains")
 
 
+def test_open_url_installed_browser_workflow_pack_matches():
+    pack = match_workflow_pack("run open url in chrome pack")
+    assert pack is not None
+    assert pack.id == "open-url-installed-browser"
+    plan = pack.to_plan("run open url in chrome pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["open_in_browser"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "mutate"
+    assert str(plan.steps[0].args.get("url", "")).startswith("https://")
+    assert plan.steps[0].args.get("name") in {"chrome", "edge", "firefox"}
+
+
 def test_git_status_workflow_pack_matches():
     pack = match_workflow_pack("run git status pack")
     assert pack is not None

@@ -117,6 +117,25 @@ def test_close_window_journey_is_mutate_not_kill():
     assert launch.steps[0].action == "launch_app"
 
 
+def test_open_url_in_chrome_uses_installed_browser_not_playwright():
+    runtime = _runtime()
+    plan = runtime.planner.plan("open https://example.com in chrome")
+    assert [step.action for step in plan.steps] == ["open_in_browser"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].args["url"] == "https://example.com"
+    assert plan.steps[0].args["name"] == "chrome"
+    assert plan.steps[0].sensitivity == Sensitivity.MUTATE
+    assert not plan.has_hard_confirmation_steps
+    edge = runtime.planner.plan("open https://example.com in edge")
+    assert edge.steps[0].action == "open_in_browser"
+    assert edge.steps[0].args["name"] == "edge"
+    research = runtime.planner.plan("research https://example.com and save a brief")
+    assert any(step.adapter == "browser" for step in research.steps)
+    assert not any(step.action == "open_in_browser" for step in research.steps)
+    launch = runtime.planner.plan("open chrome")
+    assert launch.steps[0].action == "launch_app"
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

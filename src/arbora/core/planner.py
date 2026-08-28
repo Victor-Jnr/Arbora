@@ -134,6 +134,8 @@ class GoalPlanner:
             return self._temp_plan(text)
         if self._looks_like_close_window(lower):
             return self._close_window_plan(text)
+        if self._looks_like_open_in_browser(lower):
+            return self._open_in_browser_plan(text)
         if self._looks_like_launch_app(lower):
             return self._launch_app_plan(text)
         if self._looks_like_clipboard(lower):
@@ -1172,6 +1174,38 @@ class GoalPlanner:
             return match.group(1).strip().strip("\"'")
         return text
 
+    def _open_in_browser_plan(self, goal: str) -> Plan:
+        url = self._http_url_from_goal(goal)
+        alias = self._app_alias_from_goal(goal.lower()) or "edge"
+        if alias not in {"chrome", "edge", "firefox"}:
+            alias = "edge"
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Open-URL journey — Start-Process the installed Chrome, Edge, or Firefox "
+                "with one http(s) URL. Does not use Playwright. Still requires broker approval."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="open_in_browser",
+                    args={"url": url, "name": alias},
+                    summary=f"Open {url} in installed {alias}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Starts the installed browser with one URL argument",),
+                )
+            ],
+        )
+
+    @staticmethod
+    def _http_url_from_goal(goal: str) -> str:
+        match = re.search(r"https?://[^\s\"'<>]+", goal, flags=re.I)
+        if not match:
+            return ""
+        return match.group(0).rstrip(".,);]")
+
     def _launch_app_plan(self, goal: str) -> Plan:
         alias = self._app_alias_from_goal(goal.lower()) or "notepad"
         focus = {
@@ -1974,6 +2008,19 @@ class GoalPlanner:
                 lower,
             )
         )
+
+    @staticmethod
+    def _looks_like_open_in_browser(lower: str) -> bool:
+        if not re.search(r"https?://", lower):
+            return False
+        if any(
+            word in lower
+            for word in ("research", "brief", "summarise", "summarize", "snapshot", "extract")
+        ):
+            return False
+        if not re.search(r"\b(open|launch)\b", lower):
+            return False
+        return bool(re.search(r"\b(chrome|msedge|firefox|edge)\b", lower))
 
     @staticmethod
     def _looks_like_launch_app(lower: str) -> bool:

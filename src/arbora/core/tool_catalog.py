@@ -15,6 +15,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_network",
             "inspect_battery",
             "close_window",
+            "open_in_browser",
         }
     ),
     "files": frozenset(
