@@ -136,6 +136,20 @@ def test_open_url_in_chrome_uses_installed_browser_not_playwright():
     assert launch.steps[0].action == "launch_app"
 
 
+def test_printer_status_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("printer status")
+    assert [step.action for step in plan.steps] == ["inspect_printers"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    defaulted = runtime.planner.plan("what's my default printer")
+    assert defaulted.steps[0].action == "inspect_printers"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_printers" for step in diagnose.steps)
+    battery = runtime.planner.plan("battery status")
+    assert [step.action for step in battery.steps] == ["inspect_battery"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

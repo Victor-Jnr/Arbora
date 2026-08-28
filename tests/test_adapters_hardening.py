@@ -15,11 +15,13 @@ from arbora.adapters.desktop import (
     close_window_script,
     format_battery_report,
     format_clipboard_report,
+    format_printer_report,
     installed_browser_alias,
     is_safe_http_url,
     open_in_browser_script,
     parse_battery_snapshot,
     parse_clipboard_snapshot,
+    parse_printer_snapshot,
     resolve_launch_target,
 )
 from arbora.adapters.files import (
@@ -627,6 +629,57 @@ def test_open_in_browser_mocked_powershell():
     assert "start-process" in command
     assert "https://example.com" in command
     assert "playwright" not in command
+
+
+def test_inspect_printers_dry_run():
+    result = DesktopAdapter().execute("inspect_printers", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "printer" in result.output.lower()
+    assert "job" in result.output.lower() or "secret" in result.output.lower()
+
+
+def test_format_printer_report_empty_and_default():
+    empty = parse_printer_snapshot("COUNT=0")
+    report = format_printer_report(empty)
+    assert "no printers" in report.lower()
+    listed = parse_printer_snapshot(
+        "COUNT=2\n"
+        "PRINTER_BEGIN\nNAME=OfficeJet\nDEFAULT=True\nSTATUS=3\nWORKOFFLINE=False\n"
+        "PORT=USB001\nNETWORK=False\nSHARED=False\n"
+        "PRINTER_BEGIN\nNAME=PDF\nDEFAULT=False\nSTATUS=7\nWORKOFFLINE=True\n"
+        "PORT=PORTPROMPT:\nNETWORK=False\nSHARED=False\n"
+    )
+    live = format_printer_report(listed)
+    assert "OfficeJet" in live
+    assert "default" in live.lower()
+    assert "Idle" in live
+    assert "PDF" in live
+    assert "Offline" in live
+    assert "USB001" in live
+
+
+def test_inspect_printers_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="COUNT=0", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_printers", {}, dry_run=False)
+    assert result.ok
+    assert "no printers" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "win32_printer" in command
+    assert "get-printjob" not in command
+    assert "password" not in command
+
+
+def test_inspect_printers_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_printers", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
 
 
 def test_terminal_timeout_surface():

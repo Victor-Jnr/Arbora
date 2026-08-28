@@ -71,6 +71,7 @@ Try goals like:
   take a screenshot
   wifi status
   battery status
+  printer status
   what's in temp
   empty temp
   open chrome
