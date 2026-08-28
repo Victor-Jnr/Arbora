@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 059 | [Open URL in installed Chrome/Edge](documentation/059-open-url-installed-browser.md) |
 | 058 | [Close window by title](documentation/058-close-window-by-title.md) |
 | 057 | [Battery / power inspect](documentation/057-inspect-battery.md) |
 | 056 | [Empty old Downloads](documentation/056-empty-old-downloads.md) |

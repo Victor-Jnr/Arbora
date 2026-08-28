@@ -75,6 +75,7 @@ Try goals like:
   empty temp
   open chrome
   close the notepad window
+  open https://example.com in chrome
   open downloads in explorer
   empty the recycle bin
   disk diagnose pack

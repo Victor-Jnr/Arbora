@@ -147,8 +147,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/057-inspect-battery.md` | Change doc for battery / power inspect |
 | `workflows/close-window.json` | Bundled WM_CLOSE titled-window pack |
 | `documentation/058-close-window-by-title.md` | Change doc for close window by title |
+| `workflows/open-url-installed-browser.json` | Bundled installed-browser URL pack |
+| `documentation/059-open-url-installed-browser.md` | Change doc for open URL in Chrome/Edge |
 
 ---
+
+## 059 — Open URL in installed Chrome/Edge (2026-08-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `open_in_browser` (Start-Process http(s); not Playwright) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.open_in_browser` |
+| `src/arbora/core/planner.py` | Open-URL-in-Chrome/Edge journey; research still uses Playwright |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/open-url-installed-browser.json` | Bundled open-url-installed-browser pack |
+| `tests/test_adapters_hardening.py` | URL allowlist; dry-run; Start-Process mock |
+| `tests/test_broker_and_planner.py` | Chrome/Edge URL plan vs research vs launch |
+| `tests/test_workflow_packs.py` | Pack match for open-url-installed-browser |
+| `docs/NEXT.md` | Marked P15 plate 47 done |
+| `documentation/059-open-url-installed-browser.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 059 |
+| `README.md` | Linked document 059 |
+| `CHANGELOG.md` | Added file roles and 059 section |
 
 ## 058 — Close window by title (2026-08-28)
 

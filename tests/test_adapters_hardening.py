@@ -15,6 +15,9 @@ from arbora.adapters.desktop import (
     close_window_script,
     format_battery_report,
     format_clipboard_report,
+    installed_browser_alias,
+    is_safe_http_url,
+    open_in_browser_script,
     parse_battery_snapshot,
     parse_clipboard_snapshot,
     resolve_launch_target,
@@ -556,6 +559,74 @@ def test_close_window_mocked_powershell():
     assert "closemainwindow" in command
     assert "taskkill" not in command
     assert "stop-process" not in command
+
+
+def test_open_in_browser_requires_url_and_browser():
+    missing_url = DesktopAdapter().execute("open_in_browser", {"name": "chrome"}, dry_run=True)
+    assert missing_url.ok is False
+    assert "url" in (missing_url.error or "").lower()
+    missing_name = DesktopAdapter().execute(
+        "open_in_browser", {"url": "https://example.com"}, dry_run=True
+    )
+    assert missing_name.ok is False
+    assert "chrome" in (missing_name.error or "").lower() or "name" in (missing_name.error or "").lower()
+    notepad = DesktopAdapter().execute(
+        "open_in_browser",
+        {"url": "https://example.com", "name": "notepad"},
+        dry_run=True,
+    )
+    assert notepad.ok is False
+
+
+def test_is_safe_http_url_rejects_non_http_and_credentials():
+    assert is_safe_http_url("https://example.com/path")
+    assert is_safe_http_url("http://example.com")
+    assert not is_safe_http_url("file:///C:/secrets.txt")
+    assert not is_safe_http_url("javascript:alert(1)")
+    assert not is_safe_http_url("ftp://files.example")
+    assert not is_safe_http_url("https://user:pass@example.com")
+    assert not is_safe_http_url("")
+    assert installed_browser_alias("Google Chrome") == "chrome"
+    assert installed_browser_alias("msedge") == "edge"
+    assert installed_browser_alias("notepad") is None
+
+
+def test_open_in_browser_dry_run_and_rejects_bad_url():
+    dry = DesktopAdapter().execute(
+        "open_in_browser",
+        {"url": "https://example.com", "name": "chrome"},
+        dry_run=True,
+    )
+    assert dry.ok and dry.dry_run
+    assert "example.com" in dry.output
+    assert "playwright" in dry.output.lower()
+    bad = DesktopAdapter().execute(
+        "open_in_browser",
+        {"url": "file:///C:/tmp", "name": "edge"},
+        dry_run=True,
+    )
+    assert bad.ok is False
+    script = open_in_browser_script(r"C:\Program Files\Google\Chrome\Application\chrome.exe", "https://example.com")
+    lowered = script.lower()
+    assert "start-process" in lowered
+    assert "playwright" not in lowered
+
+
+def test_open_in_browser_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="Opened https://example.com in chrome.exe", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute(
+            "open_in_browser",
+            {"url": "https://example.com", "name": "chrome"},
+            dry_run=False,
+        )
+    assert result.ok
+    command = str(mocked.call_args[0][0]).lower()
+    assert "start-process" in command
+    assert "https://example.com" in command
+    assert "playwright" not in command
 
 
 def test_terminal_timeout_surface():
