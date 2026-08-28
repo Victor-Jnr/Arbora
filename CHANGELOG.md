@@ -145,8 +145,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/056-empty-old-downloads.md` | Change doc for empty old Downloads |
 | `workflows/inspect-battery.json` | Bundled read-only battery inspect pack |
 | `documentation/057-inspect-battery.md` | Change doc for battery / power inspect |
+| `workflows/close-window.json` | Bundled WM_CLOSE titled-window pack |
+| `documentation/058-close-window-by-title.md` | Change doc for close window by title |
 
 ---
+
+## 058 — Close window by title (2026-08-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `close_window` (WM_CLOSE / CloseMainWindow; not taskkill) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.close_window` |
+| `src/arbora/core/planner.py` | Close-window journey; workday shutdown still does not auto-close |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/close-window.json` | Bundled close-window pack |
+| `tests/test_adapters_hardening.py` | Dry-run; script has CloseMainWindow and not taskkill |
+| `tests/test_broker_and_planner.py` | Close-window plan; shutdown and launch still win |
+| `tests/test_workflow_packs.py` | Pack match for close-window |
+| `docs/NEXT.md` | Added P15; marked plate 46 done |
+| `documentation/058-close-window-by-title.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 058 |
+| `README.md` | Linked document 058 |
+| `CHANGELOG.md` | Added file roles and 058 section |
 
 ## 057 — Battery / power inspect (2026-08-27)
 

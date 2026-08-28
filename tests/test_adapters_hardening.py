@@ -12,6 +12,7 @@ from arbora.adapters.desktop import (
     DesktopAdapter,
     clipboard_looks_secret,
     clipboard_save_payload,
+    close_window_script,
     format_battery_report,
     format_clipboard_report,
     parse_battery_snapshot,
@@ -524,6 +525,37 @@ def test_inspect_battery_withholds_secret_like_output():
         result = DesktopAdapter().execute("inspect_battery", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
+
+
+def test_close_window_requires_title():
+    result = DesktopAdapter().execute("close_window", {}, dry_run=True)
+    assert result.ok is False
+    assert "title" in (result.error or "").lower() or "name" in (result.error or "").lower()
+
+
+def test_close_window_dry_run_is_not_kill():
+    result = DesktopAdapter().execute("close_window", {"title_contains": "Notepad"}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "WM_CLOSE" in result.output or "close" in result.output.lower()
+    assert "force-kill" in result.output.lower() or "closemainwindow" in result.output.lower()
+    script = close_window_script("Notepad").lower()
+    assert "closemainwindow" in script
+    assert "taskkill" not in script
+    assert "stop-process" not in script
+    assert ".kill(" not in script
+
+
+def test_close_window_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="Sent WM_CLOSE to notepad (pid 1) title=Untitled - Notepad", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("close_window", {"title_contains": "Notepad"}, dry_run=False)
+    assert result.ok
+    command = str(mocked.call_args[0][0]).lower()
+    assert "closemainwindow" in command
+    assert "taskkill" not in command
+    assert "stop-process" not in command
 
 
 def test_terminal_timeout_surface():

@@ -1,0 +1,22 @@
+{
+  "id": "close-window",
+  "name": "Close window by title",
+  "description": "Send WM_CLOSE to a matching titled window. Does not force-kill.",
+  "goal_phrases": [
+    "close window pack",
+    "run close window pack"
+  ],
+  "rationale": "Workflow pack: close one Notepad window with WM_CLOSE, not taskkill.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "close_window",
+      "args": {
+        "title_contains": "Notepad"
+      },
+      "summary": "Close the Notepad window with WM_CLOSE",
+      "sensitivity": "mutate",
+      "side_effects": ["Sends a close request to one window; does not force-kill"]
+    }
+  ]
+}

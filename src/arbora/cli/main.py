@@ -74,6 +74,7 @@ Try goals like:
   what's in temp
   empty temp
   open chrome
+  close the notepad window
   open downloads in explorer
   empty the recycle bin
   disk diagnose pack
