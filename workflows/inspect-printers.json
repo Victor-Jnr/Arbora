@@ -1,0 +1,20 @@
+{
+  "id": "inspect-printers",
+  "name": "Inspect printers",
+  "description": "Read-only installed printers and the default. No print jobs or secrets.",
+  "goal_phrases": [
+    "inspect printers pack",
+    "run inspect printers pack"
+  ],
+  "rationale": "Workflow pack: read-only local printer names and default.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_printers",
+      "args": {},
+      "summary": "List printers and the default printer",
+      "sensitivity": "read",
+      "side_effects": ["Reads Win32_Printer names and status"]
+    }
+  ]
+}

@@ -271,6 +271,16 @@ _BATTERY_STATUS_LABELS = {
     11: "Partially charged",
 }
 
+_PRINTER_STATUS_LABELS = {
+    1: "Other",
+    2: "Unknown",
+    3: "Idle",
+    4: "Printing",
+    5: "Warmup",
+    6: "Stopped printing",
+    7: "Offline",
+}
+
 _PC_SYSTEM_TYPE_LABELS = {
     1: "Desktop",
     2: "Mobile / laptop",
@@ -298,6 +308,23 @@ _BATTERY_PS = (
     "  Write-Output ('STATUS=' + $_.BatteryStatus); "
     "  Write-Output ('PERCENT=' + $_.EstimatedChargeRemaining); "
     "  Write-Output ('RUNTIME_MIN=' + $_.EstimatedRunTime); "
+    "}"
+)
+
+_PRINTER_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Write-Output '=== Printers ==='; "
+    "$ps = @(Get-CimInstance -ClassName Win32_Printer); "
+    "Write-Output ('COUNT=' + @($ps).Count); "
+    "$ps | Select-Object -First 20 | ForEach-Object { "
+    "  Write-Output 'PRINTER_BEGIN'; "
+    "  Write-Output ('NAME=' + $_.Name); "
+    "  Write-Output ('DEFAULT=' + $_.Default); "
+    "  Write-Output ('STATUS=' + $_.PrinterStatus); "
+    "  Write-Output ('WORKOFFLINE=' + $_.WorkOffline); "
+    "  Write-Output ('PORT=' + $_.PortName); "
+    "  Write-Output ('NETWORK=' + $_.Network); "
+    "  Write-Output ('SHARED=' + $_.Shared); "
     "}"
 )
 
@@ -370,6 +397,85 @@ def format_battery_report(snapshot: dict[str, Any]) -> str:
         if isinstance(runtime, int) and 1 <= runtime <= 10_000:
             parts.append(f"runtime={runtime} min")
         lines.append("  " + "; ".join(parts))
+    return "\n".join(lines)
+
+
+def parse_printer_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse the structured Win32_Printer snapshot written by PowerShell."""
+    count = 0
+    printers: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for line in (stdout or "").splitlines():
+        if line == "PRINTER_BEGIN":
+            current = {
+                "name": "",
+                "default": False,
+                "status": None,
+                "work_offline": False,
+                "port": "",
+                "network": False,
+                "shared": False,
+            }
+            printers.append(current)
+            continue
+        if line.startswith("COUNT="):
+            try:
+                count = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                count = 0
+            continue
+        if current is None:
+            continue
+        if line.startswith("NAME="):
+            current["name"] = line.split("=", 1)[1].strip()
+        elif line.startswith("DEFAULT="):
+            current["default"] = line.split("=", 1)[1].strip().lower() in {"true", "1"}
+        elif line.startswith("STATUS="):
+            try:
+                current["status"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["status"] = None
+        elif line.startswith("WORKOFFLINE="):
+            current["work_offline"] = line.split("=", 1)[1].strip().lower() in {"true", "1"}
+        elif line.startswith("PORT="):
+            current["port"] = line.split("=", 1)[1].strip()
+        elif line.startswith("NETWORK="):
+            current["network"] = line.split("=", 1)[1].strip().lower() in {"true", "1"}
+        elif line.startswith("SHARED="):
+            current["shared"] = line.split("=", 1)[1].strip().lower() in {"true", "1"}
+    if not count:
+        count = len(printers)
+    return {"count": count, "printers": printers}
+
+
+def format_printer_report(snapshot: dict[str, Any]) -> str:
+    printers = list(snapshot.get("printers") or [])
+    count = int(snapshot.get("count") or len(printers))
+    if count < 1 and not printers:
+        return "No printers reported."
+    lines = [f"Printer count: {count}"]
+    for item in printers:
+        name = str(item.get("name") or "Printer")
+        status = item.get("status")
+        status_label = _PRINTER_STATUS_LABELS.get(int(status), "Unknown") if status is not None else "Unknown"
+        flags: list[str] = []
+        if item.get("default"):
+            flags.append("default")
+        if item.get("work_offline"):
+            flags.append("offline")
+        if item.get("network"):
+            flags.append("network")
+        if item.get("shared"):
+            flags.append("shared")
+        flag_text = f" ({', '.join(flags)})" if flags else ""
+        port = str(item.get("port") or "").strip()
+        port_text = f"; port={port}" if port else ""
+        lines.append(f"  {name}{flag_text}; status={status_label}{port_text}")
+    default_names = [str(item.get("name") or "") for item in printers if item.get("default")]
+    if default_names:
+        lines.insert(1, f"Default printer: {default_names[0]}")
+    else:
+        lines.insert(1, "Default printer: (none marked)")
     return "\n".join(lines)
 
 
@@ -512,6 +618,8 @@ class DesktopAdapter:
                 str(args.get("name", args.get("browser", ""))),
                 dry_run=dry_run,
             )
+        if action == "inspect_printers":
+            return self._inspect_printers(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1029,3 +1137,37 @@ class DesktopAdapter:
             ok=True,
             output=outcome.stdout or f"Opened {raw_url} in {alias}",
         )
+
+    def _inspect_printers(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would list installed printers and the default printer "
+                    "(no print jobs, driver paths, or secrets)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_PRINTER_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Printer inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_printer_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_printer_report(snapshot))

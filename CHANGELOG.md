@@ -149,8 +149,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/058-close-window-by-title.md` | Change doc for close window by title |
 | `workflows/open-url-installed-browser.json` | Bundled installed-browser URL pack |
 | `documentation/059-open-url-installed-browser.md` | Change doc for open URL in Chrome/Edge |
+| `workflows/inspect-printers.json` | Bundled read-only printer inspect pack |
+| `documentation/060-inspect-printers.md` | Change doc for printer inspect |
 
 ---
+
+## 060 — Printer inspect (2026-08-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_printers` (names, default, status; no jobs) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_printers` |
+| `src/arbora/core/planner.py` | Printer-status journey; diagnose plans unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-printers.json` | Bundled inspect-printers pack |
+| `tests/test_adapters_hardening.py` | Dry-run; empty vs default format; secret-like output withheld |
+| `tests/test_broker_and_planner.py` | Printer-status plan vs diagnose vs battery |
+| `tests/test_workflow_packs.py` | Pack match for inspect-printers |
+| `docs/NEXT.md` | Marked P15 plate 48 done |
+| `documentation/060-inspect-printers.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 060 |
+| `README.md` | Linked document 060 |
+| `CHANGELOG.md` | Added file roles and 060 section |
 
 ## 059 — Open URL in installed Chrome/Edge (2026-08-28)
 

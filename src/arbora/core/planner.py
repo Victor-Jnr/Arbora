@@ -108,6 +108,8 @@ class GoalPlanner:
             return self._network_status_plan(text)
         if self._looks_like_battery_status(lower):
             return self._battery_status_plan(text)
+        if self._looks_like_printer_status(lower):
+            return self._printer_status_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -532,6 +534,27 @@ class GoalPlanner:
                     summary="Read-only: battery charge and AC/chassis status",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Win32_Battery / computer-system chassis type",),
+                )
+            ],
+        )
+
+    def _printer_status_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Printer inspect journey — read-only installed printers and the default. "
+                "Does not send print jobs, change queues, or show driver/secret paths."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_printers",
+                    args={},
+                    summary="Read-only: list printers and the default printer",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Win32_Printer names and status",),
                 )
             ],
         )
@@ -1772,6 +1795,32 @@ class GoalPlanner:
                 "how much battery",
                 "charging status",
                 "is my laptop charging",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_printer_status(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if not re.search(r"\bprinters?\b", lower):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "printer status",
+                "printers status",
+                "default printer",
+                "list printers",
+                "list printer",
+                "what printers",
+                "what's my printer",
+                "whats my printer",
+                "what is my printer",
+                "inspect printer",
+                "installed printers",
+                "installed printer",
+                "my printers",
+                "my printer",
             )
         )
 

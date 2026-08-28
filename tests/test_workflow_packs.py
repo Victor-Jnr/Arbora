@@ -241,6 +241,17 @@ def test_open_url_installed_browser_workflow_pack_matches():
     assert plan.steps[0].args.get("name") in {"chrome", "edge", "firefox"}
 
 
+def test_inspect_printers_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect printers pack")
+    assert pack is not None
+    assert pack.id == "inspect-printers"
+    plan = pack.to_plan("run inspect printers pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_printers"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_git_status_workflow_pack_matches():
     pack = match_workflow_pack("run git status pack")
     assert pack is not None

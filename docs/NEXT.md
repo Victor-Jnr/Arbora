@@ -56,6 +56,7 @@ Already in place:
 - read-only battery charge and AC/chassis status.
 - close a titled window with WM_CLOSE (not taskkill / Stop-Process).
 - open an http(s) URL in installed Chrome/Edge (Start-Process, not Playwright).
+- read-only installed printers and the default printer (no jobs or secrets).
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under the notes folder.
@@ -159,7 +160,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 46 | **Close window by title** | ✅ Send WM_CLOSE to a matching window; never taskkill / Stop-Process |
 | 47 | **Open URL in Chrome/Edge** | ✅ Start-Process the installed browser with an http(s) URL (not Playwright) |
-| 48 | **Printer inspect** | Read-only default/list printers; no job contents or secrets |
+| 48 | **Printer inspect** | ✅ Read-only default/list printers; no job contents or secrets |
 
 ## Non-negotiables (do not drift)
 
@@ -254,4 +255,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P15 plates 46–47 are done. Next: read-only printer inspect.
+P15 plates 46–48 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
