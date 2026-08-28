@@ -132,6 +132,8 @@ class GoalPlanner:
             return self._find_files_plan(text)
         if self._looks_like_temp(lower):
             return self._temp_plan(text)
+        if self._looks_like_close_window(lower):
+            return self._close_window_plan(text)
         if self._looks_like_launch_app(lower):
             return self._launch_app_plan(text)
         if self._looks_like_clipboard(lower):
@@ -1129,6 +1131,47 @@ class GoalPlanner:
             steps=steps,
         )
 
+    def _close_window_plan(self, goal: str) -> Plan:
+        title = self._close_window_title_from_goal(goal)
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Close-window journey — send WM_CLOSE to the first matching titled window. "
+                "Does not force-kill (no taskkill / Stop-Process). "
+                "Apps may still prompt to save. Still requires broker approval."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="close_window",
+                    args={"title_contains": title},
+                    summary=f"Close the window matching '{title}' with WM_CLOSE",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Sends a close request to one window; does not force-kill",),
+                )
+            ],
+        )
+
+    @staticmethod
+    def _close_window_title_from_goal(goal: str) -> str:
+        text = goal.strip()
+        match = re.search(
+            r"close\s+window\s+(?:titled|named|called)\s+(.+)$",
+            text,
+            flags=re.I,
+        )
+        if match:
+            return match.group(1).strip().strip("\"'")
+        match = re.search(r"close\s+(?:the\s+)?(.+?)\s+window\b", text, flags=re.I)
+        if match:
+            return match.group(1).strip().strip("\"'")
+        match = re.search(r"close\s+(?:the\s+)?(.+)$", text, flags=re.I)
+        if match:
+            return match.group(1).strip().strip("\"'")
+        return text
+
     def _launch_app_plan(self, goal: str) -> Plan:
         alias = self._app_alias_from_goal(goal.lower()) or "notepad"
         focus = {
@@ -1905,6 +1948,32 @@ class GoalPlanner:
         if re.search(r"\b(open|launch|start)\s+code\b", lower):
             return "vscode"
         return None
+
+    @staticmethod
+    def _looks_like_close_window(lower: str) -> bool:
+        if any(
+            phrase in lower
+            for phrase in (
+                "workday",
+                "recycle",
+                "close out",
+                "end of day",
+                "for the day",
+                "my day",
+            )
+        ):
+            return False
+        if re.search(r"\bclose\s+window\s+(titled|named|called)\s+\S", lower):
+            return True
+        if re.search(r"\bclose\s+(the\s+)?.+\s+window\b", lower):
+            return True
+        return bool(
+            re.search(
+                r"\bclose\s+(the\s+)?(notepad|chrome|edge|firefox|discord|spotify|"
+                r"calculator|calc|code|vscode|slack|paint)\b",
+                lower,
+            )
+        )
 
     @staticmethod
     def _looks_like_launch_app(lower: str) -> bool:

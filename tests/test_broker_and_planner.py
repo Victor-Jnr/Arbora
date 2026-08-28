@@ -100,6 +100,23 @@ def test_battery_status_is_read_only_inspect():
     assert [step.action for step in wifi.steps] == ["inspect_network"]
 
 
+def test_close_window_journey_is_mutate_not_kill():
+    runtime = _runtime()
+    plan = runtime.planner.plan("close the notepad window")
+    assert [step.action for step in plan.steps] == ["close_window"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.MUTATE
+    assert "notepad" in str(plan.steps[0].args["title_contains"]).lower()
+    assert not plan.has_hard_confirmation_steps
+    titled = runtime.planner.plan("close window titled Calculator")
+    assert titled.steps[0].action == "close_window"
+    assert "calculator" in str(titled.steps[0].args["title_contains"]).lower()
+    shutdown = runtime.planner.plan("end my workday")
+    assert not any(step.action == "close_window" for step in shutdown.steps)
+    launch = runtime.planner.plan("open chrome")
+    assert launch.steps[0].action == "launch_app"
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

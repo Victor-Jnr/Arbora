@@ -361,6 +361,23 @@ def format_battery_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def close_window_script(needle: str) -> str:
+    """PowerShell that posts WM_CLOSE via CloseMainWindow — never taskkill."""
+    quoted = ps_quote(needle)
+    return (
+        f"$needle = {quoted}; "
+        "$proc = Get-Process | Where-Object { "
+        "  $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -and "
+        "  ($_.MainWindowTitle -like ('*' + $needle + '*') -or $_.ProcessName -like ('*' + $needle + '*')) "
+        "} | Select-Object -First 1; "
+        "if (-not $proc) { Write-Error \"No window matched '$needle'\"; exit 1 }; "
+        "$sent = $proc.CloseMainWindow(); "
+        "if (-not $sent) { Write-Error \"CloseMainWindow failed for '$($proc.MainWindowTitle)'\"; exit 1 }; "
+        "Write-Output (\"Sent WM_CLOSE to {0} (pid {1}) title={2}\" "
+        "-f $proc.ProcessName, $proc.Id, $proc.MainWindowTitle)"
+    )
+
+
 def _clipboard_arg_reveal(args: dict[str, Any]) -> bool:
     value = args.get("reveal", False)
     if isinstance(value, bool):
@@ -427,6 +444,11 @@ class DesktopAdapter:
             return self._inspect_network(dry_run=dry_run)
         if action == "inspect_battery":
             return self._inspect_battery(dry_run=dry_run)
+        if action == "close_window":
+            return self._close_window(
+                str(args.get("title_contains", args.get("name", ""))),
+                dry_run=dry_run,
+            )
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -842,3 +864,49 @@ class DesktopAdapter:
             )
         snapshot = parse_battery_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_battery_report(snapshot))
+
+    def _close_window(self, title_contains: str, *, dry_run: bool) -> StepResult:
+        needle = title_contains.strip()
+        if not needle:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="close_window requires args.title_contains or args.name",
+                dry_run=dry_run,
+            )
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would send WM_CLOSE to a window matching '{needle}' "
+                    "(CloseMainWindow; not a force-kill)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        command = close_window_script(needle)
+        lowered = command.lower()
+        if "taskkill" in lowered or "stop-process" in lowered or ".kill(" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to run a close script that looks like a force-kill",
+            )
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or f"Failed to close window matching '{needle}'",
+            )
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=outcome.stdout or f"Sent WM_CLOSE to window matching '{needle}'",
+        )

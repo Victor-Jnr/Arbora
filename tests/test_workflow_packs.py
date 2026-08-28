@@ -216,6 +216,18 @@ def test_inspect_battery_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_close_window_workflow_pack_matches():
+    pack = match_workflow_pack("run close window pack")
+    assert pack is not None
+    assert pack.id == "close-window"
+    plan = pack.to_plan("run close window pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["close_window"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "mutate"
+    assert plan.steps[0].args.get("title_contains")
+
+
 def test_git_status_workflow_pack_matches():
     pack = match_workflow_pack("run git status pack")
     assert pack is not None
