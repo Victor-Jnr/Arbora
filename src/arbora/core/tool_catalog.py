@@ -18,6 +18,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "open_in_browser",
             "inspect_printers",
             "inspect_startup",
+            "inspect_default_browser",
         }
     ),
     "files": frozenset(

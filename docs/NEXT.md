@@ -59,6 +59,7 @@ Already in place:
 - open an http(s) URL in installed Chrome/Edge (Start-Process, not Playwright).
 - read-only installed printers and the default printer (no jobs or secrets).
 - read-only startup apps (HKCU/HKLM Run names + user Startup folder).
+- read-only default http(s) browser (UserChoice ProgId; no association changes).
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under the notes folder.
@@ -170,7 +171,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 49 | **Recent files in Documents** | ✅ Newest-first listing behind the broker (same caps as Downloads) |
 | 50 | **Startup apps inspect** | ✅ Read-only HKCU/HKLM Run + Startup folder listing; no enable/disable |
-| 51 | **Default browser inspect** | Read-only UserChoice ProgId for http(s); no association changes |
+| 51 | **Default browser inspect** | ✅ Read-only UserChoice ProgId for http(s); no association changes |
 
 ## Non-negotiables (do not drift)
 
@@ -265,4 +266,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P16 plates 49–50 are done. Next: plate 51 (default browser inspect).
+P16 plates 49–51 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

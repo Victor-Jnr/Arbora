@@ -16,6 +16,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 060 | [Printer inspect](060-inspect-printers.md) | 2026-08-28 | Read-only default/list printers; no jobs or secrets |
 | 061 | [Recent files in Documents](061-recent-files-documents.md) | 2026-08-29 | Newest-first listing of Documents behind the broker |
 | 062 | [Startup apps inspect](062-inspect-startup.md) | 2026-08-29 | Read-only HKCU/HKLM Run + Startup folder; no enable/disable |
+| 063 | [Default browser inspect](063-inspect-default-browser.md) | 2026-08-29 | Read-only http(s) UserChoice ProgId; no association changes |
 | 055 | [Save clipboard to notes](055-save-clipboard-to-notes.md) | 2026-08-27 | Clipboard text to notes_folder; secrets/non-text refused |
 | 056 | [Empty old Downloads](056-empty-old-downloads.md) | 2026-08-27 | Preview then hard-confirm delete of old top-level Downloads files |
 | 057 | [Battery / power inspect](057-inspect-battery.md) | 2026-08-27 | Read-only battery charge and chassis status; no secrets |

@@ -155,8 +155,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/061-recent-files-documents.md` | Change doc for recent files in Documents |
 | `workflows/inspect-startup.json` | Bundled read-only startup inspect pack |
 | `documentation/062-inspect-startup.md` | Change doc for startup apps inspect |
+| `workflows/inspect-default-browser.json` | Bundled read-only default browser inspect pack |
+| `documentation/063-inspect-default-browser.md` | Change doc for default browser inspect |
 
 ---
+
+## 063 — Default browser inspect (2026-08-29)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_default_browser` (http(s) ProgId; no Hash) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_default_browser` |
+| `src/arbora/core/planner.py` | Default-browser journey; printer/open-URL unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-default-browser.json` | Bundled inspect-default-browser pack |
+| `tests/test_adapters_hardening.py` | Dry-run; ProgId mapping; no association writes; secrets withheld |
+| `tests/test_broker_and_planner.py` | Default-browser vs printer vs open-URL vs launch |
+| `tests/test_workflow_packs.py` | Pack match for inspect-default-browser |
+| `docs/NEXT.md` | Marked P16 plate 51 done |
+| `documentation/063-inspect-default-browser.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 063 |
+| `README.md` | Linked document 063 |
+| `CHANGELOG.md` | Added file roles and 063 section |
 
 ## 062 — Startup apps inspect (2026-08-29)
 
