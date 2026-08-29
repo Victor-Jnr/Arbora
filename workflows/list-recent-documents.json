@@ -1,0 +1,25 @@
+{
+  "id": "list-recent-documents",
+  "name": "List recent Documents",
+  "description": "Read-only newest-first listing of files in Documents, depth-capped.",
+  "goal_phrases": [
+    "recent documents pack",
+    "run recent documents pack",
+    "list recent documents pack"
+  ],
+  "rationale": "Workflow pack: list newest files in Documents without opening or deleting them.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "list_recent",
+      "args": {
+        "path": "~/Documents",
+        "max_depth": 2,
+        "max_results": 20
+      },
+      "summary": "List newest files in Documents",
+      "sensitivity": "read",
+      "side_effects": ["Reads file names, sizes, and modification times under Documents"]
+    }
+  ]
+}
