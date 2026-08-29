@@ -30,6 +30,8 @@ def test_load_bundled_workflow_packs():
     assert "save-clipboard-note" in ids
     assert "inspect-old-downloads" in ids
     assert "inspect-battery" in ids
+    assert "inspect-printers" in ids
+    assert "inspect-startup" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -263,6 +265,17 @@ def test_inspect_printers_workflow_pack_matches():
     plan = pack.to_plan("run inspect printers pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_printers"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_startup_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect startup pack")
+    assert pack is not None
+    assert pack.id == "inspect-startup"
+    plan = pack.to_plan("run inspect startup pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_startup"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

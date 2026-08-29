@@ -150,6 +150,23 @@ def test_printer_status_is_read_only_inspect():
     assert [step.action for step in battery.steps] == ["inspect_battery"]
 
 
+def test_startup_apps_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("startup apps")
+    assert [step.action for step in plan.steps] == ["inspect_startup"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    folder = runtime.planner.plan("what's in the startup folder")
+    assert folder.steps[0].action == "inspect_startup"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_startup" for step in diagnose.steps)
+    workday = runtime.planner.plan("start my workday")
+    assert not any(step.action == "inspect_startup" for step in workday.steps)
+    launch = runtime.planner.plan("open chrome")
+    assert launch.steps[0].action == "launch_app"
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

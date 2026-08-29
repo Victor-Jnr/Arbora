@@ -73,6 +73,7 @@ Try goals like:
   wifi status
   battery status
   printer status
+  startup apps
   what's in temp
   empty temp
   open chrome

@@ -328,6 +328,47 @@ _PRINTER_PS = (
     "}"
 )
 
+STARTUP_COMMAND_MAX_CHARS = 180
+STARTUP_MAX_ITEMS = 40
+
+_STARTUP_SOURCE_LABELS = {
+    "hkcu_run": "HKCU Run",
+    "hklm_run": "HKLM Run",
+    "startup_folder": "Startup folder",
+}
+
+_STARTUP_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "function Emit-RunKey([string]$source, [string]$path) { "
+    "  $item = Get-Item -LiteralPath $path; "
+    "  if (-not $item) { return }; "
+    "  $names = @($item.GetValueNames() | Where-Object { $_ -and $_ -ne '(default)' } | Select-Object -First 20); "
+    "  foreach ($name in $names) { "
+    "    Write-Output 'ITEM_BEGIN'; "
+    "    Write-Output ('SOURCE=' + $source); "
+    "    Write-Output ('NAME=' + $name); "
+    "    $val = [string]$item.GetValue($name); "
+    "    if ($null -eq $val) { $val = '' }; "
+    "    if ($val.Length -gt 180) { $val = $val.Substring(0, 180) }; "
+    "    Write-Output ('COMMAND=' + $val); "
+    "  } "
+    "}; "
+    "Write-Output '=== Startup ==='; "
+    "Emit-RunKey 'hkcu_run' 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'; "
+    "Emit-RunKey 'hklm_run' 'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'; "
+    "$folder = [Environment]::GetFolderPath('Startup'); "
+    "if ($folder) { "
+    "  $files = @(Get-ChildItem -LiteralPath $folder -Force -ErrorAction SilentlyContinue | "
+    "    Where-Object { -not $_.PSIsContainer } | Select-Object -First 20); "
+    "  foreach ($f in $files) { "
+    "    Write-Output 'ITEM_BEGIN'; "
+    "    Write-Output 'SOURCE=startup_folder'; "
+    "    Write-Output ('NAME=' + $f.Name); "
+    "    Write-Output 'COMMAND='; "
+    "  } "
+    "}"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -479,6 +520,46 @@ def format_printer_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def parse_startup_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse the structured HKCU/HKLM Run + Startup-folder snapshot."""
+    items: list[dict[str, str]] = []
+    current: dict[str, str] | None = None
+    for line in (stdout or "").splitlines():
+        if line == "ITEM_BEGIN":
+            current = {"source": "", "name": "", "command": ""}
+            items.append(current)
+            continue
+        if current is None:
+            continue
+        if line.startswith("SOURCE="):
+            current["source"] = line.split("=", 1)[1].strip()
+        elif line.startswith("NAME="):
+            current["name"] = line.split("=", 1)[1].strip()
+        elif line.startswith("COMMAND="):
+            current["command"] = line.split("=", 1)[1].strip()
+    return {"items": items[:STARTUP_MAX_ITEMS]}
+
+
+def format_startup_report(snapshot: dict[str, Any]) -> str:
+    items = list(snapshot.get("items") or [])
+    if not items:
+        return "No startup apps reported."
+    lines = [f"Startup items: {len(items)}"]
+    for item in items:
+        source = _STARTUP_SOURCE_LABELS.get(str(item.get("source") or ""), "Other")
+        name = str(item.get("name") or "unnamed")
+        command = str(item.get("command") or "").strip()
+        if command and clipboard_looks_secret(command):
+            command = "(command withheld)"
+        elif len(command) > STARTUP_COMMAND_MAX_CHARS:
+            command = command[:STARTUP_COMMAND_MAX_CHARS]
+        if command:
+            lines.append(f"  [{source}] {name} — {command}")
+        else:
+            lines.append(f"  [{source}] {name}")
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -620,6 +701,8 @@ class DesktopAdapter:
             )
         if action == "inspect_printers":
             return self._inspect_printers(dry_run=dry_run)
+        if action == "inspect_startup":
+            return self._inspect_startup(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1171,3 +1254,37 @@ class DesktopAdapter:
             )
         snapshot = parse_printer_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_printer_report(snapshot))
+
+    def _inspect_startup(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would list HKCU/HKLM Run names and the user Startup folder "
+                    "(no enable/disable, no Task Scheduler, no secrets)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_STARTUP_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Startup inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_startup_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_startup_report(snapshot))

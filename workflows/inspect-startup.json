@@ -1,0 +1,20 @@
+{
+  "id": "inspect-startup",
+  "name": "Inspect startup apps",
+  "description": "Read-only HKCU/HKLM Run names and user Startup folder. No enable/disable.",
+  "goal_phrases": [
+    "inspect startup pack",
+    "run inspect startup pack"
+  ],
+  "rationale": "Workflow pack: read-only local startup app names.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_startup",
+      "args": {},
+      "summary": "List startup apps (Run keys and Startup folder)",
+      "sensitivity": "read",
+      "side_effects": ["Reads Run registry value names and Startup folder file names"]
+    }
+  ]
+}
