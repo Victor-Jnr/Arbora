@@ -151,8 +151,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/059-open-url-installed-browser.md` | Change doc for open URL in Chrome/Edge |
 | `workflows/inspect-printers.json` | Bundled read-only printer inspect pack |
 | `documentation/060-inspect-printers.md` | Change doc for printer inspect |
+| `workflows/list-recent-documents.json` | Bundled newest-first Documents listing pack |
+| `documentation/061-recent-files-documents.md` | Change doc for recent files in Documents |
 
 ---
+
+## 061 — Recent files in Documents (2026-08-29)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Documents folder mapping; recent-documents phrases |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/list-recent-documents.json` | Bundled list-recent-documents pack |
+| `tests/test_broker_and_planner.py` | Recent Documents vs Downloads vs copy-to-documents |
+| `tests/test_workflow_packs.py` | Pack match for list-recent-documents |
+| `docs/NEXT.md` | Added P16; marked plate 49 done |
+| `documentation/061-recent-files-documents.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 061 |
+| `README.md` | Linked document 061 |
+| `CHANGELOG.md` | Added file roles and 061 section |
 
 ## 060 — Printer inspect (2026-08-28)
 

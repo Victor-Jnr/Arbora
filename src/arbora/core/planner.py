@@ -86,6 +86,9 @@ class GoalPlanner:
     def _downloads_dir(self) -> Path:
         return self._downloads_root or Path.home() / "Downloads"
 
+    def _documents_dir(self) -> Path:
+        return Path.home() / "Documents"
+
     def _notes_dir(self) -> Path:
         return self._notes_root or Path.home() / "ArboraNotes"
 
@@ -927,22 +930,22 @@ class GoalPlanner:
         named = {
             "downloads": self._downloads_dir(),
             "download": self._downloads_dir(),
-            "documents": Path.home() / "Documents",
-            "docs": Path.home() / "Documents",
+            "documents": self._documents_dir(),
+            "docs": self._documents_dir(),
             "desktop": Path.home() / "Desktop",
             "notes": self._notes_dir(),
         }
         if lower in named:
             return str(named[lower])
         if not raw:
-            return str(self._downloads_dir() if is_source else Path.home() / "Documents")
+            return str(self._downloads_dir() if is_source else self._documents_dir())
         if re.match(r"^[A-Za-z]:\\", raw) or raw.startswith(("~", "/", "\\")):
             if raw.startswith("~"):
                 return str(Path.home() / raw[2:].lstrip("\\/"))
             return raw
         if is_source:
             return str(self._downloads_dir() / raw)
-        return str((Path.home() / "Documents") / raw)
+        return str(self._documents_dir() / raw)
 
     def _save_note_plan(self, goal: str) -> Plan:
         notes_root = self._notes_dir()
@@ -1004,6 +1007,8 @@ class GoalPlanner:
             return str(Path.home() / "Desktop")
         if re.search(r"\btemp\b", lower) and "temperature" not in lower:
             return str(_user_temp_dir())
+        if re.search(r"\bdocuments?\b", lower) or re.search(r"\bdocs\b", lower):
+            return str(self._documents_dir())
         return str(self._downloads_dir())
 
     @staticmethod
@@ -2146,10 +2151,14 @@ class GoalPlanner:
             for phrase in (
                 "recent files",
                 "recent downloads",
+                "recent documents",
+                "recent docs",
                 "latest files",
                 "latest downloads",
+                "latest documents",
                 "newest files",
                 "newest downloads",
+                "newest documents",
                 "what did i download",
                 "recently downloaded",
                 "list recent",

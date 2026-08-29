@@ -62,6 +62,7 @@ Try goals like:
   list downloads
   find invoice.pdf in downloads
   recent files in downloads
+  recent files in documents
   old files in downloads
   delete downloads older than 30 days
   inspect clipboard

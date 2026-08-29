@@ -21,6 +21,7 @@ def test_load_bundled_workflow_packs():
     assert "find-files" in ids
     assert "inspect-temp" in ids
     assert "list-recent-downloads" in ids
+    assert "list-recent-documents" in ids
     assert "inspect-clipboard" in ids
     assert "speak-confirmation" in ids
     assert "copy-file" in ids
@@ -128,6 +129,20 @@ def test_list_recent_downloads_workflow_pack_matches():
     plan = pack.to_plan("run recent files pack")
     assert plan is not None
     assert plan.steps[0].action == "list_recent"
+
+
+def test_list_recent_documents_workflow_pack_matches():
+    pack = match_workflow_pack("run recent documents pack")
+    assert pack is not None
+    assert pack.id == "list-recent-documents"
+    plan = pack.to_plan("run recent documents pack")
+    assert plan is not None
+    assert plan.steps[0].action == "list_recent"
+    assert plan.steps[0].adapter == "files"
+    assert plan.steps[0].sensitivity.value == "read"
+    path = str(plan.steps[0].args.get("path", "")).lower()
+    assert "documents" in path
+    assert "downloads" not in path
     assert plan.steps[0].sensitivity.value == "read"
 
 

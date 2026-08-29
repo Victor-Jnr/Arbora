@@ -209,6 +209,11 @@ def test_open_explorer_desktop_folder():
     plan = runtime.planner.plan("open folder on the desktop")
     assert plan.steps[-1].action == "open_in_explorer"
     assert plan.steps[-1].args["path"].endswith("Desktop") or "Desktop" in plan.steps[-1].args["path"]
+    documents = runtime.planner.plan("open documents in explorer")
+    assert documents.steps[-1].action == "open_in_explorer"
+    docs_path = documents.steps[-1].args["path"]
+    assert "Documents" in docs_path or "documents" in docs_path.lower()
+    assert "Downloads" not in docs_path
 
 
 def test_find_files_journey_is_read_only():
@@ -268,6 +273,25 @@ def test_recent_files_journey_is_read_only():
     assert plan.steps[0].args["max_results"] == 20
     assert "Downloads" in plan.steps[0].args["path"] or "downloads" in plan.steps[0].args["path"].lower()
     assert not plan.has_hard_confirmation_steps
+
+
+def test_recent_files_in_documents_is_read_only():
+    runtime = _runtime()
+    plan = runtime.planner.plan("recent files in documents")
+    assert [step.action for step in plan.steps] == ["list_recent"]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    path = plan.steps[0].args["path"]
+    assert "Documents" in path or "documents" in path.lower()
+    assert "Downloads" not in path
+    assert plan.steps[0].args["max_depth"] == 2
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("recent documents")
+    assert named.steps[0].action == "list_recent"
+    assert "Documents" in named.steps[0].args["path"] or "documents" in named.steps[0].args["path"].lower()
+    downloads = runtime.planner.plan("recent files in downloads")
+    assert "Downloads" in downloads.steps[0].args["path"] or "downloads" in downloads.steps[0].args["path"].lower()
+    copy = runtime.planner.plan("copy the file report.pdf to documents")
+    assert copy.steps[-1].action == "copy_file"
 
 
 def test_recent_downloads_does_not_steal_list_or_find():

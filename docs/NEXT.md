@@ -50,6 +50,7 @@ Already in place:
 - user TEMP inspect, with clean only after hard confirmation;
 - everyday app aliases so “open chrome” launches the installed browser.
 - newest-first listing of recent files in Downloads.
+- newest-first listing of recent files in Documents.
 - clipboard inspect (type/length; secrets withheld).
 - save clipboard text to the notes folder (secrets/non-text refused).
 - preview then delete top-level Downloads files older than N days (hard confirm).
@@ -62,7 +63,7 @@ Already in place:
 - broker-gated screenshot / window PNG under the notes folder.
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P15).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P16).
 
 ---
 
@@ -162,6 +163,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 47 | **Open URL in Chrome/Edge** | ✅ Start-Process the installed browser with an http(s) URL (not Playwright) |
 | 48 | **Printer inspect** | ✅ Read-only default/list printers; no job contents or secrets |
 
+### P16 — Stage 3 organisation, startup, and default browser
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 49 | **Recent files in Documents** | ✅ Newest-first listing behind the broker (same caps as Downloads) |
+| 50 | **Startup apps inspect** | Read-only HKCU Run + Startup folder listing; no enable/disable |
+| 51 | **Default browser inspect** | Read-only UserChoice ProgId for http(s); no association changes |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -255,4 +264,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P15 plates 46–48 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P16 plate 49 is done. Next: plate 50 (startup apps inspect), then 51 (default browser inspect).
