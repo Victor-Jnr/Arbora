@@ -16,12 +16,14 @@ from arbora.adapters.desktop import (
     format_battery_report,
     format_clipboard_report,
     format_printer_report,
+    format_startup_report,
     installed_browser_alias,
     is_safe_http_url,
     open_in_browser_script,
     parse_battery_snapshot,
     parse_clipboard_snapshot,
     parse_printer_snapshot,
+    parse_startup_snapshot,
     resolve_launch_target,
 )
 from arbora.adapters.files import (
@@ -678,6 +680,58 @@ def test_inspect_printers_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_printers", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_startup_dry_run():
+    result = DesktopAdapter().execute("inspect_startup", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "startup" in result.output.lower()
+    assert "enable" in result.output.lower() or "scheduler" in result.output.lower()
+
+
+def test_format_startup_report_empty_and_items():
+    empty = parse_startup_snapshot("")
+    report = format_startup_report(empty)
+    assert "no startup" in report.lower()
+    listed = parse_startup_snapshot(
+        "ITEM_BEGIN\nSOURCE=hkcu_run\nNAME=OneDrive\nCOMMAND=C:\\Apps\\OneDrive.exe /background\n"
+        "ITEM_BEGIN\nSOURCE=startup_folder\nNAME=Notes.lnk\nCOMMAND=\n"
+        "ITEM_BEGIN\nSOURCE=hkcu_run\nNAME=SecretApp\nCOMMAND=app.exe password=hunter2\n"
+    )
+    live = format_startup_report(listed)
+    assert "OneDrive" in live
+    assert "HKCU Run" in live
+    assert "Notes.lnk" in live
+    assert "Startup folder" in live
+    assert "password=hunter2" not in live.lower()
+    assert "withheld" in live.lower()
+
+
+def test_inspect_startup_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_startup", {}, dry_run=False)
+    assert result.ok
+    assert "no startup" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "currentversion\\run" in command or "currentversion\\\\run" in command
+    assert "set-itemproperty" not in command
+    assert "remove-itemproperty" not in command
+    assert "disable" not in command
+    assert "schtasks" not in command
+    assert "get-scheduledtask" not in command
+
+
+def test_inspect_startup_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_startup", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

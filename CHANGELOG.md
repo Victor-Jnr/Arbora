@@ -153,8 +153,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/060-inspect-printers.md` | Change doc for printer inspect |
 | `workflows/list-recent-documents.json` | Bundled newest-first Documents listing pack |
 | `documentation/061-recent-files-documents.md` | Change doc for recent files in Documents |
+| `workflows/inspect-startup.json` | Bundled read-only startup inspect pack |
+| `documentation/062-inspect-startup.md` | Change doc for startup apps inspect |
 
 ---
+
+## 062 — Startup apps inspect (2026-08-29)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_startup` (Run keys + Startup folder; no toggles) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_startup` |
+| `src/arbora/core/planner.py` | Startup-apps journey; diagnose/workday unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-startup.json` | Bundled inspect-startup pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no registry writes; secret-like output withheld |
+| `tests/test_broker_and_planner.py` | Startup plan vs diagnose vs workday vs launch |
+| `tests/test_workflow_packs.py` | Pack match for inspect-startup |
+| `docs/NEXT.md` | Marked P16 plate 50 done |
+| `documentation/062-inspect-startup.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 062 |
+| `README.md` | Linked document 062 |
+| `CHANGELOG.md` | Added file roles and 062 section |
 
 ## 061 — Recent files in Documents (2026-08-29)
 

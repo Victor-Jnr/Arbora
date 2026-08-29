@@ -113,6 +113,8 @@ class GoalPlanner:
             return self._battery_status_plan(text)
         if self._looks_like_printer_status(lower):
             return self._printer_status_plan(text)
+        if self._looks_like_startup_apps(lower):
+            return self._startup_apps_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -558,6 +560,27 @@ class GoalPlanner:
                     summary="Read-only: list printers and the default printer",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Win32_Printer names and status",),
+                )
+            ],
+        )
+
+    def _startup_apps_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Startup inspect journey — read-only HKCU/HKLM Run names and the user Startup folder. "
+                "Does not enable, disable, or delete entries, and does not list scheduled tasks."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_startup",
+                    args={},
+                    summary="Read-only: list startup apps (Run keys and Startup folder)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Run registry value names and Startup folder file names",),
                 )
             ],
         )
@@ -1826,6 +1849,31 @@ class GoalPlanner:
                 "installed printer",
                 "my printers",
                 "my printer",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_startup_apps(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if "workday" in lower:
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "startup apps",
+                "startup app",
+                "startup programs",
+                "startup program",
+                "startup items",
+                "inspect startup",
+                "list startup",
+                "startup folder",
+                "what starts with windows",
+                "what runs at startup",
+                "what runs on startup",
+                "apps that start with windows",
+                "programs that start with windows",
             )
         )
 
