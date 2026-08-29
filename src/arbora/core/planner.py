@@ -115,6 +115,8 @@ class GoalPlanner:
             return self._printer_status_plan(text)
         if self._looks_like_startup_apps(lower):
             return self._startup_apps_plan(text)
+        if self._looks_like_default_browser(lower):
+            return self._default_browser_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -581,6 +583,27 @@ class GoalPlanner:
                     summary="Read-only: list startup apps (Run keys and Startup folder)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Run registry value names and Startup folder file names",),
+                )
+            ],
+        )
+
+    def _default_browser_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Default-browser inspect journey — read-only http(s) UserChoice ProgId. "
+                "Does not change the default browser or show the association Hash."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_default_browser",
+                    args={},
+                    summary="Read-only: default http(s) browser association",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads HKCU UserChoice ProgId for http and https",),
                 )
             ],
         )
@@ -1874,6 +1897,29 @@ class GoalPlanner:
                 "what runs on startup",
                 "apps that start with windows",
                 "programs that start with windows",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_default_browser(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if re.search(r"https?://", lower):
+            return False
+        if "printer" in lower:
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "default browser",
+                "default web browser",
+                "inspect default browser",
+                "which browser",
+                "what browser",
+                "what's my browser",
+                "whats my browser",
+                "what is my browser",
+                "my default browser",
             )
         )
 

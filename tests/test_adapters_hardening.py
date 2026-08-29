@@ -15,6 +15,7 @@ from arbora.adapters.desktop import (
     close_window_script,
     format_battery_report,
     format_clipboard_report,
+    format_default_browser_report,
     format_printer_report,
     format_startup_report,
     installed_browser_alias,
@@ -22,8 +23,10 @@ from arbora.adapters.desktop import (
     open_in_browser_script,
     parse_battery_snapshot,
     parse_clipboard_snapshot,
+    parse_default_browser_snapshot,
     parse_printer_snapshot,
     parse_startup_snapshot,
+    browser_name_from_progid,
     resolve_launch_target,
 )
 from arbora.adapters.files import (
@@ -732,6 +735,60 @@ def test_inspect_startup_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_startup", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_default_browser_dry_run():
+    result = DesktopAdapter().execute("inspect_default_browser", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "browser" in result.output.lower()
+    assert "hash" in result.output.lower() or "association" in result.output.lower()
+
+
+def test_format_default_browser_report_empty_and_progids():
+    empty = parse_default_browser_snapshot("")
+    report = format_default_browser_report(empty)
+    assert "no default browser" in report.lower()
+    assert browser_name_from_progid("ChromeHTML") == "Google Chrome"
+    assert browser_name_from_progid("MSEdgeHTM") == "Microsoft Edge"
+    assert browser_name_from_progid("FirefoxURL-E7CF176E110C211B") == "Mozilla Firefox"
+    listed = parse_default_browser_snapshot(
+        "HTTPS_PROGID=ChromeHTML\nHTTP_PROGID=ChromeHTML\nHash=should-not-appear\n"
+    )
+    live = format_default_browser_report(listed)
+    assert "Google Chrome" in live
+    assert "ChromeHTML" in live
+    assert "Hash" not in live
+    split = parse_default_browser_snapshot("HTTPS_PROGID=MSEdgeHTM\nHTTP_PROGID=ChromeHTML\n")
+    split_report = format_default_browser_report(split)
+    assert "Microsoft Edge" in split_report
+    assert "HTTP association" in split_report
+    assert "Google Chrome" in split_report
+
+
+def test_inspect_default_browser_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_default_browser", {}, dry_run=False)
+    assert result.ok
+    assert "no default browser" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "userchoice" in command
+    assert "progid" in command
+    assert "set-itemproperty" not in command
+    assert "new-item" not in command
+    assert "hash" not in command
+
+
+def test_inspect_default_browser_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_default_browser", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

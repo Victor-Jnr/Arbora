@@ -1,0 +1,20 @@
+{
+  "id": "inspect-default-browser",
+  "name": "Inspect default browser",
+  "description": "Read-only http(s) UserChoice ProgId. Does not change associations.",
+  "goal_phrases": [
+    "inspect default browser pack",
+    "run inspect default browser pack"
+  ],
+  "rationale": "Workflow pack: read-only default browser ProgId.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_default_browser",
+      "args": {},
+      "summary": "Read the default http(s) browser association",
+      "sensitivity": "read",
+      "side_effects": ["Reads HKCU UserChoice ProgId for http and https"]
+    }
+  ]
+}

@@ -167,6 +167,25 @@ def test_startup_apps_is_read_only_inspect():
     assert launch.steps[0].action == "launch_app"
 
 
+def test_default_browser_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("what's my default browser")
+    assert [step.action for step in plan.steps] == ["inspect_default_browser"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    which = runtime.planner.plan("which browser is default")
+    assert which.steps[0].action == "inspect_default_browser"
+    printer = runtime.planner.plan("what's my default printer")
+    assert printer.steps[0].action == "inspect_printers"
+    url = runtime.planner.plan("open https://example.com in chrome")
+    assert url.steps[0].action == "open_in_browser"
+    launch = runtime.planner.plan("open chrome")
+    assert launch.steps[0].action == "launch_app"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_default_browser" for step in diagnose.steps)
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

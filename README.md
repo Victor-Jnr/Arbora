@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 063 | [Default browser inspect](documentation/063-inspect-default-browser.md) |
 | 062 | [Startup apps inspect](documentation/062-inspect-startup.md) |
 | 061 | [Recent files in Documents](documentation/061-recent-files-documents.md) |
 | 060 | [Printer inspect](documentation/060-inspect-printers.md) |

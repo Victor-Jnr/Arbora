@@ -369,6 +369,20 @@ _STARTUP_PS = (
     "}"
 )
 
+_DEFAULT_BROWSER_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "function Read-Choice([string]$scheme) { "
+    "  $p = 'HKCU:\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\' + $scheme + '\\UserChoice'; "
+    "  $item = Get-ItemProperty -LiteralPath $p; "
+    "  $prog = ''; "
+    "  if ($item -and $item.ProgId) { $prog = [string]$item.ProgId }; "
+    "  Write-Output (($scheme.ToUpper()) + '_PROGID=' + $prog); "
+    "}; "
+    "Write-Output '=== DefaultBrowser ==='; "
+    "Read-Choice 'https'; "
+    "Read-Choice 'http'"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -560,6 +574,62 @@ def format_startup_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def browser_name_from_progid(progid: str) -> str:
+    """Map a UserChoice ProgId to a friendly browser name."""
+    raw = (progid or "").strip()
+    lower = raw.lower()
+    if not raw:
+        return "Unknown"
+    if lower.startswith("chromehtml"):
+        return "Google Chrome"
+    if lower.startswith("msedgehtm"):
+        return "Microsoft Edge"
+    if lower.startswith("firefoxurl"):
+        return "Mozilla Firefox"
+    if lower.startswith("ie.http") or lower in {"htmlfile", "ie.https"}:
+        return "Internet Explorer"
+    if lower.startswith("operastable") or lower.startswith("opera"):
+        return "Opera"
+    if lower.startswith("bravehtml"):
+        return "Brave"
+    if lower.startswith("appx"):
+        return "Microsoft Store app"
+    return raw
+
+
+def parse_default_browser_snapshot(stdout: str) -> dict[str, str]:
+    """Parse https/http UserChoice ProgIds from PowerShell."""
+    https_progid = ""
+    http_progid = ""
+    for line in (stdout or "").splitlines():
+        if line.startswith("HTTPS_PROGID="):
+            https_progid = line.split("=", 1)[1].strip()
+        elif line.startswith("HTTP_PROGID="):
+            http_progid = line.split("=", 1)[1].strip()
+    return {"https_progid": https_progid, "http_progid": http_progid}
+
+
+def format_default_browser_report(snapshot: dict[str, str]) -> str:
+    https_progid = str(snapshot.get("https_progid") or "").strip()
+    http_progid = str(snapshot.get("http_progid") or "").strip()
+    if not https_progid and not http_progid:
+        return "No default browser association reported."
+    lines: list[str] = []
+    if https_progid:
+        lines.append(
+            f"Default browser (https): {browser_name_from_progid(https_progid)} ({https_progid})"
+        )
+    else:
+        lines.append("Default browser (https): (none reported)")
+    if http_progid and http_progid.lower() != https_progid.lower():
+        lines.append(
+            f"HTTP association: {browser_name_from_progid(http_progid)} ({http_progid})"
+        )
+    elif http_progid:
+        lines.append("HTTP association: same as https")
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -703,6 +773,8 @@ class DesktopAdapter:
             return self._inspect_printers(dry_run=dry_run)
         if action == "inspect_startup":
             return self._inspect_startup(dry_run=dry_run)
+        if action == "inspect_default_browser":
+            return self._inspect_default_browser(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1288,3 +1360,41 @@ class DesktopAdapter:
             )
         snapshot = parse_startup_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_startup_report(snapshot))
+
+    def _inspect_default_browser(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the default http(s) browser ProgId "
+                    "(no Hash, no association changes)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_DEFAULT_BROWSER_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Default browser inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_default_browser_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_default_browser_report(snapshot),
+        )

@@ -74,6 +74,7 @@ Try goals like:
   battery status
   printer status
   startup apps
+  default browser
   what's in temp
   empty temp
   open chrome
