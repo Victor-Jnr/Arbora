@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 065 | [Windows Update last-install date](documentation/065-inspect-windows-update.md) |
 | 064 | [Display / resolution inspect](documentation/064-inspect-display.md) |
 | 063 | [Default browser inspect](documentation/063-inspect-default-browser.md) |
 | 062 | [Startup apps inspect](documentation/062-inspect-startup.md) |

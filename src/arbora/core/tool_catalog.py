@@ -20,6 +20,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_startup",
             "inspect_default_browser",
             "inspect_display",
+            "inspect_windows_update",
         }
     ),
     "files": frozenset(

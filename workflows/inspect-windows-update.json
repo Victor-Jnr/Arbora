@@ -1,0 +1,20 @@
+{
+  "id": "inspect-windows-update",
+  "name": "Inspect Windows Update",
+  "description": "Read-only last Get-HotFix install date. Does not install or scan for updates.",
+  "goal_phrases": [
+    "inspect windows update pack",
+    "run inspect windows update pack"
+  ],
+  "rationale": "Workflow pack: read-only last Windows Update install date.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_windows_update",
+      "args": {},
+      "summary": "Read the last Windows Update install date",
+      "sensitivity": "read",
+      "side_effects": ["Reads Get-HotFix InstalledOn for the latest dated item"]
+    }
+  ]
+}

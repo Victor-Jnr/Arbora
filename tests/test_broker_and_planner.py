@@ -204,6 +204,23 @@ def test_display_status_is_read_only_inspect():
     assert launch.steps[0].action == "launch_app"
 
 
+def test_windows_update_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("windows update")
+    assert [step.action for step in plan.steps] == ["inspect_windows_update"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    dated = runtime.planner.plan("when were updates installed")
+    assert dated.steps[0].action == "inspect_windows_update"
+    install = runtime.planner.plan("install windows updates")
+    assert not any(step.action == "inspect_windows_update" for step in install.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_windows_update" for step in diagnose.steps)
+    display = runtime.planner.plan("screen resolution")
+    assert [step.action for step in display.steps] == ["inspect_display"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

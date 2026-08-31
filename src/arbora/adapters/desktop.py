@@ -405,6 +405,27 @@ _DISPLAY_PS = (
     "}"
 )
 
+WINDOWS_UPDATE_DESC_MAX_CHARS = 80
+
+_WINDOWS_UPDATE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Write-Output '=== WindowsUpdate ==='; "
+    "$hotfixes = @(Get-HotFix | Where-Object { $_.InstalledOn } | Sort-Object InstalledOn -Descending); "
+    "Write-Output ('COUNT=' + @($hotfixes).Count); "
+    "$latest = $hotfixes | Select-Object -First 1; "
+    "if ($latest) { "
+    "  Write-Output 'UPDATE_BEGIN'; "
+    "  Write-Output ('KB=' + $latest.HotFixID); "
+    "  $when = ''; "
+    "  if ($latest.InstalledOn) { $when = $latest.InstalledOn.ToString('yyyy-MM-dd') }; "
+    "  Write-Output ('INSTALLED=' + $when); "
+    "  $desc = [string]$latest.Description; "
+    "  if ($null -eq $desc) { $desc = '' }; "
+    "  if ($desc.Length -gt 80) { $desc = $desc.Substring(0, 80) }; "
+    "  Write-Output ('DESC=' + $desc); "
+    "}"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -758,6 +779,53 @@ def format_display_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def parse_windows_update_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse the latest Get-HotFix install date (no InstalledBy, no full list)."""
+    count = 0
+    kb = ""
+    installed = ""
+    description = ""
+    in_update = False
+    for line in (stdout or "").splitlines():
+        if line == "UPDATE_BEGIN":
+            in_update = True
+            continue
+        if line.startswith("COUNT="):
+            try:
+                count = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                count = 0
+            continue
+        if not in_update:
+            continue
+        if line.startswith("KB="):
+            kb = line.split("=", 1)[1].strip()
+        elif line.startswith("INSTALLED="):
+            installed = line.split("=", 1)[1].strip()
+        elif line.startswith("DESC="):
+            description = line.split("=", 1)[1].strip()
+    if len(description) > WINDOWS_UPDATE_DESC_MAX_CHARS:
+        description = description[:WINDOWS_UPDATE_DESC_MAX_CHARS]
+    return {"count": count, "kb": kb, "installed": installed, "description": description}
+
+
+def format_windows_update_report(snapshot: dict[str, Any]) -> str:
+    kb = str(snapshot.get("kb") or "").strip()
+    installed = str(snapshot.get("installed") or "").strip()
+    description = str(snapshot.get("description") or "").strip()
+    count = int(snapshot.get("count") or 0)
+    if not kb and not installed:
+        return "No Windows Update install date reported."
+    detail = kb or "unknown KB"
+    if description:
+        detail = f"{detail} — {description}"
+    when = installed or "unknown date"
+    lines = [f"Last Windows Update install: {when} ({detail})"]
+    if count > 1:
+        lines.append(f"Hotfixes with an install date: {count} (listing withheld; last install only)")
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -905,6 +973,8 @@ class DesktopAdapter:
             return self._inspect_default_browser(dry_run=dry_run)
         if action == "inspect_display":
             return self._inspect_display(dry_run=dry_run)
+        if action == "inspect_windows_update":
+            return self._inspect_windows_update(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1562,3 +1632,41 @@ class DesktopAdapter:
             )
         snapshot = parse_display_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_display_report(snapshot))
+
+    def _inspect_windows_update(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the last Get-HotFix install date "
+                    "(no install, no scan, no full KB dump)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_WINDOWS_UPDATE_PS, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Windows Update inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_windows_update_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_windows_update_report(snapshot),
+        )

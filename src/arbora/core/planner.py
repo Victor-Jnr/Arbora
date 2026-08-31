@@ -119,6 +119,8 @@ class GoalPlanner:
             return self._default_browser_plan(text)
         if self._looks_like_display_status(lower):
             return self._display_status_plan(text)
+        if self._looks_like_windows_update(lower):
+            return self._windows_update_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -627,6 +629,27 @@ class GoalPlanner:
                     summary="Read-only: list displays and resolutions",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Screen.AllScreens bounds; no mode changes",),
+                )
+            ],
+        )
+
+    def _windows_update_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Windows Update inspect journey — read-only last hotfix install date. "
+                "Does not install, download, or scan for updates, and does not dump every KB."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_windows_update",
+                    args={},
+                    summary="Read-only: last Windows Update install date",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Get-HotFix InstalledOn for the latest dated item",),
                 )
             ],
         )
@@ -1978,6 +2001,41 @@ class GoalPlanner:
                 "what's my screen size",
                 "whats my screen size",
                 "monitor setup",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_windows_update(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "install update",
+                "install updates",
+                "install windows update",
+                "download update",
+                "download updates",
+                "download windows update",
+                "check for update",
+                "check for updates",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "windows update",
+                "last windows update",
+                "when were updates installed",
+                "when was the last update installed",
+                "last installed update",
+                "inspect windows update",
+                "when did windows last update",
+                "latest windows update",
+                "last hotfix",
+                "hotfix install date",
+                "last update installed",
             )
         )
 

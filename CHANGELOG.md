@@ -159,8 +159,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/063-inspect-default-browser.md` | Change doc for default browser inspect |
 | `workflows/inspect-display.json` | Bundled read-only display inspect pack |
 | `documentation/064-inspect-display.md` | Change doc for display / resolution inspect |
+| `workflows/inspect-windows-update.json` | Bundled read-only Windows Update last-install pack |
+| `documentation/065-inspect-windows-update.md` | Change doc for Windows Update last-install inspect |
 
 ---
+
+## 065 — Windows Update last-install date (2026-08-31)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_windows_update` (last Get-HotFix date; no install) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_windows_update` |
+| `src/arbora/core/planner.py` | Windows Update journey; install/diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-windows-update.json` | Bundled inspect-windows-update pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no install/scan APIs; secrets withheld |
+| `tests/test_broker_and_planner.py` | Update inspect vs install phrasing vs diagnose vs display |
+| `tests/test_workflow_packs.py` | Pack match for inspect-windows-update |
+| `docs/NEXT.md` | Marked P17 plate 53 done |
+| `documentation/065-inspect-windows-update.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 065 |
+| `README.md` | Linked document 065 |
+| `CHANGELOG.md` | Added file roles and 065 section |
 
 ## 064 — Display / resolution inspect (2026-08-31)
 
