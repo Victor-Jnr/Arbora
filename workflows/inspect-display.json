@@ -1,0 +1,20 @@
+{
+  "id": "inspect-display",
+  "name": "Inspect display",
+  "description": "Read-only attached displays and resolutions. Does not change display mode.",
+  "goal_phrases": [
+    "inspect display pack",
+    "run inspect display pack"
+  ],
+  "rationale": "Workflow pack: read-only display bounds and resolutions.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_display",
+      "args": {},
+      "summary": "List attached displays and resolutions",
+      "sensitivity": "read",
+      "side_effects": ["Reads Screen.AllScreens bounds; no mode changes"]
+    }
+  ]
+}

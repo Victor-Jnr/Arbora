@@ -16,6 +16,7 @@ from arbora.adapters.desktop import (
     format_battery_report,
     format_clipboard_report,
     format_default_browser_report,
+    format_display_report,
     format_printer_report,
     format_startup_report,
     installed_browser_alias,
@@ -24,6 +25,7 @@ from arbora.adapters.desktop import (
     parse_battery_snapshot,
     parse_clipboard_snapshot,
     parse_default_browser_snapshot,
+    parse_display_snapshot,
     parse_printer_snapshot,
     parse_startup_snapshot,
     browser_name_from_progid,
@@ -789,6 +791,59 @@ def test_inspect_default_browser_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_default_browser", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_display_dry_run():
+    result = DesktopAdapter().execute("inspect_display", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "display" in result.output.lower() or "resolution" in result.output.lower()
+    assert "mode" in result.output.lower() or "dpi" in result.output.lower()
+
+
+def test_format_display_report_empty_and_screens():
+    empty = parse_display_snapshot("")
+    report = format_display_report(empty)
+    assert "no display" in report.lower()
+    listed = parse_display_snapshot(
+        "COUNT=2\n"
+        "DISPLAY_BEGIN\nDEVICE=\\\\.\\DISPLAY1\nPRIMARY=True\n"
+        "WIDTH=1920\nHEIGHT=1080\nX=0\nY=0\n"
+        "WORKING_WIDTH=1920\nWORKING_HEIGHT=1040\nBITS=32\n"
+        "DISPLAY_BEGIN\nDEVICE=\\\\.\\DISPLAY2\nPRIMARY=False\n"
+        "WIDTH=2560\nHEIGHT=1440\nX=1920\nY=0\n"
+        "WORKING_WIDTH=2560\nWORKING_HEIGHT=1400\nBITS=32\n"
+    )
+    live = format_display_report(listed)
+    assert "Display count: 2" in live
+    assert "1920x1080" in live
+    assert "2560x1440" in live
+    assert "primary" in live.lower()
+    assert "working=1920x1040" in live
+
+
+def test_inspect_display_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_display", {}, dry_run=False)
+    assert result.ok
+    assert "no display" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "allscreens" in command or "screen" in command
+    assert "changedisplaysettings" not in command
+    assert "setdisplayconfig" not in command
+    assert "cds_updateregistry" not in command
+
+
+def test_inspect_display_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_display", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

@@ -186,6 +186,24 @@ def test_default_browser_is_read_only_inspect():
     assert not any(step.action == "inspect_default_browser" for step in diagnose.steps)
 
 
+def test_display_status_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("screen resolution")
+    assert [step.action for step in plan.steps] == ["inspect_display"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    monitors = runtime.planner.plan("how many monitors")
+    assert monitors.steps[0].action == "inspect_display"
+    shot = runtime.planner.plan("take a screenshot")
+    assert shot.steps[-1].action == "capture_screenshot"
+    assert not any(step.action == "inspect_display" for step in shot.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_display" for step in diagnose.steps)
+    launch = runtime.planner.plan("open chrome")
+    assert launch.steps[0].action == "launch_app"
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

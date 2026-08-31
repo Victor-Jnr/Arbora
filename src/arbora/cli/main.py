@@ -75,6 +75,7 @@ Try goals like:
   printer status
   startup apps
   default browser
+  screen resolution
   what's in temp
   empty temp
   open chrome

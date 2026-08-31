@@ -157,8 +157,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/062-inspect-startup.md` | Change doc for startup apps inspect |
 | `workflows/inspect-default-browser.json` | Bundled read-only default browser inspect pack |
 | `documentation/063-inspect-default-browser.md` | Change doc for default browser inspect |
+| `workflows/inspect-display.json` | Bundled read-only display inspect pack |
+| `documentation/064-inspect-display.md` | Change doc for display / resolution inspect |
 
 ---
+
+## 064 — Display / resolution inspect (2026-08-31)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_display` (Screen.AllScreens bounds; no mode writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_display` |
+| `src/arbora/core/planner.py` | Display-resolution journey; screenshot/diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-display.json` | Bundled inspect-display pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no mode-change APIs; secrets withheld |
+| `tests/test_broker_and_planner.py` | Display plan vs screenshot vs diagnose vs launch |
+| `tests/test_workflow_packs.py` | Pack match for inspect-display |
+| `docs/NEXT.md` | Defined P17; marked plate 52 done |
+| `documentation/064-inspect-display.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 064 |
+| `README.md` | Linked document 064 |
+| `CHANGELOG.md` | Added file roles and 064 section |
 
 ## 063 — Default browser inspect (2026-08-29)
 
