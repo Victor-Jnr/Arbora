@@ -76,6 +76,7 @@ Try goals like:
   startup apps
   default browser
   screen resolution
+  windows update
   what's in temp
   empty temp
   open chrome

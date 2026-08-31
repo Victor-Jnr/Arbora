@@ -61,6 +61,7 @@ Already in place:
 - read-only startup apps (HKCU/HKLM Run names + user Startup folder).
 - read-only default http(s) browser (UserChoice ProgId; no association changes).
 - read-only attached displays and resolutions (no mode changes).
+- read-only last Windows Update install date (does not install updates).
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under the notes folder.
@@ -179,7 +180,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 52 | **Display / resolution inspect** | ✅ Read-only attached displays and resolutions; no mode changes |
-| 53 | **Windows Update last-install date** | Read-only last hotfix install date; does not install updates |
+| 53 | **Windows Update last-install date** | ✅ Read-only last hotfix install date; does not install updates |
 | 54 | **Time zone / locale inspect** | Read-only timezone and culture; no tzutil / Set-Culture |
 
 ## Non-negotiables (do not drift)
@@ -275,4 +276,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P17 plate 52 is done. Next: plate 53 (Windows Update last-install date, read-only) then plate 54 (time zone / locale inspect).
+P17 plates 52–53 are done. Next: plate 54 (time zone / locale inspect).

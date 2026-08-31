@@ -19,6 +19,7 @@ from arbora.adapters.desktop import (
     format_display_report,
     format_printer_report,
     format_startup_report,
+    format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
     open_in_browser_script,
@@ -28,6 +29,7 @@ from arbora.adapters.desktop import (
     parse_display_snapshot,
     parse_printer_snapshot,
     parse_startup_snapshot,
+    parse_windows_update_snapshot,
     browser_name_from_progid,
     resolve_launch_target,
 )
@@ -844,6 +846,55 @@ def test_inspect_display_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_display", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_windows_update_dry_run():
+    result = DesktopAdapter().execute("inspect_windows_update", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "hotfix" in result.output.lower() or "update" in result.output.lower()
+    assert "install" in result.output.lower() or "scan" in result.output.lower()
+
+
+def test_format_windows_update_report_empty_and_latest():
+    empty = parse_windows_update_snapshot("")
+    report = format_windows_update_report(empty)
+    assert "no windows update" in report.lower()
+    listed = parse_windows_update_snapshot(
+        "COUNT=12\nUPDATE_BEGIN\nKB=KB5063878\nINSTALLED=2026-08-12\nDESC=Security Update\n"
+    )
+    live = format_windows_update_report(listed)
+    assert "2026-08-12" in live
+    assert "KB5063878" in live
+    assert "Security Update" in live
+    assert "12" in live
+    assert "listing withheld" in live.lower()
+
+
+def test_inspect_windows_update_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_windows_update", {}, dry_run=False)
+    assert result.ok
+    assert "no windows update" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-hotfix" in command
+    assert "installedon" in command
+    assert "install-windowsupdate" not in command
+    assert "wuauclt" not in command
+    assert "usoclient" not in command
+    assert "ms-settings:windowsupdate" not in command
+
+
+def test_inspect_windows_update_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_windows_update", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
