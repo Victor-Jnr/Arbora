@@ -77,6 +77,7 @@ Try goals like:
   default browser
   screen resolution
   windows update
+  time zone
   what's in temp
   empty temp
   open chrome

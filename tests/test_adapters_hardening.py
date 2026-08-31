@@ -19,6 +19,7 @@ from arbora.adapters.desktop import (
     format_display_report,
     format_printer_report,
     format_startup_report,
+    format_timezone_report,
     format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
@@ -29,6 +30,7 @@ from arbora.adapters.desktop import (
     parse_display_snapshot,
     parse_printer_snapshot,
     parse_startup_snapshot,
+    parse_timezone_snapshot,
     parse_windows_update_snapshot,
     browser_name_from_progid,
     resolve_launch_target,
@@ -895,6 +897,62 @@ def test_inspect_windows_update_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_windows_update", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_timezone_dry_run():
+    result = DesktopAdapter().execute("inspect_timezone", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "time zone" in result.output.lower() or "timezone" in result.output.lower()
+    assert "tzutil" in result.output.lower() or "set-timezone" in result.output.lower()
+
+
+def test_format_timezone_report_empty_and_india():
+    empty = parse_timezone_snapshot("")
+    report = format_timezone_report(empty)
+    assert "no time zone" in report.lower() or "no timezone" in report.lower()
+    listed = parse_timezone_snapshot(
+        "TZ_ID=India Standard Time\n"
+        "TZ_NAME=(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi\n"
+        "TZ_STD=India Standard Time\n"
+        "TZ_OFFSET=05:30:00\n"
+        "TZ_DST=False\n"
+        "CULTURE=en-IN\n"
+        "CULTURE_DISPLAY=English (India)\n"
+        "SYSTEM_LOCALE=en-IN\n"
+    )
+    live = format_timezone_report(listed)
+    assert "India Standard Time" in live
+    assert "05:30:00" in live
+    assert "en-IN" in live
+    assert "English (India)" in live
+    assert "DST not supported" in live
+
+
+def test_inspect_timezone_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_timezone", {}, dry_run=False)
+    assert result.ok
+    assert "no time zone" in result.output.lower() or "no timezone" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-timezone" in command
+    assert "get-culture" in command
+    assert "set-timezone" not in command
+    assert "tzutil" not in command
+    assert "set-culture" not in command
+    assert "set-winsystemlocale" not in command
+
+
+def test_inspect_timezone_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_timezone", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
