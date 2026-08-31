@@ -426,6 +426,31 @@ _WINDOWS_UPDATE_PS = (
     "}"
 )
 
+_TIMEZONE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Write-Output '=== TimeZone ==='; "
+    "try { "
+    "  $tz = Get-TimeZone; "
+    "  Write-Output ('TZ_ID=' + $tz.Id); "
+    "  Write-Output ('TZ_NAME=' + $tz.DisplayName); "
+    "  Write-Output ('TZ_STD=' + $tz.StandardName); "
+    "  $offset = ''; "
+    "  if ($tz.BaseUtcOffset) { $offset = $tz.BaseUtcOffset.ToString() }; "
+    "  Write-Output ('TZ_OFFSET=' + $offset); "
+    "  Write-Output ('TZ_DST=' + $tz.SupportsDaylightSavingTime); "
+    "} catch { Write-Output 'TZ_ID='; }; "
+    "Write-Output '=== Locale ==='; "
+    "try { "
+    "  $culture = Get-Culture; "
+    "  Write-Output ('CULTURE=' + $culture.Name); "
+    "  Write-Output ('CULTURE_DISPLAY=' + $culture.DisplayName); "
+    "} catch { Write-Output 'CULTURE='; }; "
+    "try { "
+    "  $sys = Get-WinSystemLocale; "
+    "  Write-Output ('SYSTEM_LOCALE=' + $sys.Name); "
+    "} catch { Write-Output 'SYSTEM_LOCALE='; }"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -826,6 +851,70 @@ def format_windows_update_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def parse_timezone_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Get-TimeZone / Get-Culture / Get-WinSystemLocale keys."""
+    snapshot = {
+        "tz_id": "",
+        "tz_name": "",
+        "tz_std": "",
+        "tz_offset": "",
+        "tz_dst": "",
+        "culture": "",
+        "culture_display": "",
+        "system_locale": "",
+    }
+    mapping = (
+        ("TZ_ID=", "tz_id"),
+        ("TZ_NAME=", "tz_name"),
+        ("TZ_STD=", "tz_std"),
+        ("TZ_OFFSET=", "tz_offset"),
+        ("TZ_DST=", "tz_dst"),
+        ("CULTURE_DISPLAY=", "culture_display"),
+        ("CULTURE=", "culture"),
+        ("SYSTEM_LOCALE=", "system_locale"),
+    )
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()
+                break
+    return snapshot
+
+
+def format_timezone_report(snapshot: dict[str, str]) -> str:
+    tz_id = str(snapshot.get("tz_id") or "").strip()
+    tz_name = str(snapshot.get("tz_name") or "").strip()
+    tz_std = str(snapshot.get("tz_std") or "").strip()
+    tz_offset = str(snapshot.get("tz_offset") or "").strip()
+    tz_dst = str(snapshot.get("tz_dst") or "").strip().lower()
+    culture = str(snapshot.get("culture") or "").strip()
+    culture_display = str(snapshot.get("culture_display") or "").strip()
+    system_locale = str(snapshot.get("system_locale") or "").strip()
+    if not any((tz_id, tz_name, tz_std, culture, system_locale)):
+        return "No time zone or locale reported."
+    lines: list[str] = []
+    if tz_name or tz_id or tz_std:
+        label = tz_name or tz_id or tz_std
+        extra = f" ({tz_id})" if tz_id and tz_name and tz_id.lower() != tz_name.lower() else ""
+        parts = [f"Time zone: {label}{extra}"]
+        if tz_offset:
+            parts.append(f"offset {tz_offset}")
+        if tz_dst in {"true", "1"}:
+            parts.append("DST supported")
+        elif tz_dst in {"false", "0"}:
+            parts.append("DST not supported")
+        lines.append("; ".join(parts))
+    if culture or culture_display:
+        shown = culture_display or culture
+        tag = ""
+        if culture and culture_display and culture.lower() not in culture_display.lower():
+            tag = f" ({culture})"
+        lines.append(f"User culture: {shown}{tag}")
+    if system_locale:
+        lines.append(f"System locale: {system_locale}")
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -975,6 +1064,8 @@ class DesktopAdapter:
             return self._inspect_display(dry_run=dry_run)
         if action == "inspect_windows_update":
             return self._inspect_windows_update(dry_run=dry_run)
+        if action == "inspect_timezone":
+            return self._inspect_timezone(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1670,3 +1761,37 @@ class DesktopAdapter:
             ok=True,
             output=format_windows_update_report(snapshot),
         )
+
+    def _inspect_timezone(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the current time zone and locale "
+                    "(no tzutil /s, no Set-TimeZone or Set-Culture)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_TIMEZONE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Time zone inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_timezone_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_timezone_report(snapshot))

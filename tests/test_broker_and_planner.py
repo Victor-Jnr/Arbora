@@ -221,6 +221,23 @@ def test_windows_update_is_read_only_inspect():
     assert [step.action for step in display.steps] == ["inspect_display"]
 
 
+def test_timezone_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("time zone")
+    assert [step.action for step in plan.steps] == ["inspect_timezone"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    locale = runtime.planner.plan("what's my locale")
+    assert locale.steps[0].action == "inspect_timezone"
+    change = runtime.planner.plan("set time zone to UTC")
+    assert not any(step.action == "inspect_timezone" for step in change.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_timezone" for step in diagnose.steps)
+    update = runtime.planner.plan("windows update")
+    assert [step.action for step in update.steps] == ["inspect_windows_update"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

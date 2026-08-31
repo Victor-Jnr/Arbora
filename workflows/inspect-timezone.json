@@ -1,0 +1,20 @@
+{
+  "id": "inspect-timezone",
+  "name": "Inspect time zone",
+  "description": "Read-only time zone, user culture, and system locale. Does not change the clock.",
+  "goal_phrases": [
+    "inspect timezone pack",
+    "run inspect timezone pack"
+  ],
+  "rationale": "Workflow pack: read-only time zone and locale.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_timezone",
+      "args": {},
+      "summary": "Read the current time zone and locale",
+      "sensitivity": "read",
+      "side_effects": ["Reads Get-TimeZone / Get-Culture / Get-WinSystemLocale"]
+    }
+  ]
+}

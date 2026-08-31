@@ -121,6 +121,8 @@ class GoalPlanner:
             return self._display_status_plan(text)
         if self._looks_like_windows_update(lower):
             return self._windows_update_plan(text)
+        if self._looks_like_timezone(lower):
+            return self._timezone_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -650,6 +652,27 @@ class GoalPlanner:
                     summary="Read-only: last Windows Update install date",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Get-HotFix InstalledOn for the latest dated item",),
+                )
+            ],
+        )
+
+    def _timezone_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Time zone inspect journey — read-only timezone, user culture, and system locale. "
+                "Does not change the clock, timezone, or regional format."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_timezone",
+                    args={},
+                    summary="Read-only: time zone and locale",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Get-TimeZone / Get-Culture / Get-WinSystemLocale",),
                 )
             ],
         )
@@ -2036,6 +2059,43 @@ class GoalPlanner:
                 "last hotfix",
                 "hotfix install date",
                 "last update installed",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_timezone(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "set time zone",
+                "set timezone",
+                "change time zone",
+                "change timezone",
+                "set locale",
+                "change locale",
+                "set culture",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "time zone",
+                "timezone",
+                "what's my timezone",
+                "whats my timezone",
+                "what timezone",
+                "what time zone",
+                "inspect timezone",
+                "inspect time zone",
+                "inspect locale",
+                "system locale",
+                "what's my locale",
+                "whats my locale",
+                "what is my locale",
+                "what locale",
             )
         )
 

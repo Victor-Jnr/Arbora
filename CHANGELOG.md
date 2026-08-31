@@ -161,8 +161,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/064-inspect-display.md` | Change doc for display / resolution inspect |
 | `workflows/inspect-windows-update.json` | Bundled read-only Windows Update last-install pack |
 | `documentation/065-inspect-windows-update.md` | Change doc for Windows Update last-install inspect |
+| `workflows/inspect-timezone.json` | Bundled read-only time zone / locale inspect pack |
+| `documentation/066-inspect-timezone.md` | Change doc for time zone / locale inspect |
 
 ---
+
+## 066 — Time zone / locale inspect (2026-08-31)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_timezone` (Get-TimeZone / locale; no tzutil writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_timezone` |
+| `src/arbora/core/planner.py` | Time-zone journey; set/change and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-timezone.json` | Bundled inspect-timezone pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no tzutil/Set-TimeZone; secrets withheld |
+| `tests/test_broker_and_planner.py` | Timezone vs locale vs set vs diagnose vs Windows Update |
+| `tests/test_workflow_packs.py` | Pack match for inspect-timezone |
+| `docs/NEXT.md` | Marked P17 plate 54 done |
+| `documentation/066-inspect-timezone.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 066 |
+| `README.md` | Linked document 066 |
+| `CHANGELOG.md` | Added file roles and 066 section |
 
 ## 065 — Windows Update last-install date (2026-08-31)
 

@@ -35,6 +35,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-default-browser" in ids
     assert "inspect-display" in ids
     assert "inspect-windows-update" in ids
+    assert "inspect-timezone" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -312,6 +313,17 @@ def test_inspect_windows_update_workflow_pack_matches():
     plan = pack.to_plan("run inspect windows update pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_windows_update"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_timezone_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect timezone pack")
+    assert pack is not None
+    assert pack.id == "inspect-timezone"
+    plan = pack.to_plan("run inspect timezone pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_timezone"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

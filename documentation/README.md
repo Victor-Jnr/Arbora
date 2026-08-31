@@ -16,6 +16,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 | 060 | [Printer inspect](060-inspect-printers.md) | 2026-08-28 | Read-only default/list printers; no jobs or secrets |
 | 061 | [Recent files in Documents](061-recent-files-documents.md) | 2026-08-29 | Newest-first listing of Documents behind the broker |
 | 062 | [Startup apps inspect](062-inspect-startup.md) | 2026-08-29 | Read-only HKCU/HKLM Run + Startup folder; no enable/disable |
+| 066 | [Time zone / locale inspect](066-inspect-timezone.md) | 2026-08-31 | Read-only timezone and culture; no tzutil / Set-Culture |
 | 065 | [Windows Update last-install date](065-inspect-windows-update.md) | 2026-08-31 | Read-only last Get-HotFix date; does not install updates |
 | 064 | [Display / resolution inspect](064-inspect-display.md) | 2026-08-31 | Read-only attached displays and resolutions; no mode changes |
 | 063 | [Default browser inspect](063-inspect-default-browser.md) | 2026-08-29 | Read-only http(s) UserChoice ProgId; no association changes |
