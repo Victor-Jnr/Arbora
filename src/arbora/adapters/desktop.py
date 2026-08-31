@@ -383,6 +383,28 @@ _DEFAULT_BROWSER_PS = (
     "Read-Choice 'http'"
 )
 
+DISPLAY_MAX_ITEMS = 8
+
+_DISPLAY_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Add-Type -AssemblyName System.Windows.Forms; "
+    "$screens = @([System.Windows.Forms.Screen]::AllScreens); "
+    "Write-Output '=== Displays ==='; "
+    "Write-Output ('COUNT=' + @($screens).Count); "
+    "$screens | Select-Object -First 8 | ForEach-Object { "
+    "  Write-Output 'DISPLAY_BEGIN'; "
+    "  Write-Output ('DEVICE=' + $_.DeviceName); "
+    "  Write-Output ('PRIMARY=' + $_.Primary); "
+    "  Write-Output ('WIDTH=' + $_.Bounds.Width); "
+    "  Write-Output ('HEIGHT=' + $_.Bounds.Height); "
+    "  Write-Output ('X=' + $_.Bounds.X); "
+    "  Write-Output ('Y=' + $_.Bounds.Y); "
+    "  Write-Output ('WORKING_WIDTH=' + $_.WorkingArea.Width); "
+    "  Write-Output ('WORKING_HEIGHT=' + $_.WorkingArea.Height); "
+    "  Write-Output ('BITS=' + $_.BitsPerPixel); "
+    "}"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -630,6 +652,112 @@ def format_default_browser_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_display_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse attached-display bounds from System.Windows.Forms.Screen."""
+    count = 0
+    displays: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for line in (stdout or "").splitlines():
+        if line == "DISPLAY_BEGIN":
+            current = {
+                "device": "",
+                "primary": False,
+                "width": None,
+                "height": None,
+                "x": None,
+                "y": None,
+                "working_width": None,
+                "working_height": None,
+                "bits": None,
+            }
+            displays.append(current)
+            continue
+        if line.startswith("COUNT="):
+            try:
+                count = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                count = 0
+            continue
+        if current is None:
+            continue
+        if line.startswith("DEVICE="):
+            current["device"] = line.split("=", 1)[1].strip()
+        elif line.startswith("PRIMARY="):
+            current["primary"] = line.split("=", 1)[1].strip().lower() in {"true", "1"}
+        elif line.startswith("WIDTH="):
+            try:
+                current["width"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["width"] = None
+        elif line.startswith("HEIGHT="):
+            try:
+                current["height"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["height"] = None
+        elif line.startswith("X="):
+            try:
+                current["x"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["x"] = None
+        elif line.startswith("Y="):
+            try:
+                current["y"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["y"] = None
+        elif line.startswith("WORKING_WIDTH="):
+            try:
+                current["working_width"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["working_width"] = None
+        elif line.startswith("WORKING_HEIGHT="):
+            try:
+                current["working_height"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["working_height"] = None
+        elif line.startswith("BITS="):
+            try:
+                current["bits"] = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                current["bits"] = None
+    if not count:
+        count = len(displays)
+    return {"count": count, "displays": displays[:DISPLAY_MAX_ITEMS]}
+
+
+def format_display_report(snapshot: dict[str, Any]) -> str:
+    displays = list(snapshot.get("displays") or [])
+    count = int(snapshot.get("count") or len(displays))
+    if count < 1 and not displays:
+        return "No displays reported."
+    lines = [f"Display count: {count}"]
+    for item in displays:
+        device = str(item.get("device") or "Display")
+        width = item.get("width")
+        height = item.get("height")
+        if isinstance(width, int) and isinstance(height, int) and width > 0 and height > 0:
+            size = f"{width}x{height}"
+        else:
+            size = "unknown resolution"
+        flags: list[str] = []
+        if item.get("primary"):
+            flags.append("primary")
+        flag_text = f" ({', '.join(flags)})" if flags else ""
+        origin = ""
+        x_pos = item.get("x")
+        y_pos = item.get("y")
+        if isinstance(x_pos, int) and isinstance(y_pos, int):
+            origin = f" at {x_pos},{y_pos}"
+        working = ""
+        work_w = item.get("working_width")
+        work_h = item.get("working_height")
+        if isinstance(work_w, int) and isinstance(work_h, int) and work_w > 0 and work_h > 0:
+            working = f"; working={work_w}x{work_h}"
+        bits = item.get("bits")
+        bits_text = f"; {bits} bpp" if isinstance(bits, int) and bits > 0 else ""
+        lines.append(f"  {device}{flag_text} {size}{origin}{working}{bits_text}")
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -775,6 +903,8 @@ class DesktopAdapter:
             return self._inspect_startup(dry_run=dry_run)
         if action == "inspect_default_browser":
             return self._inspect_default_browser(dry_run=dry_run)
+        if action == "inspect_display":
+            return self._inspect_display(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1398,3 +1528,37 @@ class DesktopAdapter:
             ok=True,
             output=format_default_browser_report(snapshot),
         )
+
+    def _inspect_display(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would list attached displays and their resolutions "
+                    "(no mode changes, no DPI writes)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_DISPLAY_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Display inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_display_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_display_report(snapshot))

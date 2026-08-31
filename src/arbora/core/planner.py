@@ -117,6 +117,8 @@ class GoalPlanner:
             return self._startup_apps_plan(text)
         if self._looks_like_default_browser(lower):
             return self._default_browser_plan(text)
+        if self._looks_like_display_status(lower):
+            return self._display_status_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -604,6 +606,27 @@ class GoalPlanner:
                     summary="Read-only: default http(s) browser association",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads HKCU UserChoice ProgId for http and https",),
+                )
+            ],
+        )
+
+    def _display_status_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Display inspect journey — read-only attached displays and resolutions. "
+                "Does not change display mode, DPI, or wallpaper."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_display",
+                    args={},
+                    summary="Read-only: list displays and resolutions",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Screen.AllScreens bounds; no mode changes",),
                 )
             ],
         )
@@ -1920,6 +1943,41 @@ class GoalPlanner:
                 "whats my browser",
                 "what is my browser",
                 "my default browser",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_display_status(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            word in lower
+            for word in ("screenshot", "screen shot", "screen-shot", "capture", "snapshot", "wallpaper")
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "screen resolution",
+                "display resolution",
+                "monitor resolution",
+                "what's my resolution",
+                "whats my resolution",
+                "what is my resolution",
+                "inspect display",
+                "inspect displays",
+                "list displays",
+                "list monitors",
+                "how many monitors",
+                "how many displays",
+                "display status",
+                "attached displays",
+                "attached monitors",
+                "my monitors",
+                "my displays",
+                "what's my screen size",
+                "whats my screen size",
+                "monitor setup",
             )
         )
 

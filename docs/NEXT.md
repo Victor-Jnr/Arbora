@@ -60,12 +60,13 @@ Already in place:
 - read-only installed printers and the default printer (no jobs or secrets).
 - read-only startup apps (HKCU/HKLM Run names + user Startup folder).
 - read-only default http(s) browser (UserChoice ProgId; no association changes).
+- read-only attached displays and resolutions (no mode changes).
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under the notes folder.
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P16).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P17).
 
 ---
 
@@ -173,6 +174,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 50 | **Startup apps inspect** | ✅ Read-only HKCU/HKLM Run + Startup folder listing; no enable/disable |
 | 51 | **Default browser inspect** | ✅ Read-only UserChoice ProgId for http(s); no association changes |
 
+### P17 — Stage 3 display, Windows Update, and locale
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 52 | **Display / resolution inspect** | ✅ Read-only attached displays and resolutions; no mode changes |
+| 53 | **Windows Update last-install date** | Read-only last hotfix install date; does not install updates |
+| 54 | **Time zone / locale inspect** | Read-only timezone and culture; no tzutil / Set-Culture |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -266,4 +275,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P16 plates 49–51 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P17 plate 52 is done. Next: plate 53 (Windows Update last-install date, read-only) then plate 54 (time zone / locale inspect).
