@@ -24,6 +24,7 @@ class UserPreferences:
     projects_folder: str = ""
     downloads_folder: str = ""
     notes_folder: str = ""
+    screenshots_folder: str = ""
     run_due_schedules_on_start: bool = False
     spoken_confirmations: bool = False
 
@@ -52,6 +53,11 @@ class UserPreferences:
             return Path(self.notes_folder).expanduser()
         return Path.home() / "ArboraNotes"
 
+    def resolved_screenshots_folder(self) -> Path:
+        if self.screenshots_folder.strip():
+            return Path(self.screenshots_folder).expanduser()
+        return self.resolved_notes_folder() / "screenshots"
+
 
 def preferences_to_dict(prefs: UserPreferences) -> dict[str, Any]:
     return {
@@ -62,6 +68,7 @@ def preferences_to_dict(prefs: UserPreferences) -> dict[str, Any]:
         "projects_folder": prefs.projects_folder,
         "downloads_folder": prefs.downloads_folder,
         "notes_folder": prefs.notes_folder,
+        "screenshots_folder": prefs.screenshots_folder,
         "run_due_schedules_on_start": prefs.run_due_schedules_on_start,
         "spoken_confirmations": prefs.spoken_confirmations,
     }
@@ -83,6 +90,7 @@ def preferences_from_dict(raw: dict[str, Any] | None) -> UserPreferences:
         projects_folder=str(raw.get("projects_folder", "")),
         downloads_folder=str(raw.get("downloads_folder", "")),
         notes_folder=str(raw.get("notes_folder", "")),
+        screenshots_folder=str(raw.get("screenshots_folder", "")),
         run_due_schedules_on_start=bool(raw.get("run_due_schedules_on_start", False)),
         spoken_confirmations=bool(raw.get("spoken_confirmations", False)),
     )
@@ -119,13 +127,15 @@ def set_preference(memory: LocalMemoryStore, key: str, value: str) -> UserPrefer
         prefs.downloads_folder = value.strip()
     elif normalized in {"notes_folder", "notes_root", "notes"}:
         prefs.notes_folder = value.strip()
+    elif normalized in {"screenshots_folder", "screenshots_root", "screenshots"}:
+        prefs.screenshots_folder = value.strip()
     elif normalized in {"run_due_schedules_on_start", "run_schedules_on_start", "schedules_on_start"}:
         prefs.run_due_schedules_on_start = value.strip().lower() in {"1", "true", "on", "yes", "y"}
     elif normalized in {"spoken_confirmations", "spoken_confirmation", "speak_confirmations"}:
         prefs.spoken_confirmations = value.strip().lower() in {"1", "true", "on", "yes", "y"}
     else:
         raise ValueError(
-            f"Unknown preference '{key}'. Use dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, run_schedules_on_start, or spoken_confirmations."
+            f"Unknown preference '{key}'. Use dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, screenshots_folder, run_schedules_on_start, or spoken_confirmations."
         )
     save_preferences(memory, prefs)
     return prefs
@@ -138,6 +148,7 @@ def preference_rows(prefs: UserPreferences) -> list[str]:
     projects = str(prefs.resolved_projects_folder())
     downloads = str(prefs.resolved_downloads_folder())
     notes = str(prefs.resolved_notes_folder())
+    screenshots = str(prefs.resolved_screenshots_folder())
     dry = "on" if prefs.dry_run_default else "off"
     return [
         f"dry_run_default = {dry}",
@@ -147,6 +158,7 @@ def preference_rows(prefs: UserPreferences) -> list[str]:
         f"projects_folder = {projects}",
         f"downloads_folder = {downloads}",
         f"notes_folder = {notes}",
+        f"screenshots_folder = {screenshots}",
         f"run_schedules_on_start = {'on' if prefs.run_due_schedules_on_start else 'off'}",
         f"spoken_confirmations = {'on' if prefs.spoken_confirmations else 'off'}",
     ]

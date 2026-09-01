@@ -40,6 +40,33 @@ def test_downloads_folder_preference(tmp_path: Path):
     assert str(custom) in listed_default.steps[0].args["path"]
 
 
+def test_screenshots_folder_preference_and_screenshot_plan(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    custom = tmp_path / "MyShots"
+    set_preference(runtime.memory, "screenshots_folder", str(custom))
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    assert runtime2.preferences.resolved_screenshots_folder() == custom
+    plan = runtime2.planner.plan("take a screenshot")
+    ensure = next(step for step in plan.steps if step.action == "ensure_directory")
+    capture = next(step for step in plan.steps if step.action == "capture_screenshot")
+    assert str(custom) in ensure.args["path"]
+    assert str(custom) in capture.args["path"]
+    notes = runtime2.planner.plan("save a note about milk")
+    write = next(step for step in notes.steps if step.action == "write_text")
+    assert str(custom) not in write.args["path"]
+
+
+def test_screenshots_folder_defaults_under_notes(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    custom_notes = tmp_path / "MyNotes"
+    set_preference(runtime.memory, "notes_folder", str(custom_notes))
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    assert runtime2.preferences.resolved_screenshots_folder() == custom_notes / "screenshots"
+    plan = runtime2.planner.plan("take a screenshot")
+    ensure = next(step for step in plan.steps if step.action == "ensure_directory")
+    assert str(custom_notes / "screenshots") in ensure.args["path"]
+
+
 def test_notes_folder_preference_and_save_note_plan(tmp_path: Path):
     runtime = build_runtime(memory_root=tmp_path, provider="echo")
     custom = tmp_path / "MyNotes"
@@ -110,4 +137,5 @@ def test_prefs_cli_list(tmp_path: Path, capsys):
     assert "projects_folder" in out
     assert "downloads_folder" in out
     assert "notes_folder" in out
+    assert "screenshots_folder" in out
     assert "spoken_confirmations" in out

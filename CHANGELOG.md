@@ -163,8 +163,25 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/065-inspect-windows-update.md` | Change doc for Windows Update last-install inspect |
 | `workflows/inspect-timezone.json` | Bundled read-only time zone / locale inspect pack |
 | `documentation/066-inspect-timezone.md` | Change doc for time zone / locale inspect |
+| `documentation/067-screenshots-folder-preference.md` | Change doc for screenshots folder preference |
 
 ---
+
+## 067 — Screenshots folder preference (2026-09-01)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/preferences/store.py` | Added `screenshots_folder` (default under notes) |
+| `src/arbora/core/planner.py` | Screenshot journey writes under `screenshots_root` |
+| `src/arbora/cli/session.py` | Wired resolved screenshots folder into the planner |
+| `src/arbora/cli/main.py` | Listed `screenshots_folder` in `/prefs` help |
+| `src/arbora/cli/prefs.py` | Listed `screenshots_folder` in set-key help |
+| `tests/test_preferences.py` | Preference, default-under-notes, and capture-plan paths |
+| `docs/NEXT.md` | Defined P18; marked plate 55 done |
+| `documentation/067-screenshots-folder-preference.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 067 |
+| `README.md` | Linked document 067 |
+| `CHANGELOG.md` | Added file roles and 067 section |
 
 ## 066 — Time zone / locale inspect (2026-08-31)
 
