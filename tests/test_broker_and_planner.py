@@ -302,6 +302,14 @@ def test_open_explorer_desktop_folder():
     docs_path = documents.steps[-1].args["path"]
     assert "Documents" in docs_path or "documents" in docs_path.lower()
     assert "Downloads" not in docs_path
+    workday = runtime.planner.plan("open my workday folder")
+    assert [step.action for step in workday.steps] == ["list_directory", "open_in_explorer"]
+    work_path = workday.steps[-1].args["path"]
+    assert "ArboraWorkday" in work_path or "workday" in work_path.lower()
+    assert "Downloads" not in work_path
+    start = runtime.planner.plan("start my workday")
+    assert start.steps[0].action == "list_running_apps"
+    assert not any(step.action == "open_in_explorer" for step in start.steps)
 
 
 def test_find_files_journey_is_read_only():

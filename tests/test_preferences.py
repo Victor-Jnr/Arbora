@@ -139,3 +139,17 @@ def test_prefs_cli_list(tmp_path: Path, capsys):
     assert "notes_folder" in out
     assert "screenshots_folder" in out
     assert "spoken_confirmations" in out
+
+
+def test_open_workday_folder_uses_workday_preference(tmp_path: Path):
+    runtime = build_runtime(memory_root=tmp_path, provider="echo")
+    custom = tmp_path / "MyWorkday"
+    set_preference(runtime.memory, "workday_folder", str(custom))
+    runtime2 = build_runtime(memory_root=tmp_path, provider="echo")
+    plan = runtime2.planner.plan("open my workday folder")
+    assert [step.action for step in plan.steps] == ["list_directory", "open_in_explorer"]
+    assert str(custom) in plan.steps[0].args["path"]
+    assert str(custom) in plan.steps[-1].args["path"]
+    start = runtime2.planner.plan("start my workday")
+    assert start.steps[0].action == "list_running_apps"
+    assert not any(step.action == "open_in_explorer" for step in start.steps)

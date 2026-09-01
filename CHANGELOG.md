@@ -164,8 +164,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `workflows/inspect-timezone.json` | Bundled read-only time zone / locale inspect pack |
 | `documentation/066-inspect-timezone.md` | Change doc for time zone / locale inspect |
 | `documentation/067-screenshots-folder-preference.md` | Change doc for screenshots folder preference |
+| `workflows/open-workday-folder.json` | Bundled list-then-open workday folder pack |
+| `documentation/068-open-workday-folder.md` | Change doc for open workday folder in Explorer |
 
 ---
+
+## 068 — Open workday folder in Explorer (2026-09-01)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Named workday-folder Explorer journey; path uses workday root |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/open-workday-folder.json` | Bundled open-workday-folder pack |
+| `tests/test_broker_and_planner.py` | Workday folder vs start-workday vs Downloads |
+| `tests/test_preferences.py` | Open-workday plan uses `workday_folder` |
+| `tests/test_workflow_packs.py` | Pack match for open-workday-folder |
+| `docs/NEXT.md` | Marked P18 plate 56 done |
+| `documentation/068-open-workday-folder.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 068 |
+| `README.md` | Linked document 068 |
+| `CHANGELOG.md` | Added file roles and 068 section |
 
 ## 067 — Screenshots folder preference (2026-09-01)
 

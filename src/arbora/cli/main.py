@@ -84,6 +84,7 @@ Try goals like:
   close the notepad window
   open https://example.com in chrome
   open downloads in explorer
+  open my workday folder
   empty the recycle bin
   disk diagnose pack
 """.strip()

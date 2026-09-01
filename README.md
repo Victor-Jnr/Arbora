@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 068 | [Open workday folder in Explorer](documentation/068-open-workday-folder.md) |
 | 067 | [Screenshots folder preference](documentation/067-screenshots-folder-preference.md) |
 | 066 | [Time zone / locale inspect](documentation/066-inspect-timezone.md) |
 | 065 | [Windows Update last-install date](documentation/065-inspect-windows-update.md) |

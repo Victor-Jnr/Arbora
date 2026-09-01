@@ -1,0 +1,28 @@
+{
+  "id": "open-workday-folder",
+  "name": "Open workday folder",
+  "description": "List the workday folder, then open it in File Explorer. Not the full start-workday ritual.",
+  "goal_phrases": [
+    "open workday folder pack",
+    "run open workday folder pack"
+  ],
+  "rationale": "Workflow pack: list then open the workday folder in Explorer.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "list_directory",
+      "args": { "path": "~/ArboraWorkday" },
+      "summary": "List files in the workday folder",
+      "sensitivity": "read",
+      "side_effects": ["Reads directory listing"]
+    },
+    {
+      "adapter": "files",
+      "action": "open_in_explorer",
+      "args": { "path": "~/ArboraWorkday" },
+      "summary": "Open the workday folder in File Explorer",
+      "sensitivity": "mutate",
+      "side_effects": ["Opens a File Explorer window"]
+    }
+  ]
+}
