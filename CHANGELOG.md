@@ -166,8 +166,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/067-screenshots-folder-preference.md` | Change doc for screenshots folder preference |
 | `workflows/open-workday-folder.json` | Bundled list-then-open workday folder pack |
 | `documentation/068-open-workday-folder.md` | Change doc for open workday folder in Explorer |
+| `workflows/inspect-theme.json` | Bundled read-only dark/light theme inspect pack |
+| `documentation/069-inspect-theme.md` | Change doc for dark/light theme inspect |
 
 ---
+
+## 069 — Dark / light theme inspect (2026-09-01)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_theme` (Personalize light/dark flags; no writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_theme` |
+| `src/arbora/core/planner.py` | Theme journey; set/change and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-theme.json` | Bundled inspect-theme pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Set-ItemProperty; secrets withheld |
+| `tests/test_broker_and_planner.py` | Theme vs set vs diagnose vs timezone vs screenshot |
+| `tests/test_workflow_packs.py` | Pack match for inspect-theme |
+| `docs/NEXT.md` | Marked P18 plate 57 done |
+| `documentation/069-inspect-theme.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 069 |
+| `README.md` | Linked document 069 |
+| `CHANGELOG.md` | Added file roles and 069 section |
 
 ## 068 — Open workday folder in Explorer (2026-09-01)
 

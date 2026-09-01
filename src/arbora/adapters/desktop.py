@@ -451,6 +451,19 @@ _TIMEZONE_PS = (
     "} catch { Write-Output 'SYSTEM_LOCALE='; }"
 )
 
+_THEME_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "$path = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize'; "
+    "try { "
+    "  $apps = (Get-ItemProperty -Path $path -Name AppsUseLightTheme).AppsUseLightTheme; "
+    "  Write-Output ('APPS_LIGHT=' + [int]$apps); "
+    "} catch { Write-Output 'APPS_LIGHT='; }; "
+    "try { "
+    "  $sys = (Get-ItemProperty -Path $path -Name SystemUsesLightTheme).SystemUsesLightTheme; "
+    "  Write-Output ('SYSTEM_LIGHT=' + [int]$sys); "
+    "} catch { Write-Output 'SYSTEM_LIGHT='; }"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -915,6 +928,40 @@ def format_timezone_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_theme_snapshot(stdout: str) -> dict[str, str]:
+    """Parse AppsUseLightTheme / SystemUsesLightTheme keys."""
+    snapshot = {"apps_light": "", "system_light": ""}
+    mapping = (("APPS_LIGHT=", "apps_light"), ("SYSTEM_LIGHT=", "system_light"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()
+                break
+    return snapshot
+
+
+def format_theme_report(snapshot: dict[str, str]) -> str:
+    apps = _theme_label(snapshot.get("apps_light"))
+    system = _theme_label(snapshot.get("system_light"))
+    if apps is None and system is None:
+        return "No theme setting reported."
+    lines: list[str] = []
+    if apps is not None:
+        lines.append(f"Apps: {apps}")
+    if system is not None:
+        lines.append(f"System chrome: {system}")
+    return "\n".join(lines)
+
+
+def _theme_label(raw: str | None) -> str | None:
+    text = str(raw or "").strip().lower()
+    if text in {"1", "true"}:
+        return "light"
+    if text in {"0", "false"}:
+        return "dark"
+    return None
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1066,6 +1113,8 @@ class DesktopAdapter:
             return self._inspect_windows_update(dry_run=dry_run)
         if action == "inspect_timezone":
             return self._inspect_timezone(dry_run=dry_run)
+        if action == "inspect_theme":
+            return self._inspect_theme(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1795,3 +1844,37 @@ class DesktopAdapter:
             )
         snapshot = parse_timezone_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_timezone_report(snapshot))
+
+    def _inspect_theme(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the Windows light/dark theme "
+                    "(no Set-ItemProperty, no personalization writes)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_THEME_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Theme inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_theme_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_theme_report(snapshot))

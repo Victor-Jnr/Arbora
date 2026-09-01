@@ -78,6 +78,7 @@ Try goals like:
   screen resolution
   windows update
   time zone
+  dark mode
   what's in temp
   empty temp
   open chrome

@@ -20,6 +20,7 @@ from arbora.adapters.desktop import (
     format_printer_report,
     format_startup_report,
     format_timezone_report,
+    format_theme_report,
     format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
@@ -31,6 +32,7 @@ from arbora.adapters.desktop import (
     parse_printer_snapshot,
     parse_startup_snapshot,
     parse_timezone_snapshot,
+    parse_theme_snapshot,
     parse_windows_update_snapshot,
     browser_name_from_progid,
     resolve_launch_target,
@@ -953,6 +955,53 @@ def test_inspect_timezone_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_timezone", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_theme_dry_run():
+    result = DesktopAdapter().execute("inspect_theme", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "theme" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_theme_report_empty_and_mixed():
+    empty = parse_theme_snapshot("")
+    report = format_theme_report(empty)
+    assert "no theme" in report.lower()
+    listed = parse_theme_snapshot("APPS_LIGHT=0\nSYSTEM_LIGHT=1\n")
+    live = format_theme_report(listed)
+    assert "Apps: dark" in live
+    assert "System chrome: light" in live
+    both_dark = format_theme_report(parse_theme_snapshot("APPS_LIGHT=0\nSYSTEM_LIGHT=0\n"))
+    assert "dark" in both_dark
+    assert "light" not in both_dark
+
+
+def test_inspect_theme_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_theme", {}, dry_run=False)
+    assert result.ok
+    assert "no theme" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "appsuselighttheme" in command
+    assert "systemuseslighttheme" in command
+    assert "get-itemproperty" in command
+    assert "set-itemproperty" not in command
+    assert "systemparametersinfo" not in command
+    assert "ms-settings:personalization" not in command
+
+
+def test_inspect_theme_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_theme", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

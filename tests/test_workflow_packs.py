@@ -37,6 +37,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-windows-update" in ids
     assert "inspect-timezone" in ids
     assert "open-workday-folder" in ids
+    assert "inspect-theme" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -339,6 +340,17 @@ def test_open_workday_folder_workflow_pack_matches():
     assert all(step.adapter == "files" for step in plan.steps)
     assert plan.steps[0].sensitivity.value == "read"
     assert plan.steps[1].sensitivity.value == "mutate"
+
+
+def test_inspect_theme_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect theme pack")
+    assert pack is not None
+    assert pack.id == "inspect-theme"
+    plan = pack.to_plan("run inspect theme pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_theme"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
 
 
 def test_git_status_workflow_pack_matches():
