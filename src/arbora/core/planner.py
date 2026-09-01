@@ -97,6 +97,9 @@ class GoalPlanner:
     def _screenshots_dir(self) -> Path:
         return self._screenshots_root or (self._notes_dir() / "screenshots")
 
+    def _workday_dir(self) -> Path:
+        return self._workday_root or Path.home() / "ArboraWorkday"
+
     def plan(self, goal: str) -> Plan:
         return self._maybe_add_spoken_confirmation(self._draft_plan(goal))
 
@@ -110,6 +113,8 @@ class GoalPlanner:
             return self._workday_start_plan(text)
         if self._looks_like_workday_shutdown(lower):
             return self._workday_shutdown_plan(text)
+        if self._looks_like_open_workday_folder(lower):
+            return self._open_explorer_plan(text)
         if self._looks_like_largest_folders(lower):
             return self._largest_folders_plan(text)
         if self._looks_like_network_status(lower):
@@ -1125,6 +1130,8 @@ class GoalPlanner:
             return path
         if "desktop" in lower:
             return str(Path.home() / "Desktop")
+        if "workday" in lower:
+            return str(self._workday_dir())
         if re.search(r"\btemp\b", lower) and "temperature" not in lower:
             return str(_user_temp_dir())
         if re.search(r"\bdocuments?\b", lower) or re.search(r"\bdocs\b", lower):
@@ -2225,6 +2232,33 @@ class GoalPlanner:
                 "leave a note",
                 "save note",
                 "jot down",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_open_workday_folder(lower: str) -> bool:
+        if any(
+            phrase in lower
+            for phrase in (
+                "start my workday",
+                "start workday",
+                "begin my day",
+                "begin workday",
+                "end my workday",
+                "shutdown workday",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "open my workday folder",
+                "open workday folder",
+                "open the workday folder",
+                "show workday folder",
+                "workday folder in explorer",
+                "open my workday in explorer",
+                "open workday in explorer",
             )
         )
 
