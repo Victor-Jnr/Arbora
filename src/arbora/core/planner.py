@@ -73,6 +73,7 @@ class GoalPlanner:
         projects_root: Path | None = None,
         downloads_root: Path | None = None,
         notes_root: Path | None = None,
+        screenshots_root: Path | None = None,
         spoken_confirmations: bool = False,
     ) -> None:
         self._provider = provider
@@ -81,6 +82,7 @@ class GoalPlanner:
         self._projects_root = projects_root
         self._downloads_root = downloads_root
         self._notes_root = notes_root
+        self._screenshots_root = screenshots_root
         self._spoken_confirmations = spoken_confirmations
 
     def _downloads_dir(self) -> Path:
@@ -91,6 +93,9 @@ class GoalPlanner:
 
     def _notes_dir(self) -> Path:
         return self._notes_root or Path.home() / "ArboraNotes"
+
+    def _screenshots_dir(self) -> Path:
+        return self._screenshots_root or (self._notes_dir() / "screenshots")
 
     def plan(self, goal: str) -> Plan:
         return self._maybe_add_spoken_confirmation(self._draft_plan(goal))
@@ -1394,7 +1399,7 @@ class GoalPlanner:
 
     def _screenshot_plan(self, goal: str) -> Plan:
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        folder = self._notes_dir() / "screenshots"
+        folder = self._screenshots_dir()
         path = folder / f"screenshot-{stamp}.png"
         window_title = self._screenshot_window_from_goal(goal)
         capture_args: dict[str, Any] = {"path": str(path)}
@@ -1409,7 +1414,7 @@ class GoalPlanner:
             id=new_id("plan_"),
             goal=goal,
             rationale=(
-                "Screenshot journey — write one PNG under the notes/screenshots folder. "
+                "Screenshot journey — write one PNG under the screenshots folder. "
                 "Still requires broker approval. Does not upload the image."
             ),
             steps=[

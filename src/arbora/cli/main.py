@@ -44,7 +44,7 @@ Commands:
   /memory         Show local memory status (/memory export [path])
   /wipe           Wipe local memory (routines/preferences)
   /workflows      List reusable workflow packs
-  /prefs          Show or set user preferences (dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, run_schedules_on_start, spoken_confirmations)
+  /prefs          Show or set user preferences (dry_run, provider, workday_folder, briefs_folder, projects_folder, downloads_folder, notes_folder, screenshots_folder, run_schedules_on_start, spoken_confirmations)
   /schedules      List trusted-routine schedules
   /undo           Undo the last organise move batch (shortcut plan)
   /dry on|off     Toggle dry-run mode (default: on)

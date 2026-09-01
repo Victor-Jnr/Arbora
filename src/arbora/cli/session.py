@@ -109,6 +109,7 @@ def build_runtime(
         projects_root=preferences.resolved_projects_folder(),
         downloads_root=preferences.resolved_downloads_folder(),
         notes_root=preferences.resolved_notes_folder(),
+        screenshots_root=preferences.resolved_screenshots_folder(),
         spoken_confirmations=preferences.spoken_confirmations,
     )
     runtime = Runtime(

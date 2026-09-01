@@ -64,11 +64,12 @@ Already in place:
 - read-only last Windows Update install date (does not install updates).
 - read-only time zone and locale (no tzutil / Set-Culture).
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
+- user-configurable `screenshots_folder` for capture (defaults under notes).
 - preview then copy or move one file (overwrite refused; move can undo).
-- broker-gated screenshot / window PNG under the notes folder.
+- broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P17).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P18).
 
 ---
 
@@ -184,6 +185,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 53 | **Windows Update last-install date** | ✅ Read-only last hotfix install date; does not install updates |
 | 54 | **Time zone / locale inspect** | ✅ Read-only timezone and culture; no tzutil / Set-Culture |
 
+### P18 — Stage 3 organisation, workday, and theme
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 55 | **Screenshots folder preference** | ✅ User-configurable `screenshots_folder` for the capture journey |
+| 56 | **Open workday folder in Explorer** | Named journey lists then opens the workday folder (not the full start-workday ritual) |
+| 57 | **Dark/light theme inspect** | Read-only AppsUseLightTheme / SystemUsesLightTheme; no theme writes |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -277,4 +286,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P17 plates 52–54 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P18 plate 55 is done. Next: open the workday folder in Explorer as a named journey, then dark/light theme inspect.
