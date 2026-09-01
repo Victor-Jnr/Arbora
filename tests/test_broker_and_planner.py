@@ -238,6 +238,26 @@ def test_timezone_is_read_only_inspect():
     assert [step.action for step in update.steps] == ["inspect_windows_update"]
 
 
+def test_theme_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("dark mode")
+    assert [step.action for step in plan.steps] == ["inspect_theme"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what's my theme")
+    assert named.steps[0].action == "inspect_theme"
+    change = runtime.planner.plan("set dark mode")
+    assert not any(step.action == "inspect_theme" for step in change.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_theme" for step in diagnose.steps)
+    zone = runtime.planner.plan("time zone")
+    assert [step.action for step in zone.steps] == ["inspect_timezone"]
+    shot = runtime.planner.plan("take a screenshot")
+    assert shot.steps[-1].action == "capture_screenshot"
+    assert not any(step.action == "inspect_theme" for step in shot.steps)
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

@@ -133,6 +133,8 @@ class GoalPlanner:
             return self._windows_update_plan(text)
         if self._looks_like_timezone(lower):
             return self._timezone_plan(text)
+        if self._looks_like_theme(lower):
+            return self._theme_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -683,6 +685,27 @@ class GoalPlanner:
                     summary="Read-only: time zone and locale",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Get-TimeZone / Get-Culture / Get-WinSystemLocale",),
+                )
+            ],
+        )
+
+    def _theme_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Theme inspect journey — read-only light/dark app and system chrome settings. "
+                "Does not change the theme, accent color, or wallpaper."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_theme",
+                    args={},
+                    summary="Read-only: Windows light/dark theme",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads HKCU Themes\\Personalize light/dark flags",),
                 )
             ],
         )
@@ -2108,6 +2131,60 @@ class GoalPlanner:
                 "whats my locale",
                 "what is my locale",
                 "what locale",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_theme(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            word in lower
+            for word in ("screenshot", "screen shot", "wallpaper", "accent")
+        ):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "set dark",
+                "set light",
+                "change theme",
+                "change dark",
+                "change light",
+                "enable dark",
+                "enable light",
+                "disable dark",
+                "disable light",
+                "switch to dark",
+                "switch to light",
+                "turn on dark",
+                "turn on light",
+                "turn off dark",
+                "turn off light",
+                "apply theme",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "dark mode",
+                "light mode",
+                "dark theme",
+                "light theme",
+                "windows theme",
+                "app theme",
+                "apps theme",
+                "system theme",
+                "color mode",
+                "inspect theme",
+                "what's my theme",
+                "whats my theme",
+                "what is my theme",
+                "what theme",
+                "am i in dark mode",
+                "am i using dark mode",
+                "are we in dark mode",
             )
         )
 

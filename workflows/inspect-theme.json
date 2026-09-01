@@ -1,0 +1,20 @@
+{
+  "id": "inspect-theme",
+  "name": "Inspect Windows theme",
+  "description": "Read-only light/dark app and system chrome settings. Does not change the theme.",
+  "goal_phrases": [
+    "inspect theme pack",
+    "run inspect theme pack"
+  ],
+  "rationale": "Workflow pack: read-only Windows light/dark theme.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_theme",
+      "args": {},
+      "summary": "Read the current light/dark theme",
+      "sensitivity": "read",
+      "side_effects": ["Reads HKCU Themes\\Personalize light/dark flags"]
+    }
+  ]
+}

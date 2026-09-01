@@ -66,6 +66,7 @@ Already in place:
 - opt-in spoken plan read-back (TTS, still broker-gated; no always-on mic).
 - user-configurable `screenshots_folder` for capture (defaults under notes).
 - named journey to list then open the workday folder in Explorer.
+- read-only dark/light theme (AppsUseLightTheme; no theme writes).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -192,7 +193,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 55 | **Screenshots folder preference** | ✅ User-configurable `screenshots_folder` for the capture journey |
 | 56 | **Open workday folder in Explorer** | ✅ Named journey lists then opens the workday folder (not the full start-workday ritual) |
-| 57 | **Dark/light theme inspect** | Read-only AppsUseLightTheme / SystemUsesLightTheme; no theme writes |
+| 57 | **Dark/light theme inspect** | ✅ Read-only AppsUseLightTheme / SystemUsesLightTheme; no theme writes |
 
 ## Non-negotiables (do not drift)
 
@@ -287,4 +288,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P18 plates 55–56 are done. Next: dark/light theme inspect.
+P18 plates 55–57 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
