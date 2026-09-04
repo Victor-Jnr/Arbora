@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 070 | [Volume / mute inspect](070-inspect-volume.md) | 2026-09-04 | Read-only default playback volume and mute; no volume writes |
 | 069 | [Dark / light theme inspect](069-inspect-theme.md) | 2026-09-01 | Read-only AppsUseLightTheme / SystemUsesLightTheme; no theme writes |
 | 068 | [Open workday folder in Explorer](068-open-workday-folder.md) | 2026-09-01 | Named journey lists then opens the workday folder |
 | 067 | [Screenshots folder preference](067-screenshots-folder-preference.md) | 2026-09-01 | User-configurable screenshots_folder for capture |

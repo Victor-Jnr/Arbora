@@ -67,11 +67,12 @@ Already in place:
 - user-configurable `screenshots_folder` for capture (defaults under notes).
 - named journey to list then open the workday folder in Explorer.
 - read-only dark/light theme (AppsUseLightTheme; no theme writes).
+- read-only default playback volume and mute (no volume or mute changes).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P18).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P19).
 
 ---
 
@@ -195,6 +196,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 56 | **Open workday folder in Explorer** | ✅ Named journey lists then opens the workday folder (not the full start-workday ritual) |
 | 57 | **Dark/light theme inspect** | ✅ Read-only AppsUseLightTheme / SystemUsesLightTheme; no theme writes |
 
+### P19 — Stage 3 volume, wallpaper, and idle
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 58 | **Mute/volume inspect** | ✅ Read-only default playback percent and mute; does not set volume |
+| 59 | **Wallpaper path inspect** | Read-only desktop wallpaper path; no wallpaper writes |
+| 60 | **Idle time inspect** | Read-only last-input idle duration; no input injection |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -288,4 +297,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P18 plates 55–57 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P19 plate 58 is done. Next: plate 59 (wallpaper path inspect), then plate 60 (idle time inspect).

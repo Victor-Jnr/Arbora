@@ -135,6 +135,8 @@ class GoalPlanner:
             return self._timezone_plan(text)
         if self._looks_like_theme(lower):
             return self._theme_plan(text)
+        if self._looks_like_volume(lower):
+            return self._volume_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -706,6 +708,27 @@ class GoalPlanner:
                     summary="Read-only: Windows light/dark theme",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads HKCU Themes\\Personalize light/dark flags",),
+                )
+            ],
+        )
+
+    def _volume_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Volume inspect journey — read-only default playback level and mute flag. "
+                "Does not change volume or mute."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_volume",
+                    args={},
+                    summary="Read-only: default playback volume and mute",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Core Audio default endpoint volume scalar and mute",),
                 )
             ],
         )
@@ -2185,6 +2208,60 @@ class GoalPlanner:
                 "am i in dark mode",
                 "am i using dark mode",
                 "are we in dark mode",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_volume(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disk volume",
+                "format volume",
+                "format-volume",
+                "volume shadow",
+                "shadow copy",
+            )
+        ):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "set volume",
+                "change volume",
+                "volume up",
+                "volume down",
+                "turn up the volume",
+                "turn down the volume",
+                "unmute",
+                "mute the",
+                "mute my",
+                "mute speakers",
+                "mute sound",
+                "mute audio",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "volume",
+                "sound level",
+                "master volume",
+                "speaker volume",
+                "inspect volume",
+                "inspect mute",
+                "am i muted",
+                "is it muted",
+                "is sound muted",
+                "is audio muted",
+                "mute status",
+                "volume status",
+                "what's my volume",
+                "whats my volume",
+                "what is my volume",
             )
         )
 

@@ -464,6 +464,54 @@ _THEME_PS = (
     "} catch { Write-Output 'SYSTEM_LIGHT='; }"
 )
 
+_VOLUME_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Add-Type -TypeDefinition @'\n"
+    "using System;\n"
+    "using System.Runtime.InteropServices;\n"
+    "[Guid(\"5CDF2C82-841E-4546-9722-0CF74078229A\"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]\n"
+    "interface IArboraAudioEndpointVolume {\n"
+    "  int _a(); int _b(); int _c(); int _d(); int _e(); int _f();\n"
+    "  int GetMasterVolumeLevelScalar(out float pfLevel);\n"
+    "  int _g(); int _h(); int _i(); int _j(); int _k();\n"
+    "  int GetMute(out bool pbMute);\n"
+    "}\n"
+    "[Guid(\"D666063F-1587-4E43-81F1-B948E807363F\"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]\n"
+    "interface IArboraMmDevice {\n"
+    "  int Activate(ref Guid id, int clsCtx, int activationParams, "
+    "[MarshalAs(UnmanagedType.IUnknown)] out object iface);\n"
+    "}\n"
+    "[Guid(\"A95664D2-9614-4F35-A746-DE8DB63617E6\"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]\n"
+    "interface IArboraMmDeviceEnumerator {\n"
+    "  int _a();\n"
+    "  int GetDefaultAudioEndpoint(int dataFlow, int role, out IArboraMmDevice ppDevice);\n"
+    "}\n"
+    "[ComImport, Guid(\"BCDE0395-E52F-467C-8E3D-C4579291692E\")] class ArboraMmDeviceEnumeratorComObject { }\n"
+    "public class ArboraVolumeProbe {\n"
+    "  public static string Snapshot() {\n"
+    "    var enumerator = new ArboraMmDeviceEnumeratorComObject() as IArboraMmDeviceEnumerator;\n"
+    "    IArboraMmDevice dev;\n"
+    "    Marshal.ThrowExceptionForHR(enumerator.GetDefaultAudioEndpoint(0, 1, out dev));\n"
+    "    Guid iid = typeof(IArboraAudioEndpointVolume).GUID;\n"
+    "    object ep;\n"
+    "    Marshal.ThrowExceptionForHR(dev.Activate(ref iid, 23, 0, out ep));\n"
+    "    var vol = (IArboraAudioEndpointVolume)ep;\n"
+    "    float scalar = 0;\n"
+    "    Marshal.ThrowExceptionForHR(vol.GetMasterVolumeLevelScalar(out scalar));\n"
+    "    bool muted = false;\n"
+    "    Marshal.ThrowExceptionForHR(vol.GetMute(out muted));\n"
+    "    int percent = (int)Math.Round(scalar * 100.0);\n"
+    "    if (percent < 0) { percent = 0; }\n"
+    "    if (percent > 100) { percent = 100; }\n"
+    "    return \"PERCENT=\" + percent + \"\\nMUTED=\" + (muted ? \"1\" : \"0\");\n"
+    "  }\n"
+    "}\n"
+    "'@ -ErrorAction SilentlyContinue; "
+    "try { "
+    "  Write-Output ([ArboraVolumeProbe]::Snapshot()); "
+    "} catch { Write-Output 'PERCENT='; Write-Output 'MUTED='; }"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -962,6 +1010,39 @@ def _theme_label(raw: str | None) -> str | None:
     return None
 
 
+def parse_volume_snapshot(stdout: str) -> dict[str, str]:
+    """Parse default-endpoint volume percent and mute flag."""
+    snapshot = {"percent": "", "muted": ""}
+    mapping = (("PERCENT=", "percent"), ("MUTED=", "muted"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()
+                break
+    return snapshot
+
+
+def format_volume_report(snapshot: dict[str, str]) -> str:
+    percent_raw = str(snapshot.get("percent") or "").strip()
+    muted_raw = str(snapshot.get("muted") or "").strip().lower()
+    lines: list[str] = []
+    if percent_raw:
+        try:
+            percent = int(percent_raw)
+        except ValueError:
+            percent = None
+        if percent is not None:
+            percent = max(0, min(100, percent))
+            lines.append(f"Volume: {percent}%")
+    if muted_raw in {"1", "true"}:
+        lines.append("Muted: yes")
+    elif muted_raw in {"0", "false"}:
+        lines.append("Muted: no")
+    if not lines:
+        return "No volume or mute state reported."
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1115,6 +1196,8 @@ class DesktopAdapter:
             return self._inspect_timezone(dry_run=dry_run)
         if action == "inspect_theme":
             return self._inspect_theme(dry_run=dry_run)
+        if action == "inspect_volume":
+            return self._inspect_volume(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1878,3 +1961,37 @@ class DesktopAdapter:
             )
         snapshot = parse_theme_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_theme_report(snapshot))
+
+    def _inspect_volume(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the default playback volume and mute state "
+                    "(no SetMasterVolumeLevelScalar, no mute toggle)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_VOLUME_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Volume inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_volume_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_volume_report(snapshot))

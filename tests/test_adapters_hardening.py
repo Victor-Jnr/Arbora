@@ -21,6 +21,7 @@ from arbora.adapters.desktop import (
     format_startup_report,
     format_timezone_report,
     format_theme_report,
+    format_volume_report,
     format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
@@ -33,6 +34,7 @@ from arbora.adapters.desktop import (
     parse_startup_snapshot,
     parse_timezone_snapshot,
     parse_theme_snapshot,
+    parse_volume_snapshot,
     parse_windows_update_snapshot,
     browser_name_from_progid,
     resolve_launch_target,
@@ -1002,6 +1004,52 @@ def test_inspect_theme_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_theme", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_volume_dry_run():
+    result = DesktopAdapter().execute("inspect_volume", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "volume" in result.output.lower()
+    assert "setmastervolumelevelscalar" in result.output.lower()
+
+
+def test_format_volume_report_empty_and_muted():
+    empty = parse_volume_snapshot("")
+    report = format_volume_report(empty)
+    assert "no volume" in report.lower()
+    live = format_volume_report(parse_volume_snapshot("PERCENT=40\nMUTED=1\n"))
+    assert "Volume: 40%" in live
+    assert "Muted: yes" in live
+    unmuted = format_volume_report(parse_volume_snapshot("PERCENT=100\nMUTED=0\n"))
+    assert "Volume: 100%" in unmuted
+    assert "Muted: no" in unmuted
+
+
+def test_inspect_volume_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_volume", {}, dry_run=False)
+    assert result.ok
+    assert "no volume" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "getmastervolumelevelscalar" in command
+    assert "getmute" in command
+    assert "setmastervolume" not in command
+    assert "setmute" not in command
+    assert "sends keys" not in command
+    assert "sendkeys" not in command
+
+
+def test_inspect_volume_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_volume", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
