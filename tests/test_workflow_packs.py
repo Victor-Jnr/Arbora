@@ -353,6 +353,17 @@ def test_inspect_theme_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_volume_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect volume pack")
+    assert pack is not None
+    assert pack.id == "inspect-volume"
+    plan = pack.to_plan("run inspect volume pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_volume"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_git_status_workflow_pack_matches():
     pack = match_workflow_pack("run git status pack")
     assert pack is not None

@@ -79,6 +79,7 @@ Try goals like:
   windows update
   time zone
   dark mode
+  volume
   what's in temp
   empty temp
   open chrome

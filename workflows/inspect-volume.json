@@ -1,0 +1,20 @@
+{
+  "id": "inspect-volume",
+  "name": "Inspect volume and mute",
+  "description": "Read-only default playback volume percent and mute flag. Does not change volume.",
+  "goal_phrases": [
+    "inspect volume pack",
+    "run inspect volume pack"
+  ],
+  "rationale": "Workflow pack: read-only default playback volume and mute.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_volume",
+      "args": {},
+      "summary": "Read the current volume and mute state",
+      "sensitivity": "read",
+      "side_effects": ["Reads Core Audio default endpoint volume scalar and mute"]
+    }
+  ]
+}

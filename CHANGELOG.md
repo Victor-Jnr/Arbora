@@ -168,8 +168,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/068-open-workday-folder.md` | Change doc for open workday folder in Explorer |
 | `workflows/inspect-theme.json` | Bundled read-only dark/light theme inspect pack |
 | `documentation/069-inspect-theme.md` | Change doc for dark/light theme inspect |
+| `workflows/inspect-volume.json` | Bundled read-only volume / mute inspect pack |
+| `documentation/070-inspect-volume.md` | Change doc for volume / mute inspect |
 
 ---
+
+## 070 — Volume / mute inspect (2026-09-04)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_volume` (default endpoint percent + mute; no writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_volume` |
+| `src/arbora/core/planner.py` | Volume journey; set/mute and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-volume.json` | Bundled inspect-volume pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no SetMute; secrets withheld |
+| `tests/test_broker_and_planner.py` | Volume vs set vs mute vs diagnose vs theme |
+| `tests/test_workflow_packs.py` | Pack match for inspect-volume |
+| `docs/NEXT.md` | Marked P19 plate 58 done |
+| `documentation/070-inspect-volume.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 070 |
+| `README.md` | Linked document 070 |
+| `CHANGELOG.md` | Added file roles and 070 section |
 
 ## 069 — Dark / light theme inspect (2026-09-01)
 
