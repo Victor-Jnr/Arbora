@@ -1,0 +1,20 @@
+{
+  "id": "inspect-idle",
+  "name": "Inspect idle time",
+  "description": "Read-only last-input idle duration. Does not inject input.",
+  "goal_phrases": [
+    "inspect idle pack",
+    "run inspect idle pack"
+  ],
+  "rationale": "Workflow pack: read-only last-input idle time.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_idle",
+      "args": {},
+      "summary": "Read last-input idle time",
+      "sensitivity": "read",
+      "side_effects": ["Reads GetLastInputInfo idle milliseconds"]
+    }
+  ]
+}

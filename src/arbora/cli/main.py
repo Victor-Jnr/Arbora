@@ -81,6 +81,7 @@ Try goals like:
   dark mode
   volume
   wallpaper
+  idle time
   what's in temp
   empty temp
   open chrome

@@ -529,6 +529,28 @@ _WALLPAPER_PS = (
     "} catch { Write-Output 'TILE='; }"
 )
 
+_IDLE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Add-Type -TypeDefinition @'\n"
+    "using System;\n"
+    "using System.Runtime.InteropServices;\n"
+    "public class ArboraIdleProbe {\n"
+    "  [StructLayout(LayoutKind.Sequential)]\n"
+    "  public struct LASTINPUTINFO { public uint cbSize; public uint dwTime; }\n"
+    "  [DllImport(\"user32.dll\")] public static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);\n"
+    "  public static uint IdleMs() {\n"
+    "    LASTINPUTINFO info = new LASTINPUTINFO();\n"
+    "    info.cbSize = (uint)Marshal.SizeOf(info);\n"
+    "    GetLastInputInfo(ref info);\n"
+    "    return unchecked((uint)Environment.TickCount) - info.dwTime;\n"
+    "  }\n"
+    "}\n"
+    "'@ -ErrorAction SilentlyContinue; "
+    "try { "
+    "  Write-Output ('IDLE_MS=' + [ArboraIdleProbe]::IdleMs()); "
+    "} catch { Write-Output 'IDLE_MS='; }"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -1105,6 +1127,38 @@ def _wallpaper_style_label(style_raw: str, tile_raw: str) -> str | None:
     return labels.get(text)
 
 
+def parse_idle_snapshot(stdout: str) -> dict[str, str]:
+    """Parse last-input idle duration in milliseconds."""
+    snapshot = {"idle_ms": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("IDLE_MS="):
+            snapshot["idle_ms"] = line.split("=", 1)[1].strip()
+    return snapshot
+
+
+def format_idle_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("idle_ms") or "").strip()
+    if not raw:
+        return "No idle time reported."
+    try:
+        idle_ms = int(raw)
+    except ValueError:
+        return "No idle time reported."
+    if idle_ms < 0:
+        idle_ms = 0
+    seconds = idle_ms // 1000
+    hours, rem = divmod(seconds, 3600)
+    minutes, secs = divmod(rem, 60)
+    parts: list[str] = []
+    if hours:
+        parts.append(f"{hours} hour" + ("s" if hours != 1 else ""))
+    if minutes:
+        parts.append(f"{minutes} minute" + ("s" if minutes != 1 else ""))
+    if secs or not parts:
+        parts.append(f"{secs} second" + ("s" if secs != 1 else ""))
+    return "Idle for " + " ".join(parts) + "."
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1262,6 +1316,8 @@ class DesktopAdapter:
             return self._inspect_volume(dry_run=dry_run)
         if action == "inspect_wallpaper":
             return self._inspect_wallpaper(dry_run=dry_run)
+        if action == "inspect_idle":
+            return self._inspect_idle(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -2093,3 +2149,37 @@ class DesktopAdapter:
             )
         snapshot = parse_wallpaper_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_wallpaper_report(snapshot))
+
+    def _inspect_idle(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read last-input idle time "
+                    "(no BlockInput, no SendInput, no key or mouse injection)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_IDLE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Idle inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_idle_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_idle_report(snapshot))
