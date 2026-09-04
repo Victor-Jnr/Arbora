@@ -24,6 +24,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_timezone",
             "inspect_theme",
             "inspect_volume",
+            "inspect_wallpaper",
         }
     ),
     "files": frozenset(

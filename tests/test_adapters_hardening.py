@@ -22,6 +22,7 @@ from arbora.adapters.desktop import (
     format_timezone_report,
     format_theme_report,
     format_volume_report,
+    format_wallpaper_report,
     format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
@@ -35,6 +36,7 @@ from arbora.adapters.desktop import (
     parse_timezone_snapshot,
     parse_theme_snapshot,
     parse_volume_snapshot,
+    parse_wallpaper_snapshot,
     parse_windows_update_snapshot,
     browser_name_from_progid,
     resolve_launch_target,
@@ -1050,6 +1052,55 @@ def test_inspect_volume_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_volume", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_wallpaper_dry_run():
+    result = DesktopAdapter().execute("inspect_wallpaper", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "wallpaper" in result.output.lower()
+    assert "spi_setdeskwallpaper" in result.output.lower()
+
+
+def test_format_wallpaper_report_empty_and_path():
+    empty = parse_wallpaper_snapshot("")
+    report = format_wallpaper_report(empty)
+    assert "no wallpaper" in report.lower()
+    live = format_wallpaper_report(
+        parse_wallpaper_snapshot("WALLPAPER=C:\\Windows\\Web\\Wallpaper\\Windows\\img0.jpg\nSTYLE=10\nTILE=0\n")
+    )
+    assert "img0.jpg" in live
+    assert "Style: fill" in live
+    tiled = format_wallpaper_report(parse_wallpaper_snapshot("WALLPAPER=C:\\tile.bmp\nSTYLE=0\nTILE=1\n"))
+    assert "Style: tile" in tiled
+    none = format_wallpaper_report(parse_wallpaper_snapshot("WALLPAPER=\nSTYLE=0\nTILE=0\n"))
+    assert "solid color" in none.lower()
+
+
+def test_inspect_wallpaper_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_wallpaper", {}, dry_run=False)
+    assert result.ok
+    assert "no wallpaper" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "wallpaper" in command
+    assert "get-itemproperty" in command
+    assert "set-itemproperty" not in command
+    assert "spi_setdeskwallpaper" not in command
+    assert "systemparametersinfo" not in command
+    assert "ms-settings:personalization" not in command
+
+
+def test_inspect_wallpaper_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_wallpaper", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

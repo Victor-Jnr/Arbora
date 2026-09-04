@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 071 | [Wallpaper path inspect](documentation/071-inspect-wallpaper.md) |
 | 070 | [Volume / mute inspect](documentation/070-inspect-volume.md) |
 | 069 | [Dark / light theme inspect](documentation/069-inspect-theme.md) |
 | 068 | [Open workday folder in Explorer](documentation/068-open-workday-folder.md) |
