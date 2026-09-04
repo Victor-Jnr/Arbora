@@ -172,8 +172,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/070-inspect-volume.md` | Change doc for volume / mute inspect |
 | `workflows/inspect-wallpaper.json` | Bundled read-only wallpaper path inspect pack |
 | `documentation/071-inspect-wallpaper.md` | Change doc for wallpaper path inspect |
+| `workflows/inspect-idle.json` | Bundled read-only idle time inspect pack |
+| `documentation/072-inspect-idle.md` | Change doc for idle time inspect |
 
 ---
+
+## 072 — Idle time inspect (2026-09-04)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_idle` (GetLastInputInfo; no input injection) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_idle` |
+| `src/arbora/core/planner.py` | Idle journey; diagnose, wallpaper, and volume unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-idle.json` | Bundled inspect-idle pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no BlockInput; secrets withheld |
+| `tests/test_broker_and_planner.py` | Idle vs diagnose vs wallpaper vs volume |
+| `tests/test_workflow_packs.py` | Pack match for inspect-idle |
+| `docs/NEXT.md` | Marked P19 plate 60 done |
+| `documentation/072-inspect-idle.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 072 |
+| `README.md` | Linked document 072 |
+| `CHANGELOG.md` | Added file roles and 072 section |
 
 ## 071 — Wallpaper path inspect (2026-09-04)
 

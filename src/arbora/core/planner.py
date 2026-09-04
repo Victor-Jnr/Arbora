@@ -139,6 +139,8 @@ class GoalPlanner:
             return self._volume_plan(text)
         if self._looks_like_wallpaper(lower):
             return self._wallpaper_plan(text)
+        if self._looks_like_idle(lower):
+            return self._idle_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -752,6 +754,27 @@ class GoalPlanner:
                     summary="Read-only: desktop wallpaper path",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads HKCU Control Panel\\Desktop Wallpaper path and style",),
+                )
+            ],
+        )
+
+    def _idle_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Idle inspect journey — read-only last-input idle duration. "
+                "Does not inject input or change power settings."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_idle",
+                    args={},
+                    summary="Read-only: last-input idle time",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads GetLastInputInfo idle milliseconds",),
                 )
             ],
         )
@@ -2321,6 +2344,40 @@ class GoalPlanner:
                 "whats my wallpaper",
                 "what is my wallpaper",
                 "what wallpaper",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_idle(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "block input",
+                "sendinput",
+                "send input",
+                "move the mouse",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "idle time",
+                "idle for",
+                "been idle",
+                "am i idle",
+                "is the pc idle",
+                "is the computer idle",
+                "system idle",
+                "pc idle",
+                "computer idle",
+                "last input",
+                "inspect idle",
+                "how long idle",
+                "how long have i been idle",
+                "how long has the pc been idle",
             )
         )
 

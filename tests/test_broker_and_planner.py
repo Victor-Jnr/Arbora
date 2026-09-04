@@ -305,6 +305,25 @@ def test_wallpaper_is_read_only_inspect():
     assert [step.action for step in volume.steps] == ["inspect_volume"]
 
 
+def test_idle_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("idle time")
+    assert [step.action for step in plan.steps] == ["inspect_idle"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("how long have i been idle")
+    assert named.steps[0].action == "inspect_idle"
+    last = runtime.planner.plan("last input")
+    assert last.steps[0].action == "inspect_idle"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_idle" for step in diagnose.steps)
+    wallpaper = runtime.planner.plan("wallpaper")
+    assert [step.action for step in wallpaper.steps] == ["inspect_wallpaper"]
+    volume = runtime.planner.plan("volume")
+    assert [step.action for step in volume.steps] == ["inspect_volume"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

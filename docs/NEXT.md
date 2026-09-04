@@ -69,6 +69,7 @@ Already in place:
 - read-only dark/light theme (AppsUseLightTheme; no theme writes).
 - read-only default playback volume and mute (no volume or mute changes).
 - read-only desktop wallpaper path and style (no wallpaper writes).
+- read-only last-input idle duration (no input injection).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -203,7 +204,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 58 | **Mute/volume inspect** | ✅ Read-only default playback percent and mute; does not set volume |
 | 59 | **Wallpaper path inspect** | ✅ Read-only desktop wallpaper path; no wallpaper writes |
-| 60 | **Idle time inspect** | Read-only last-input idle duration; no input injection |
+| 60 | **Idle time inspect** | ✅ Read-only last-input idle duration; no input injection |
 
 ## Non-negotiables (do not drift)
 
@@ -298,4 +299,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P19 plates 58–59 are done. Next: plate 60 (idle time inspect).
+P19 plates 58–60 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

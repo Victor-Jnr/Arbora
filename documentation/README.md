@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 072 | [Idle time inspect](072-inspect-idle.md) | 2026-09-04 | Read-only last-input idle duration; no input injection |
 | 071 | [Wallpaper path inspect](071-inspect-wallpaper.md) | 2026-09-04 | Read-only desktop wallpaper path and style; no wallpaper writes |
 | 070 | [Volume / mute inspect](070-inspect-volume.md) | 2026-09-04 | Read-only default playback volume and mute; no volume writes |
 | 069 | [Dark / light theme inspect](069-inspect-theme.md) | 2026-09-01 | Read-only AppsUseLightTheme / SystemUsesLightTheme; no theme writes |
