@@ -170,8 +170,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/069-inspect-theme.md` | Change doc for dark/light theme inspect |
 | `workflows/inspect-volume.json` | Bundled read-only volume / mute inspect pack |
 | `documentation/070-inspect-volume.md` | Change doc for volume / mute inspect |
+| `workflows/inspect-wallpaper.json` | Bundled read-only wallpaper path inspect pack |
+| `documentation/071-inspect-wallpaper.md` | Change doc for wallpaper path inspect |
 
 ---
+
+## 071 — Wallpaper path inspect (2026-09-04)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_wallpaper` (Desktop Wallpaper path + style; no writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_wallpaper` |
+| `src/arbora/core/planner.py` | Wallpaper journey; set/change, display, theme, screenshot unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-wallpaper.json` | Bundled inspect-wallpaper pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no SPI_SET; secrets withheld |
+| `tests/test_broker_and_planner.py` | Wallpaper vs set vs display vs theme vs screenshot vs volume |
+| `tests/test_workflow_packs.py` | Pack match for inspect-wallpaper |
+| `docs/NEXT.md` | Marked P19 plate 59 done |
+| `documentation/071-inspect-wallpaper.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 071 |
+| `README.md` | Linked document 071 |
+| `CHANGELOG.md` | Added file roles and 071 section |
 
 ## 070 — Volume / mute inspect (2026-09-04)
 

@@ -279,6 +279,32 @@ def test_volume_is_read_only_inspect():
     assert [step.action for step in theme.steps] == ["inspect_theme"]
 
 
+def test_wallpaper_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("wallpaper")
+    assert [step.action for step in plan.steps] == ["inspect_wallpaper"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what's my wallpaper")
+    assert named.steps[0].action == "inspect_wallpaper"
+    background = runtime.planner.plan("desktop background")
+    assert background.steps[0].action == "inspect_wallpaper"
+    change = runtime.planner.plan("set wallpaper")
+    assert not any(step.action == "inspect_wallpaper" for step in change.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_wallpaper" for step in diagnose.steps)
+    display = runtime.planner.plan("screen resolution")
+    assert [step.action for step in display.steps] == ["inspect_display"]
+    theme = runtime.planner.plan("dark mode")
+    assert [step.action for step in theme.steps] == ["inspect_theme"]
+    shot = runtime.planner.plan("take a screenshot")
+    assert shot.steps[-1].action == "capture_screenshot"
+    assert not any(step.action == "inspect_wallpaper" for step in shot.steps)
+    volume = runtime.planner.plan("volume")
+    assert [step.action for step in volume.steps] == ["inspect_volume"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

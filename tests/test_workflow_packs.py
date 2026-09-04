@@ -364,6 +364,17 @@ def test_inspect_volume_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_wallpaper_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect wallpaper pack")
+    assert pack is not None
+    assert pack.id == "inspect-wallpaper"
+    plan = pack.to_plan("run inspect wallpaper pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_wallpaper"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_git_status_workflow_pack_matches():
     pack = match_workflow_pack("run git status pack")
     assert pack is not None

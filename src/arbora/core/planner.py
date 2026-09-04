@@ -137,6 +137,8 @@ class GoalPlanner:
             return self._theme_plan(text)
         if self._looks_like_volume(lower):
             return self._volume_plan(text)
+        if self._looks_like_wallpaper(lower):
+            return self._wallpaper_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -729,6 +731,27 @@ class GoalPlanner:
                     summary="Read-only: default playback volume and mute",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Core Audio default endpoint volume scalar and mute",),
+                )
+            ],
+        )
+
+    def _wallpaper_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Wallpaper inspect journey — read-only desktop wallpaper path and style. "
+                "Does not change the wallpaper or personalization settings."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_wallpaper",
+                    args={},
+                    summary="Read-only: desktop wallpaper path",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads HKCU Control Panel\\Desktop Wallpaper path and style",),
                 )
             ],
         )
@@ -2262,6 +2285,42 @@ class GoalPlanner:
                 "what's my volume",
                 "whats my volume",
                 "what is my volume",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_wallpaper(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            word in lower
+            for word in ("screenshot", "screen shot", "screen-shot", "capture", "snapshot")
+        ):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "set wallpaper",
+                "change wallpaper",
+                "set desktop background",
+                "change desktop background",
+                "set background",
+                "change background",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "wallpaper",
+                "desktop background",
+                "desktop wallpaper",
+                "background image",
+                "inspect wallpaper",
+                "what's my wallpaper",
+                "whats my wallpaper",
+                "what is my wallpaper",
+                "what wallpaper",
             )
         )
 

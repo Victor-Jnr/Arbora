@@ -80,6 +80,7 @@ Try goals like:
   time zone
   dark mode
   volume
+  wallpaper
   what's in temp
   empty temp
   open chrome

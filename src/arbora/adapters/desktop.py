@@ -512,6 +512,23 @@ _VOLUME_PS = (
     "} catch { Write-Output 'PERCENT='; Write-Output 'MUTED='; }"
 )
 
+_WALLPAPER_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "$path = 'HKCU:\\Control Panel\\Desktop'; "
+    "try { "
+    "  $wp = (Get-ItemProperty -Path $path -Name Wallpaper).Wallpaper; "
+    "  Write-Output ('WALLPAPER=' + $wp); "
+    "} catch { Write-Output 'WALLPAPER='; }; "
+    "try { "
+    "  $style = (Get-ItemProperty -Path $path -Name WallpaperStyle).WallpaperStyle; "
+    "  Write-Output ('STYLE=' + $style); "
+    "} catch { Write-Output 'STYLE='; }; "
+    "try { "
+    "  $tile = (Get-ItemProperty -Path $path -Name TileWallpaper).TileWallpaper; "
+    "  Write-Output ('TILE=' + $tile); "
+    "} catch { Write-Output 'TILE='; }"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -1043,6 +1060,51 @@ def format_volume_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_wallpaper_snapshot(stdout: str) -> dict[str, str]:
+    """Parse desktop wallpaper path and style keys."""
+    snapshot = {"wallpaper": "", "style": "", "tile": ""}
+    mapping = (("WALLPAPER=", "wallpaper"), ("STYLE=", "style"), ("TILE=", "tile"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()
+                break
+    return snapshot
+
+
+def format_wallpaper_report(snapshot: dict[str, str]) -> str:
+    path = str(snapshot.get("wallpaper") or "").strip()
+    style_raw = str(snapshot.get("style") or "").strip()
+    tile_raw = str(snapshot.get("tile") or "").strip().lower()
+    style = _wallpaper_style_label(style_raw, tile_raw)
+    if not path and style is None:
+        return "No wallpaper path reported."
+    lines: list[str] = []
+    if path:
+        lines.append(f"Wallpaper: {path}")
+    else:
+        lines.append("Wallpaper: none (solid color or unset)")
+    if style:
+        lines.append(f"Style: {style}")
+    return "\n".join(lines)
+
+
+def _wallpaper_style_label(style_raw: str, tile_raw: str) -> str | None:
+    if tile_raw in {"1", "true"}:
+        return "tile"
+    text = str(style_raw or "").strip()
+    if not text:
+        return None
+    labels = {
+        "0": "center",
+        "2": "stretch",
+        "6": "fit",
+        "10": "fill",
+        "22": "span",
+    }
+    return labels.get(text)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1198,6 +1260,8 @@ class DesktopAdapter:
             return self._inspect_theme(dry_run=dry_run)
         if action == "inspect_volume":
             return self._inspect_volume(dry_run=dry_run)
+        if action == "inspect_wallpaper":
+            return self._inspect_wallpaper(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -1995,3 +2059,37 @@ class DesktopAdapter:
             )
         snapshot = parse_volume_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_volume_report(snapshot))
+
+    def _inspect_wallpaper(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the desktop wallpaper path "
+                    "(no SystemParametersInfo SPI_SETDESKWALLPAPER, no personalization writes)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_WALLPAPER_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Wallpaper inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_wallpaper_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_wallpaper_report(snapshot))

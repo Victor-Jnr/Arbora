@@ -1,0 +1,20 @@
+{
+  "id": "inspect-wallpaper",
+  "name": "Inspect wallpaper path",
+  "description": "Read-only desktop wallpaper path and style. Does not change the wallpaper.",
+  "goal_phrases": [
+    "inspect wallpaper pack",
+    "run inspect wallpaper pack"
+  ],
+  "rationale": "Workflow pack: read-only desktop wallpaper path.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_wallpaper",
+      "args": {},
+      "summary": "Read the current wallpaper path",
+      "sensitivity": "read",
+      "side_effects": ["Reads HKCU Control Panel\\Desktop Wallpaper path and style"]
+    }
+  ]
+}
