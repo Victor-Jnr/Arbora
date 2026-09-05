@@ -364,6 +364,25 @@ def test_installed_apps_is_read_only_inspect():
     assert launch.steps[0].action == "launch_app"
 
 
+def test_hosts_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("hosts file")
+    assert [step.action for step in plan.steps] == ["inspect_hosts"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what's in hosts")
+    assert named.steps[0].action == "inspect_hosts"
+    change = runtime.planner.plan("edit hosts file")
+    assert not any(step.action == "inspect_hosts" for step in change.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_hosts" for step in diagnose.steps)
+    idle = runtime.planner.plan("idle time")
+    assert [step.action for step in idle.steps] == ["inspect_idle"]
+    apps = runtime.planner.plan("installed apps")
+    assert [step.action for step in apps.steps] == ["inspect_installed_apps"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

@@ -82,6 +82,7 @@ Try goals like:
   volume
   audio device
   installed apps
+  hosts file
   wallpaper
   idle time
   what's in temp

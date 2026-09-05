@@ -26,6 +26,7 @@ from arbora.adapters.desktop import (
     format_idle_report,
     format_audio_device_report,
     format_installed_apps_report,
+    format_hosts_report,
     format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
@@ -43,7 +44,9 @@ from arbora.adapters.desktop import (
     parse_idle_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
+    parse_hosts_snapshot,
     parse_windows_update_snapshot,
+    windows_hosts_path,
     browser_name_from_progid,
     resolve_launch_target,
 )
@@ -1254,6 +1257,63 @@ def test_inspect_installed_apps_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_installed_apps", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_hosts_dry_run():
+    result = DesktopAdapter().execute("inspect_hosts", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "hosts" in result.output.lower()
+    assert "set-content" in result.output.lower()
+    with patch("arbora.adapters.desktop.windows_hosts_path") as mocked:
+        DesktopAdapter().execute("inspect_hosts", {}, dry_run=True)
+    mocked.assert_not_called()
+
+
+def test_format_hosts_report_empty_and_mappings():
+    empty = parse_hosts_snapshot("")
+    report = format_hosts_report(empty)
+    assert "no hosts" in report.lower()
+    live = format_hosts_report(
+        parse_hosts_snapshot(
+            "# comment\n"
+            "127.0.0.1 localhost # loopback\n"
+            "::1 localhost\n"
+            "\n"
+        )
+    )
+    assert "127.0.0.1" in live
+    assert "localhost" in live
+    assert "::1" in live
+    assert "loopback" not in live
+    assert "Comment lines skipped: 1" in live
+    assert windows_hosts_path().name == "hosts"
+
+
+def test_inspect_hosts_reads_fixed_path_only(tmp_path: Path):
+    decoy = tmp_path / "decoy"
+    decoy.write_text("10.0.0.1 should-not-appear\n", encoding="utf-8")
+    real = tmp_path / "hosts"
+    real.write_text("192.0.2.1 arbora.example\n# secret comment\n", encoding="utf-8")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.windows_hosts_path", return_value=real
+    ), patch("arbora.adapters.desktop.run_powershell") as mocked:
+        result = DesktopAdapter().execute("inspect_hosts", {"path": str(decoy)}, dry_run=False)
+    mocked.assert_not_called()
+    assert result.ok
+    assert "arbora.example" in result.output
+    assert "should-not-appear" not in result.output
+    assert "secret comment" not in result.output
+
+
+def test_inspect_hosts_withholds_secret_like_output(tmp_path: Path):
+    real = tmp_path / "hosts"
+    real.write_text("127.0.0.1 localhost password=hunter2\n", encoding="utf-8")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.windows_hosts_path", return_value=real
+    ):
+        result = DesktopAdapter().execute("inspect_hosts", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

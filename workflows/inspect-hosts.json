@@ -1,0 +1,20 @@
+{
+  "id": "inspect-hosts",
+  "name": "Inspect hosts file",
+  "description": "Read-only Windows hosts file mappings. Does not edit the file.",
+  "goal_phrases": [
+    "inspect hosts pack",
+    "run inspect hosts pack"
+  ],
+  "rationale": "Workflow pack: read-only hosts file mappings.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_hosts",
+      "args": {},
+      "summary": "Read Windows hosts file mappings",
+      "sensitivity": "read",
+      "side_effects": ["Reads System32\\drivers\\etc\\hosts (no writes)"]
+    }
+  ]
+}

@@ -178,8 +178,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/073-inspect-audio-device.md` | Change doc for default audio device inspect |
 | `workflows/inspect-installed-apps.json` | Bundled capped read-only installed apps inspect pack |
 | `documentation/074-inspect-installed-apps.md` | Change doc for installed apps inspect |
+| `workflows/inspect-hosts.json` | Bundled read-only hosts file inspect pack |
+| `documentation/075-inspect-hosts.md` | Change doc for hosts file inspect |
 
 ---
+
+## 075 — Hosts file inspect (2026-09-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_hosts` (fixed hosts path; comments skipped; no writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_hosts` |
+| `src/arbora/core/planner.py` | Hosts journey; edit/add/remove and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-hosts.json` | Bundled inspect-hosts pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; ignores caller path; secrets withheld |
+| `tests/test_broker_and_planner.py` | Hosts vs edit vs idle vs installed apps vs diagnose |
+| `tests/test_workflow_packs.py` | Pack match for inspect-hosts |
+| `docs/NEXT.md` | Marked P20 plate 63 done |
+| `documentation/075-inspect-hosts.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 075 |
+| `README.md` | Linked document 075 |
+| `CHANGELOG.md` | Added file roles and 075 section |
 
 ## 074 — Installed apps inspect (2026-09-05)
 
