@@ -551,6 +551,65 @@ _IDLE_PS = (
     "} catch { Write-Output 'IDLE_MS='; }"
 )
 
+_AUDIO_DEVICE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Add-Type -TypeDefinition @'\n"
+    "using System;\n"
+    "using System.Runtime.InteropServices;\n"
+    "[StructLayout(LayoutKind.Sequential)]\n"
+    "struct ArboraPropertyKey {\n"
+    "  public Guid fmtid;\n"
+    "  public uint pid;\n"
+    "}\n"
+    "[StructLayout(LayoutKind.Explicit)]\n"
+    "struct ArboraPropVariant {\n"
+    "  [FieldOffset(0)] public ushort vt;\n"
+    "  [FieldOffset(8)] public IntPtr p;\n"
+    "}\n"
+    "[Guid(\"886d8eeb-8cf2-4446-8d02-cdba1dbdcf99\"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]\n"
+    "interface IArboraPropertyStore {\n"
+    "  int GetCount(out uint cProps);\n"
+    "  int GetAt(uint iProp, out ArboraPropertyKey pkey);\n"
+    "  int GetValue(ref ArboraPropertyKey key, out ArboraPropVariant pv);\n"
+    "}\n"
+    "[Guid(\"D666063F-1587-4E43-81F1-B948E807363F\"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]\n"
+    "interface IArboraNamedMmDevice {\n"
+    "  int Activate(ref Guid id, int clsCtx, int activationParams, "
+    "[MarshalAs(UnmanagedType.IUnknown)] out object iface);\n"
+    "  int OpenPropertyStore(int stgmAccess, out IArboraPropertyStore store);\n"
+    "}\n"
+    "[Guid(\"A95664D2-9614-4F35-A746-DE8DB63617E6\"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]\n"
+    "interface IArboraNamedMmDeviceEnumerator {\n"
+    "  int _a();\n"
+    "  int GetDefaultAudioEndpoint(int dataFlow, int role, out IArboraNamedMmDevice ppDevice);\n"
+    "}\n"
+    "[ComImport, Guid(\"BCDE0395-E52F-467C-8E3D-C4579291692E\")] class ArboraNamedMmDeviceEnumeratorComObject { }\n"
+    "public class ArboraAudioDeviceProbe {\n"
+    "  public static string Snapshot() {\n"
+    "    var enumerator = new ArboraNamedMmDeviceEnumeratorComObject() as IArboraNamedMmDeviceEnumerator;\n"
+    "    IArboraNamedMmDevice dev;\n"
+    "    Marshal.ThrowExceptionForHR(enumerator.GetDefaultAudioEndpoint(0, 1, out dev));\n"
+    "    IArboraPropertyStore store;\n"
+    "    Marshal.ThrowExceptionForHR(dev.OpenPropertyStore(0, out store));\n"
+    "    ArboraPropertyKey key = new ArboraPropertyKey();\n"
+    "    key.fmtid = new Guid(\"a45c254e-df1c-4efd-8020-67d146a850e0\");\n"
+    "    key.pid = 14;\n"
+    "    ArboraPropVariant pv;\n"
+    "    Marshal.ThrowExceptionForHR(store.GetValue(ref key, out pv));\n"
+    "    string name = \"\";\n"
+    "    if (pv.vt == 31 && pv.p != IntPtr.Zero) {\n"
+    "      name = Marshal.PtrToStringUni(pv.p) ?? \"\";\n"
+    "    }\n"
+    "    if (name.Length > 180) { name = name.Substring(0, 180); }\n"
+    "    return \"NAME=\" + name + \"\\nFLOW=playback\";\n"
+    "  }\n"
+    "}\n"
+    "'@ -ErrorAction SilentlyContinue; "
+    "try { "
+    "  Write-Output ([ArboraAudioDeviceProbe]::Snapshot()); "
+    "} catch { Write-Output 'NAME='; Write-Output 'FLOW='; }"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -1159,6 +1218,26 @@ def format_idle_report(snapshot: dict[str, str]) -> str:
     return "Idle for " + " ".join(parts) + "."
 
 
+def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
+    """Parse the default playback endpoint friendly name."""
+    snapshot = {"name": "", "flow": ""}
+    mapping = (("NAME=", "name"), ("FLOW=", "flow"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()
+                break
+    return snapshot
+
+
+def format_audio_device_report(snapshot: dict[str, str]) -> str:
+    name = str(snapshot.get("name") or "").strip()
+    flow = str(snapshot.get("flow") or "").strip().lower() or "playback"
+    if not name:
+        return "No default playback device reported."
+    return f"Default {flow} device: {name}"
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1318,6 +1397,8 @@ class DesktopAdapter:
             return self._inspect_wallpaper(dry_run=dry_run)
         if action == "inspect_idle":
             return self._inspect_idle(dry_run=dry_run)
+        if action == "inspect_audio_device":
+            return self._inspect_audio_device(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -2183,3 +2264,37 @@ class DesktopAdapter:
             )
         snapshot = parse_idle_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_idle_report(snapshot))
+
+    def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the default playback device friendly name "
+                    "(no SetDefaultEndpoint, no PolicyConfig, no device switches)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_AUDIO_DEVICE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Audio device inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_audio_device_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_audio_device_report(snapshot))

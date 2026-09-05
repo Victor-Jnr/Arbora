@@ -24,6 +24,7 @@ from arbora.adapters.desktop import (
     format_volume_report,
     format_wallpaper_report,
     format_idle_report,
+    format_audio_device_report,
     format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
@@ -39,6 +40,7 @@ from arbora.adapters.desktop import (
     parse_volume_snapshot,
     parse_wallpaper_snapshot,
     parse_idle_snapshot,
+    parse_audio_device_snapshot,
     parse_windows_update_snapshot,
     browser_name_from_progid,
     resolve_launch_target,
@@ -1150,6 +1152,50 @@ def test_inspect_idle_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_idle", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_audio_device_dry_run():
+    result = DesktopAdapter().execute("inspect_audio_device", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "playback" in result.output.lower()
+    assert "setdefaultendpoint" in result.output.lower()
+
+
+def test_format_audio_device_report_empty_and_name():
+    empty = parse_audio_device_snapshot("")
+    report = format_audio_device_report(empty)
+    assert "no default playback" in report.lower()
+    named = format_audio_device_report(
+        parse_audio_device_snapshot("NAME=Speakers (Realtek(R) Audio)\nFLOW=playback\n")
+    )
+    assert named == "Default playback device: Speakers (Realtek(R) Audio)"
+
+
+def test_inspect_audio_device_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_audio_device", {}, dry_run=False)
+    assert result.ok
+    assert "no default playback" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "getdefaultaudioendpoint" in command
+    assert "openpropertystore" in command
+    assert "a45c254e" in command
+    assert "setdefaultendpoint" not in command
+    assert "policyconfig" not in command
+    assert "setvalue" not in command
+
+
+def test_inspect_audio_device_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_audio_device", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

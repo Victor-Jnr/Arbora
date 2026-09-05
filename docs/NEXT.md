@@ -70,11 +70,12 @@ Already in place:
 - read-only default playback volume and mute (no volume or mute changes).
 - read-only desktop wallpaper path and style (no wallpaper writes).
 - read-only last-input idle duration (no input injection).
+- read-only default playback audio device name (no device switches).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P19).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P20).
 
 ---
 
@@ -206,6 +207,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 59 | **Wallpaper path inspect** | ✅ Read-only desktop wallpaper path; no wallpaper writes |
 | 60 | **Idle time inspect** | ✅ Read-only last-input idle duration; no input injection |
 
+### P20 — Stage 3 audio device, installed apps, and hosts
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 61 | **Default audio device inspect** | ✅ Read-only default playback device name; does not change the default |
+| 62 | **Installed apps inspect** | Capped read-only DisplayName list from uninstall keys; no Add/Remove dump or Win32_Product |
+| 63 | **Hosts file inspect** | Read-only hosts mappings; does not edit the file |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -299,4 +308,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P19 plates 58–60 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P20 plate 61 is done. Next: installed apps inspect (62), then hosts file inspect (63).

@@ -1,0 +1,20 @@
+{
+  "id": "inspect-audio-device",
+  "name": "Inspect default audio device",
+  "description": "Read-only default playback device friendly name. Does not change the default device.",
+  "goal_phrases": [
+    "inspect audio device pack",
+    "run inspect audio device pack"
+  ],
+  "rationale": "Workflow pack: read-only default playback audio device name.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_audio_device",
+      "args": {},
+      "summary": "Read the default playback device name",
+      "sensitivity": "read",
+      "side_effects": ["Reads Core Audio default endpoint friendly name"]
+    }
+  ]
+}
