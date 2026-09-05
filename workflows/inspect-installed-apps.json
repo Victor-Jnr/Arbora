@@ -1,0 +1,20 @@
+{
+  "id": "inspect-installed-apps",
+  "name": "Inspect installed apps",
+  "description": "Capped read-only DisplayName list from uninstall registry keys. Does not uninstall or open Add/Remove.",
+  "goal_phrases": [
+    "inspect installed apps pack",
+    "run inspect installed apps pack"
+  ],
+  "rationale": "Workflow pack: capped read-only installed app names.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_installed_apps",
+      "args": {},
+      "summary": "List installed app names (capped)",
+      "sensitivity": "read",
+      "side_effects": ["Reads DisplayName/Publisher from uninstall registry keys"]
+    }
+  ]
+}

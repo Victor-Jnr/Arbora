@@ -345,6 +345,25 @@ def test_audio_device_is_read_only_inspect():
     assert muted.steps[0].action == "inspect_volume"
 
 
+def test_installed_apps_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("installed apps")
+    assert [step.action for step in plan.steps] == ["inspect_installed_apps"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what programs are installed")
+    assert named.steps[0].action == "inspect_installed_apps"
+    uninstall = runtime.planner.plan("uninstall chrome")
+    assert not any(step.action == "inspect_installed_apps" for step in uninstall.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_installed_apps" for step in diagnose.steps)
+    startup = runtime.planner.plan("startup apps")
+    assert [step.action for step in startup.steps] == ["inspect_startup"]
+    launch = runtime.planner.plan("open chrome")
+    assert launch.steps[0].action == "launch_app"
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

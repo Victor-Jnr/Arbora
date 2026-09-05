@@ -397,6 +397,17 @@ def test_inspect_audio_device_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_installed_apps_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect installed apps pack")
+    assert pack is not None
+    assert pack.id == "inspect-installed-apps"
+    plan = pack.to_plan("run inspect installed apps pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_installed_apps"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_git_status_workflow_pack_matches():
     pack = match_workflow_pack("run git status pack")
     assert pack is not None
