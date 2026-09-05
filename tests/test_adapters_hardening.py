@@ -25,6 +25,7 @@ from arbora.adapters.desktop import (
     format_wallpaper_report,
     format_idle_report,
     format_audio_device_report,
+    format_installed_apps_report,
     format_windows_update_report,
     installed_browser_alias,
     is_safe_http_url,
@@ -41,6 +42,7 @@ from arbora.adapters.desktop import (
     parse_wallpaper_snapshot,
     parse_idle_snapshot,
     parse_audio_device_snapshot,
+    parse_installed_apps_snapshot,
     parse_windows_update_snapshot,
     browser_name_from_progid,
     resolve_launch_target,
@@ -1196,6 +1198,62 @@ def test_inspect_audio_device_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_audio_device", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_installed_apps_dry_run():
+    result = DesktopAdapter().execute("inspect_installed_apps", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "installed" in result.output.lower()
+    assert "win32_product" in result.output.lower()
+    assert "appwiz" in result.output.lower()
+
+
+def test_format_installed_apps_report_empty_and_items():
+    empty = parse_installed_apps_snapshot("")
+    report = format_installed_apps_report(empty)
+    assert "no installed" in report.lower()
+    listed = parse_installed_apps_snapshot(
+        "COUNT=2\nAPP_BEGIN\nNAME=ArbEditor\nPUBLISHER=Arbora\n"
+        "APP_BEGIN\nNAME=Notes\nPUBLISHER=\n"
+    )
+    live = format_installed_apps_report(listed)
+    assert "ArbEditor" in live
+    assert "Arbora" in live
+    assert "Notes" in live
+    capped = format_installed_apps_report(
+        parse_installed_apps_snapshot(
+            "COUNT=90\nAPP_BEGIN\nNAME=OnlyOne\nPUBLISHER=Co\n"
+        )
+    )
+    assert "showing 1 of 90" in capped
+
+
+def test_inspect_installed_apps_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_installed_apps", {}, dry_run=False)
+    assert result.ok
+    assert "no installed" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "currentversion\\uninstall" in command or "currentversion\\\\uninstall" in command
+    assert "displayname" in command
+    assert "win32_product" not in command
+    assert "appwiz" not in command
+    assert "uninstallstring" not in command
+    assert "msiexec" not in command
+    assert "remove-itemproperty" not in command
+
+
+def test_inspect_installed_apps_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_installed_apps", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

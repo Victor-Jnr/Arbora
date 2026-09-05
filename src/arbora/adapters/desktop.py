@@ -610,6 +610,45 @@ _AUDIO_DEVICE_PS = (
     "} catch { Write-Output 'NAME='; Write-Output 'FLOW='; }"
 )
 
+INSTALLED_APPS_MAX_ITEMS = 40
+INSTALLED_APP_NAME_MAX_CHARS = 120
+INSTALLED_APP_PUBLISHER_MAX_CHARS = 80
+
+_INSTALLED_APPS_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "$paths = @("
+    "'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall', "
+    "'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall', "
+    "'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'"
+    "); "
+    "$seen = @{}; "
+    "$items = New-Object System.Collections.Generic.List[object]; "
+    "foreach ($path in $paths) { "
+    "  Get-ChildItem -LiteralPath $path | ForEach-Object { "
+    "    $p = Get-ItemProperty -LiteralPath $_.PSPath; "
+    "    $name = [string]$p.DisplayName; "
+    "    if (-not $name) { return }; "
+    "    $name = $name.Trim(); "
+    "    if (-not $name) { return }; "
+    "    if ($seen.ContainsKey($name)) { return }; "
+    "    $seen[$name] = $true; "
+    "    if ($name.Length -gt 120) { $name = $name.Substring(0, 120) }; "
+    "    $pub = [string]$p.Publisher; "
+    "    if ($null -eq $pub) { $pub = '' }; "
+    "    $pub = $pub.Trim(); "
+    "    if ($pub.Length -gt 80) { $pub = $pub.Substring(0, 80) }; "
+    "    $items.Add([pscustomobject]@{ Name = $name; Publisher = $pub }) "
+    "  } "
+    "}; "
+    "Write-Output '=== InstalledApps ==='; "
+    "Write-Output ('COUNT=' + $items.Count); "
+    "$items | Sort-Object Name | Select-Object -First 40 | ForEach-Object { "
+    "  Write-Output 'APP_BEGIN'; "
+    "  Write-Output ('NAME=' + $_.Name); "
+    "  Write-Output ('PUBLISHER=' + $_.Publisher) "
+    "}"
+)
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -1238,6 +1277,53 @@ def format_audio_device_report(snapshot: dict[str, str]) -> str:
     return f"Default {flow} device: {name}"
 
 
+def parse_installed_apps_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse a capped DisplayName listing from uninstall registry keys."""
+    count = 0
+    apps: list[dict[str, str]] = []
+    current: dict[str, str] | None = None
+    for line in (stdout or "").splitlines():
+        if line == "APP_BEGIN":
+            current = {"name": "", "publisher": ""}
+            apps.append(current)
+            continue
+        if line.startswith("COUNT="):
+            try:
+                count = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                count = 0
+            continue
+        if current is None:
+            continue
+        if line.startswith("NAME="):
+            current["name"] = line.split("=", 1)[1].strip()[:INSTALLED_APP_NAME_MAX_CHARS]
+        elif line.startswith("PUBLISHER="):
+            current["publisher"] = line.split("=", 1)[1].strip()[:INSTALLED_APP_PUBLISHER_MAX_CHARS]
+    shown = apps[:INSTALLED_APPS_MAX_ITEMS]
+    if not count:
+        count = len(shown)
+    return {"count": count, "apps": shown}
+
+
+def format_installed_apps_report(snapshot: dict[str, Any]) -> str:
+    apps = list(snapshot.get("apps") or [])
+    count = int(snapshot.get("count") or len(apps))
+    if not apps:
+        return "No installed apps reported."
+    cap_note = ""
+    if count > len(apps):
+        cap_note = f" (showing {len(apps)} of {count})"
+    lines = [f"Installed apps: {len(apps)}{cap_note}"]
+    for item in apps:
+        name = str(item.get("name") or "unnamed")
+        publisher = str(item.get("publisher") or "").strip()
+        if publisher:
+            lines.append(f"  {name} — {publisher}")
+        else:
+            lines.append(f"  {name}")
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1399,6 +1485,8 @@ class DesktopAdapter:
             return self._inspect_idle(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
+        if action == "inspect_installed_apps":
+            return self._inspect_installed_apps(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -2298,3 +2386,37 @@ class DesktopAdapter:
             )
         snapshot = parse_audio_device_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_audio_device_report(snapshot))
+
+    def _inspect_installed_apps(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would list up to {INSTALLED_APPS_MAX_ITEMS} installed app names "
+                    "from uninstall registry keys (no appwiz.cpl, no Win32_Product, no uninstall)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_INSTALLED_APPS_PS, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Installed apps inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_installed_apps_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_installed_apps_report(snapshot))

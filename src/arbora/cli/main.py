@@ -81,6 +81,7 @@ Try goals like:
   dark mode
   volume
   audio device
+  installed apps
   wallpaper
   idle time
   what's in temp

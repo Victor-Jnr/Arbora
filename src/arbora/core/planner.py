@@ -125,6 +125,8 @@ class GoalPlanner:
             return self._printer_status_plan(text)
         if self._looks_like_startup_apps(lower):
             return self._startup_apps_plan(text)
+        if self._looks_like_installed_apps(lower):
+            return self._installed_apps_plan(text)
         if self._looks_like_default_browser(lower):
             return self._default_browser_plan(text)
         if self._looks_like_display_status(lower):
@@ -609,6 +611,27 @@ class GoalPlanner:
                     summary="Read-only: list startup apps (Run keys and Startup folder)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Run registry value names and Startup folder file names",),
+                )
+            ],
+        )
+
+    def _installed_apps_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Installed apps inspect journey — capped read-only DisplayName list from uninstall "
+                "registry keys. Does not open Add/Remove Programs or uninstall anything."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_installed_apps",
+                    args={},
+                    summary="Read-only: capped list of installed app names",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads DisplayName/Publisher from uninstall registry keys",),
                 )
             ],
         )
@@ -2093,6 +2116,46 @@ class GoalPlanner:
                 "what runs on startup",
                 "apps that start with windows",
                 "programs that start with windows",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_installed_apps(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "uninstall",
+                "reinstall",
+                "startup",
+                "add or remove",
+                "add/remove",
+                "appwiz",
+                "programs and features",
+                "win32_product",
+            )
+        ):
+            return False
+        if "install" in lower and "installed" not in lower:
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "installed apps",
+                "installed app",
+                "installed programs",
+                "installed program",
+                "installed software",
+                "what apps are installed",
+                "what programs are installed",
+                "which apps are installed",
+                "list installed apps",
+                "list installed programs",
+                "inspect installed apps",
+                "what's installed",
+                "whats installed",
+                "what is installed",
             )
         )
 

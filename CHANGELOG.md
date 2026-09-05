@@ -176,8 +176,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/072-inspect-idle.md` | Change doc for idle time inspect |
 | `workflows/inspect-audio-device.json` | Bundled read-only default audio device inspect pack |
 | `documentation/073-inspect-audio-device.md` | Change doc for default audio device inspect |
+| `workflows/inspect-installed-apps.json` | Bundled capped read-only installed apps inspect pack |
+| `documentation/074-inspect-installed-apps.md` | Change doc for installed apps inspect |
 
 ---
+
+## 074 — Installed apps inspect (2026-09-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_installed_apps` (capped DisplayName list; no Win32_Product) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_installed_apps` |
+| `src/arbora/core/planner.py` | Installed-apps journey; uninstall and startup unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-installed-apps.json` | Bundled inspect-installed-apps pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Win32_Product; secrets withheld |
+| `tests/test_broker_and_planner.py` | Installed apps vs uninstall vs startup vs diagnose |
+| `tests/test_workflow_packs.py` | Pack match for inspect-installed-apps |
+| `docs/NEXT.md` | Marked P20 plate 62 done |
+| `documentation/074-inspect-installed-apps.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 074 |
+| `README.md` | Linked document 074 |
+| `CHANGELOG.md` | Added file roles and 074 section |
 
 ## 073 — Default audio device inspect (2026-09-05)
 

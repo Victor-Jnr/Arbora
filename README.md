@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 074 | [Installed apps inspect](documentation/074-inspect-installed-apps.md) |
 | 073 | [Default audio device inspect](documentation/073-inspect-audio-device.md) |
 | 072 | [Idle time inspect](documentation/072-inspect-idle.md) |
 | 071 | [Wallpaper path inspect](documentation/071-inspect-wallpaper.md) |
