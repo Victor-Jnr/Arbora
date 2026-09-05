@@ -80,6 +80,7 @@ Try goals like:
   time zone
   dark mode
   volume
+  audio device
   wallpaper
   idle time
   what's in temp

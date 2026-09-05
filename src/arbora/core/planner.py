@@ -135,6 +135,8 @@ class GoalPlanner:
             return self._timezone_plan(text)
         if self._looks_like_theme(lower):
             return self._theme_plan(text)
+        if self._looks_like_audio_device(lower):
+            return self._audio_device_plan(text)
         if self._looks_like_volume(lower):
             return self._volume_plan(text)
         if self._looks_like_wallpaper(lower):
@@ -712,6 +714,27 @@ class GoalPlanner:
                     summary="Read-only: Windows light/dark theme",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads HKCU Themes\\Personalize light/dark flags",),
+                )
+            ],
+        )
+
+    def _audio_device_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Audio device inspect journey — read-only default playback endpoint name. "
+                "Does not change the default device or volume."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_audio_device",
+                    args={},
+                    summary="Read-only: default playback audio device",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Core Audio default endpoint friendly name",),
                 )
             ],
         )
@@ -2258,6 +2281,48 @@ class GoalPlanner:
         )
 
     @staticmethod
+    def _looks_like_audio_device(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(word in lower for word in ("volume", "mute", "unmute")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "set default audio",
+                "change audio device",
+                "switch audio device",
+                "set playback device",
+                "change playback device",
+                "set sound device",
+                "change sound device",
+                "set default speaker",
+                "change default speaker",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "audio device",
+                "playback device",
+                "sound device",
+                "output device",
+                "default speaker",
+                "default speakers",
+                "default audio",
+                "which speaker",
+                "which speakers",
+                "what's my speaker",
+                "whats my speaker",
+                "what is my speaker",
+                "inspect audio device",
+                "inspect playback device",
+                "inspect sound device",
+            )
+        )
+
+    @staticmethod
     def _looks_like_volume(lower: str) -> bool:
         if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
             return False
@@ -2269,6 +2334,9 @@ class GoalPlanner:
                 "format-volume",
                 "volume shadow",
                 "shadow copy",
+                "audio device",
+                "playback device",
+                "sound device",
             )
         ):
             return False

@@ -324,6 +324,27 @@ def test_idle_is_read_only_inspect():
     assert [step.action for step in volume.steps] == ["inspect_volume"]
 
 
+def test_audio_device_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("audio device")
+    assert [step.action for step in plan.steps] == ["inspect_audio_device"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what's my speaker")
+    assert named.steps[0].action == "inspect_audio_device"
+    playback = runtime.planner.plan("playback device")
+    assert playback.steps[0].action == "inspect_audio_device"
+    change = runtime.planner.plan("set default audio device")
+    assert not any(step.action == "inspect_audio_device" for step in change.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_audio_device" for step in diagnose.steps)
+    volume = runtime.planner.plan("volume")
+    assert [step.action for step in volume.steps] == ["inspect_volume"]
+    muted = runtime.planner.plan("am i muted")
+    assert muted.steps[0].action == "inspect_volume"
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

@@ -174,8 +174,28 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/071-inspect-wallpaper.md` | Change doc for wallpaper path inspect |
 | `workflows/inspect-idle.json` | Bundled read-only idle time inspect pack |
 | `documentation/072-inspect-idle.md` | Change doc for idle time inspect |
+| `workflows/inspect-audio-device.json` | Bundled read-only default audio device inspect pack |
+| `documentation/073-inspect-audio-device.md` | Change doc for default audio device inspect |
 
 ---
+
+## 073 — Default audio device inspect (2026-09-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_audio_device` (default endpoint friendly name; no device switches) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_audio_device` |
+| `src/arbora/core/planner.py` | Audio-device journey; set/switch and volume/mute unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-audio-device.json` | Bundled inspect-audio-device pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no SetDefaultEndpoint; secrets withheld |
+| `tests/test_broker_and_planner.py` | Audio device vs set vs volume vs diagnose |
+| `tests/test_workflow_packs.py` | Pack match for inspect-audio-device |
+| `docs/NEXT.md` | Added P20; marked plate 61 done |
+| `documentation/073-inspect-audio-device.md` | Recorded this change set |
+| `documentation/README.md` | Indexed document 073 |
+| `README.md` | Linked document 073 |
+| `CHANGELOG.md` | Added file roles and 073 section |
 
 ## 072 — Idle time inspect (2026-09-04)
 
