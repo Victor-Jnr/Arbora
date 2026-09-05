@@ -649,6 +649,15 @@ _INSTALLED_APPS_PS = (
     "}"
 )
 
+HOSTS_MAX_BYTES = 64_000
+HOSTS_MAX_ENTRIES = 40
+
+
+def windows_hosts_path() -> Path:
+    """Fixed Windows hosts path; callers cannot redirect this inspect."""
+    root = os.environ.get("SystemRoot") or r"C:\Windows"
+    return Path(root) / "System32" / "drivers" / "etc" / "hosts"
+
 
 def parse_battery_snapshot(stdout: str) -> dict[str, Any]:
     """Parse the structured Win32_Battery snapshot written by PowerShell."""
@@ -1324,6 +1333,53 @@ def format_installed_apps_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def parse_hosts_snapshot(text: str) -> dict[str, Any]:
+    """Parse IP-to-name mappings from a hosts file; comments are counted, not shown."""
+    entries: list[dict[str, Any]] = []
+    comment_lines = 0
+    extra = 0
+    for raw_line in (text or "").splitlines():
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            comment_lines += 1
+            continue
+        if "#" in stripped:
+            stripped = stripped.split("#", 1)[0].strip()
+            if not stripped:
+                comment_lines += 1
+                continue
+        parts = stripped.split()
+        if len(parts) < 2:
+            continue
+        address = parts[0][:80]
+        names = [name[:120] for name in parts[1:][:8]]
+        if len(entries) >= HOSTS_MAX_ENTRIES:
+            extra += 1
+            continue
+        entries.append({"address": address, "names": names})
+    return {"entries": entries, "comment_lines": comment_lines, "extra": extra}
+
+
+def format_hosts_report(snapshot: dict[str, Any]) -> str:
+    entries = list(snapshot.get("entries") or [])
+    extra = int(snapshot.get("extra") or 0)
+    comments = int(snapshot.get("comment_lines") or 0)
+    if not entries:
+        return "No hosts file mappings reported."
+    total = len(entries) + extra
+    cap_note = f" (showing {len(entries)} of {total})" if extra else ""
+    lines = [f"Hosts mappings: {len(entries)}{cap_note}"]
+    for item in entries:
+        address = str(item.get("address") or "")
+        names = " ".join(str(name) for name in (item.get("names") or []))
+        lines.append(f"  {address}  {names}".rstrip())
+    if comments:
+        lines.append(f"Comment lines skipped: {comments}")
+    return "\n".join(lines)
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1487,6 +1543,8 @@ class DesktopAdapter:
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
             return self._inspect_installed_apps(dry_run=dry_run)
+        if action == "inspect_hosts":
+            return self._inspect_hosts(dry_run=dry_run)
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -2420,3 +2478,47 @@ class DesktopAdapter:
             )
         snapshot = parse_installed_apps_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_installed_apps_report(snapshot))
+
+    def _inspect_hosts(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the Windows hosts file mappings "
+                    "(no Set-Content, no Add-Content, no notepad edit)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        path = windows_hosts_path()
+        if not path.is_file():
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output="Hosts file not found.",
+            )
+        try:
+            data = path.read_bytes()
+        except OSError as exc:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=f"Failed to read hosts file: {exc}",
+            )
+        if len(data) > HOSTS_MAX_BYTES:
+            data = data[:HOSTS_MAX_BYTES]
+        text = data.decode("utf-8", errors="replace")
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_hosts_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_hosts_report(snapshot))

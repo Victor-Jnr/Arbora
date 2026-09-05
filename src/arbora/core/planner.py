@@ -145,6 +145,8 @@ class GoalPlanner:
             return self._wallpaper_plan(text)
         if self._looks_like_idle(lower):
             return self._idle_plan(text)
+        if self._looks_like_hosts(lower):
+            return self._hosts_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -821,6 +823,27 @@ class GoalPlanner:
                     summary="Read-only: last-input idle time",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads GetLastInputInfo idle milliseconds",),
+                )
+            ],
+        )
+
+    def _hosts_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Hosts inspect journey — read-only IP-to-name mappings from the Windows hosts file. "
+                "Does not edit, append, or replace the file."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_hosts",
+                    args={},
+                    summary="Read-only: Windows hosts file mappings",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads System32\\drivers\\etc\\hosts (no writes)",),
                 )
             ],
         )
@@ -2509,6 +2532,40 @@ class GoalPlanner:
                 "how long idle",
                 "how long have i been idle",
                 "how long has the pc been idle",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_hosts(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "edit hosts",
+                "change hosts",
+                "write hosts",
+                "update hosts",
+                "add to hosts",
+                "remove from hosts",
+                "delete from hosts",
+                "modify hosts",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "hosts file",
+                "inspect hosts",
+                "what's in hosts",
+                "whats in hosts",
+                "what is in hosts",
+                "dns hosts",
+                "etc/hosts",
+                "etc\\hosts",
+                "windows hosts",
+                "read hosts",
             )
         )
 

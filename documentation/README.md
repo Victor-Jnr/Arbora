@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 075 | [Hosts file inspect](075-inspect-hosts.md) | 2026-09-05 | Read-only hosts mappings; no edits |
 | 074 | [Installed apps inspect](074-inspect-installed-apps.md) | 2026-09-05 | Capped read-only DisplayName list; no Add/Remove dump |
 | 073 | [Default audio device inspect](073-inspect-audio-device.md) | 2026-09-05 | Read-only default playback device name; no device switches |
 | 072 | [Idle time inspect](072-inspect-idle.md) | 2026-09-04 | Read-only last-input idle duration; no input injection |

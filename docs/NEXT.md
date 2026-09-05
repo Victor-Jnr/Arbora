@@ -72,6 +72,7 @@ Already in place:
 - read-only last-input idle duration (no input injection).
 - read-only default playback audio device name (no device switches).
 - capped read-only installed app names from uninstall keys (no Add/Remove dump).
+- read-only Windows hosts file mappings (no edits).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -214,7 +215,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 61 | **Default audio device inspect** | ✅ Read-only default playback device name; does not change the default |
 | 62 | **Installed apps inspect** | ✅ Capped read-only DisplayName list from uninstall keys; no Add/Remove dump or Win32_Product |
-| 63 | **Hosts file inspect** | Read-only hosts mappings; does not edit the file |
+| 63 | **Hosts file inspect** | ✅ Read-only hosts mappings; does not edit the file |
 
 ## Non-negotiables (do not drift)
 
@@ -309,4 +310,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P20 plates 61–62 are done. Next: hosts file inspect (63).
+P20 plates 61–63 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
