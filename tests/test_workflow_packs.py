@@ -386,6 +386,17 @@ def test_inspect_idle_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_uptime_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect uptime pack")
+    assert pack is not None
+    assert pack.id == "inspect-uptime"
+    plan = pack.to_plan("run inspect uptime pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_uptime"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_inspect_audio_device_workflow_pack_matches():
     pack = match_workflow_pack("run inspect audio device pack")
     assert pack is not None

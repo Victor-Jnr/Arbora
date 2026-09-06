@@ -145,6 +145,8 @@ class GoalPlanner:
             return self._wallpaper_plan(text)
         if self._looks_like_idle(lower):
             return self._idle_plan(text)
+        if self._looks_like_uptime(lower):
+            return self._uptime_plan(text)
         if self._looks_like_hosts(lower):
             return self._hosts_plan(text)
         if self._looks_like_environment_variable(lower):
@@ -825,6 +827,27 @@ class GoalPlanner:
                     summary="Read-only: last-input idle time",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads GetLastInputInfo idle milliseconds",),
+                )
+            ],
+        )
+
+    def _uptime_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Uptime inspect journey — read-only system uptime and last boot time. "
+                "Does not shut down, restart, or change power settings."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_uptime",
+                    args={},
+                    summary="Read-only: system uptime and last boot",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads TickCount64 and Win32_OperatingSystem LastBootUpTime",),
                 )
             ],
         )
@@ -2557,6 +2580,44 @@ class GoalPlanner:
                 "how long idle",
                 "how long have i been idle",
                 "how long has the pc been idle",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_uptime(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if "idle" in lower:
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "shutdown",
+                "shut down",
+                "restart",
+                "reboot",
+                "stop-computer",
+                "restart-computer",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "uptime",
+                "system uptime",
+                "pc uptime",
+                "computer uptime",
+                "last boot",
+                "boot time",
+                "time since boot",
+                "inspect uptime",
+                "how long has the pc been on",
+                "how long has the computer been on",
+                "how long has the pc been running",
+                "how long has the computer been running",
+                "how long has this pc been up",
+                "how long since boot",
             )
         )
 

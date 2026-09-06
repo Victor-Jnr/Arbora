@@ -324,6 +324,25 @@ def test_idle_is_read_only_inspect():
     assert [step.action for step in volume.steps] == ["inspect_volume"]
 
 
+def test_uptime_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("uptime")
+    assert [step.action for step in plan.steps] == ["inspect_uptime"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("how long has the pc been on")
+    assert named.steps[0].action == "inspect_uptime"
+    boot = runtime.planner.plan("last boot")
+    assert boot.steps[0].action == "inspect_uptime"
+    idle = runtime.planner.plan("idle time")
+    assert [step.action for step in idle.steps] == ["inspect_idle"]
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_uptime" for step in diagnose.steps)
+    shutdown = runtime.planner.plan("shutdown the pc")
+    assert not any(step.action == "inspect_uptime" for step in shutdown.steps)
+
+
 def test_audio_device_is_read_only_inspect():
     runtime = _runtime()
     plan = runtime.planner.plan("audio device")

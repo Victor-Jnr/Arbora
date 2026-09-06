@@ -182,8 +182,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/075-inspect-hosts.md` | Change doc for hosts file inspect |
 | `workflows/inspect-env-var.json` | Bundled read-only named environment variable inspect pack |
 | `documentation/076-inspect-env-var.md` | Change doc for environment variable inspect by name |
+| `workflows/inspect-uptime.json` | Bundled read-only uptime inspect pack |
+| `documentation/077-inspect-uptime.md` | Change doc for uptime inspect |
 
 ---
+
+## 077 — Uptime inspect (2026-09-06)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_uptime` (TickCount64 + last boot; no shutdown) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_uptime` |
+| `src/arbora/core/planner.py` | Uptime journey; idle, shutdown, and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-uptime.json` | Bundled inspect-uptime pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no shutdown cmdlets; secrets withheld |
+| `tests/test_broker_and_planner.py` | Uptime vs idle vs shutdown vs diagnose |
+| `tests/test_workflow_packs.py` | Pack match for inspect-uptime |
+| `docs/NEXT.md` | Marked P21 plate 65 done |
+| `documentation/077-inspect-uptime.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 077 |
+| `README.md` | Documentation latest table |
 
 ## 076 — Environment variable inspect by name (2026-09-06)
 

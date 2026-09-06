@@ -1,0 +1,20 @@
+{
+  "id": "inspect-uptime",
+  "name": "Inspect uptime",
+  "description": "Read-only system uptime and last boot time. Does not shut down or restart.",
+  "goal_phrases": [
+    "inspect uptime pack",
+    "run inspect uptime pack"
+  ],
+  "rationale": "Workflow pack: read-only system uptime and last boot.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_uptime",
+      "args": {},
+      "summary": "Read system uptime and last boot",
+      "sensitivity": "read",
+      "side_effects": ["Reads TickCount64 and Win32_OperatingSystem LastBootUpTime"]
+    }
+  ]
+}

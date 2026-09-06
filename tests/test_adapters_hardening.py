@@ -24,6 +24,7 @@ from arbora.adapters.desktop import (
     format_volume_report,
     format_wallpaper_report,
     format_idle_report,
+    format_uptime_report,
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
@@ -45,6 +46,7 @@ from arbora.adapters.desktop import (
     parse_volume_snapshot,
     parse_wallpaper_snapshot,
     parse_idle_snapshot,
+    parse_uptime_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
@@ -1162,6 +1164,55 @@ def test_inspect_idle_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_idle", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_uptime_dry_run():
+    result = DesktopAdapter().execute("inspect_uptime", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "uptime" in result.output.lower()
+    assert "shutdown" in result.output.lower()
+
+
+def test_format_uptime_report_empty_and_duration():
+    empty = parse_uptime_snapshot("")
+    report = format_uptime_report(empty)
+    assert "no uptime" in report.lower()
+    seconds = format_uptime_report(parse_uptime_snapshot("UPTIME_MS=5000\n"))
+    assert seconds == "Uptime: 5 seconds."
+    mixed = format_uptime_report(
+        parse_uptime_snapshot("UPTIME_MS=93784000\nBOOT=2026-09-05T08:00:00\n")
+    )
+    assert "1 day" in mixed
+    assert "2 hours" in mixed
+    assert "Last boot: 2026-09-05T08:00:00" in mixed
+    zero = format_uptime_report(parse_uptime_snapshot("UPTIME_MS=0\n"))
+    assert zero == "Uptime: 0 seconds."
+
+
+def test_inspect_uptime_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_uptime", {}, dry_run=False)
+    assert result.ok
+    assert "no uptime" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "tickcount64" in command
+    assert "lastbootuptime" in command
+    assert "shutdown" not in command
+    assert "restart-computer" not in command
+    assert "stop-computer" not in command
+
+
+def test_inspect_uptime_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_uptime", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

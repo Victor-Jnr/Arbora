@@ -86,6 +86,7 @@ Try goals like:
   environment variable PATH
   wallpaper
   idle time
+  uptime
   what's in temp
   empty temp
   open chrome

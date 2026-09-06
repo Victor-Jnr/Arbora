@@ -26,6 +26,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_volume",
             "inspect_wallpaper",
             "inspect_idle",
+            "inspect_uptime",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",
