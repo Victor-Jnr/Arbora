@@ -73,11 +73,12 @@ Already in place:
 - read-only default playback audio device name (no device switches).
 - capped read-only installed app names from uninstall keys (no Add/Remove dump).
 - read-only Windows hosts file mappings (no edits).
+- read-only named process environment variable (never dumps Env:; secret-like names skipped).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P20).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P21).
 
 ---
 
@@ -217,6 +218,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 62 | **Installed apps inspect** | ✅ Capped read-only DisplayName list from uninstall keys; no Add/Remove dump or Win32_Product |
 | 63 | **Hosts file inspect** | ✅ Read-only hosts mappings; does not edit the file |
 
+### P21 — Stage 3 environment, uptime, and identity
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 64 | **Environment variable inspect by name** | ✅ Read-only named process env var; never dumps Env:; secret-like names skipped |
+| 65 | **Uptime inspect** | Read-only system uptime / last boot; does not shutdown or restart |
+| 66 | **Local username / computer name inspect** | Read-only USERNAME and COMPUTERNAME; not domain credentials |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -310,4 +319,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P20 plates 61–63 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P21 plate 64 is done. Next: plates 65–66 (uptime inspect, then local username / computer name inspect).

@@ -383,6 +383,30 @@ def test_hosts_is_read_only_inspect():
     assert [step.action for step in apps.steps] == ["inspect_installed_apps"]
 
 
+def test_environment_variable_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("environment variable PATH")
+    assert [step.action for step in plan.steps] == ["inspect_environment_variable"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].args.get("name") == "PATH"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("env var TEMP")
+    assert named.steps[0].action == "inspect_environment_variable"
+    assert named.steps[0].args.get("name") == "TEMP"
+    dollar = runtime.planner.plan("what is $env:USERPROFILE")
+    assert dollar.steps[0].action == "inspect_environment_variable"
+    assert dollar.steps[0].args.get("name") == "USERPROFILE"
+    dump = runtime.planner.plan("dump environment variables")
+    assert not any(step.action == "inspect_environment_variable" for step in dump.steps)
+    change = runtime.planner.plan("set environment variable PATH")
+    assert not any(step.action == "inspect_environment_variable" for step in change.steps)
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_environment_variable" for step in diagnose.steps)
+    hosts = runtime.planner.plan("hosts file")
+    assert [step.action for step in hosts.steps] == ["inspect_hosts"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

@@ -29,6 +29,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",
+            "inspect_environment_variable",
         }
     ),
     "files": frozenset(

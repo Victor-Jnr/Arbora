@@ -147,6 +147,8 @@ class GoalPlanner:
             return self._idle_plan(text)
         if self._looks_like_hosts(lower):
             return self._hosts_plan(text)
+        if self._looks_like_environment_variable(lower):
+            return self._environment_variable_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -844,6 +846,29 @@ class GoalPlanner:
                     summary="Read-only: Windows hosts file mappings",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads System32\\drivers\\etc\\hosts (no writes)",),
+                )
+            ],
+        )
+
+    def _environment_variable_plan(self, goal: str) -> Plan:
+        name = self._env_var_name_from_goal(goal)
+        labeled = name or "(name required)"
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Environment variable inspect journey — read one named process variable. "
+                "Does not dump the environment, set variables, or return secret-like names."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_environment_variable",
+                    args={"name": name},
+                    summary=f"Read-only: process environment variable {labeled}",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads one named process environment variable (no Env: dump)",),
                 )
             ],
         )
@@ -2568,6 +2593,94 @@ class GoalPlanner:
                 "read hosts",
             )
         )
+
+    @staticmethod
+    def _looks_like_environment_variable(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "list env",
+                "list the env",
+                "list environment",
+                "dump env",
+                "dump the env",
+                "dump environment",
+                "printenv",
+                "get-childitem env",
+                "gci env",
+                "dir env",
+                "ls env",
+                "all environment",
+                "all env vars",
+                "entire environment",
+                "whole environment",
+                "every environment",
+                "set environment",
+                "set env var",
+                "set $env",
+                "change environment",
+                "unset environment",
+                "unset env",
+                "delete environment",
+                "remove environment",
+                "setx ",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "environment variable",
+                "env var",
+                "env variable",
+                "inspect env",
+                "inspect environment",
+                "$env:",
+            )
+        )
+
+    @staticmethod
+    def _env_var_name_from_goal(goal: str) -> str:
+        text = goal.strip()
+        stop = {
+            "pack",
+            "variable",
+            "var",
+            "environment",
+            "the",
+            "a",
+            "an",
+            "my",
+            "please",
+            "named",
+        }
+        match = re.search(r"\$env:([A-Za-z_][A-Za-z0-9_().]*)", text, flags=re.I)
+        if match:
+            return match.group(1)
+        match = re.search(
+            r"(?:environment variable|env(?:ironment)?\s+var(?:iable)?)\s+[\"']?([A-Za-z_][A-Za-z0-9_().]*)",
+            text,
+            flags=re.I,
+        )
+        if match and match.group(1).lower() not in stop:
+            return match.group(1)
+        match = re.search(
+            r"[\"']?([A-Za-z_][A-Za-z0-9_().]*)[\"']?\s+environment variable",
+            text,
+            flags=re.I,
+        )
+        if match and match.group(1).lower() not in stop:
+            return match.group(1)
+        match = re.search(
+            r"inspect env(?:ironment)?\s+([A-Za-z_][A-Za-z0-9_().]*)",
+            text,
+            flags=re.I,
+        )
+        if match and match.group(1).lower() not in stop:
+            return match.group(1)
+        return ""
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

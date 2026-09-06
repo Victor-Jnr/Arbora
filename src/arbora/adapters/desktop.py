@@ -652,6 +652,31 @@ _INSTALLED_APPS_PS = (
 HOSTS_MAX_BYTES = 64_000
 HOSTS_MAX_ENTRIES = 40
 
+ENV_VAR_MAX_VALUE_CHARS = 500
+ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_().]{0,127}$")
+_ENV_DUMP_NAMES = frozenset({"all", "env", "environment", "*"})
+_ENV_SECRET_NAME_MARKERS = (
+    "password",
+    "passwd",
+    "secret",
+    "token",
+    "apikey",
+    "api_key",
+    "access_key",
+    "private_key",
+    "credential",
+    "authorization",
+    "bearer",
+    "cookie",
+    "connectionstring",
+    "conn_str",
+    "connstr",
+    "passphrase",
+    "oauth",
+    "jwt",
+    "privatekey",
+)
+
 
 def windows_hosts_path() -> Path:
     """Fixed Windows hosts path; callers cannot redirect this inspect."""
@@ -1380,6 +1405,91 @@ def format_hosts_report(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def normalize_env_var_name(raw: str) -> str | None:
+    """Return a single process env var name, or None when the name is unusable."""
+    name = (raw or "").strip()
+    if name.startswith("%") and name.endswith("%") and len(name) >= 3:
+        name = name[1:-1]
+    if name.lower().startswith("$env:"):
+        name = name[5:]
+    elif name.lower().startswith("env:"):
+        name = name[4:]
+    name = name.strip().strip("'\"")
+    if not name or name.lower() in _ENV_DUMP_NAMES:
+        return None
+    if not ENV_VAR_NAME_RE.fullmatch(name):
+        return None
+    return name
+
+
+def env_var_name_looks_secret(name: str) -> bool:
+    """True when the variable name itself looks like a secret or credential."""
+    lower = (name or "").strip().lower()
+    if not lower:
+        return False
+    if any(marker in lower for marker in _ENV_SECRET_NAME_MARKERS):
+        return True
+    return bool(re.search(r"(^|_)pwd(_|$)", lower))
+
+
+def environment_variable_script(name: str) -> str:
+    """Read one process environment variable. Never lists Env:."""
+    quoted = ps_quote(name)
+    limit = ENV_VAR_MAX_VALUE_CHARS
+    return (
+        "$ErrorActionPreference = 'SilentlyContinue'; "
+        f"$name = {quoted}; "
+        "$value = [Environment]::GetEnvironmentVariable($name, 'Process'); "
+        "if ($null -eq $value) { $value = '' }; "
+        f"if ($value.Length -gt {limit}) {{ $value = $value.Substring(0, {limit}) }}; "
+        "Write-Output ('NAME=' + $name); "
+        "Write-Output ('LENGTH=' + ([string]$value).Length); "
+        "Write-Output 'VALUE_BEGIN'; "
+        "Write-Output $value"
+    )
+
+
+def parse_environment_variable_snapshot(stdout: str) -> dict[str, Any]:
+    """Parse a single named environment variable snapshot."""
+    name = ""
+    length = 0
+    capturing = False
+    value_lines: list[str] = []
+    for line in (stdout or "").splitlines():
+        if capturing:
+            value_lines.append(line)
+            continue
+        if line == "VALUE_BEGIN":
+            capturing = True
+            continue
+        if line.startswith("NAME="):
+            name = line.split("=", 1)[1].strip()
+        elif line.startswith("LENGTH="):
+            try:
+                length = int(line.split("=", 1)[1].strip() or "0")
+            except ValueError:
+                length = 0
+    value = "\n".join(value_lines)
+    if not length:
+        length = len(value)
+    return {"name": name, "length": length, "value": value}
+
+
+def format_environment_variable_report(snapshot: dict[str, Any]) -> str:
+    name = str(snapshot.get("name") or "").strip() or "unnamed"
+    value = str(snapshot.get("value") or "")
+    length = snapshot.get("length")
+    try:
+        shown_len = int(length) if length is not None else len(value)
+    except (TypeError, ValueError):
+        shown_len = len(value)
+    if not value:
+        return f"{name} is not set in the process environment."
+    truncated = shown_len > len(value) or len(value) >= ENV_VAR_MAX_VALUE_CHARS
+    suffix = " (truncated)" if truncated and len(value) >= ENV_VAR_MAX_VALUE_CHARS else ""
+    return f"{name} ({shown_len} chars){suffix}: {value}"
+
+
 def is_safe_http_url(url: str) -> bool:
     """True for http(s) URLs with a host and no embedded credentials."""
     raw = (url or "").strip()
@@ -1545,6 +1655,11 @@ class DesktopAdapter:
             return self._inspect_installed_apps(dry_run=dry_run)
         if action == "inspect_hosts":
             return self._inspect_hosts(dry_run=dry_run)
+        if action == "inspect_environment_variable":
+            return self._inspect_environment_variable(
+                str(args.get("name", args.get("variable", ""))),
+                dry_run=dry_run,
+            )
         return StepResult(
             step_id=new_id("res_"),
             ok=False,
@@ -2522,3 +2637,72 @@ class DesktopAdapter:
             )
         snapshot = parse_hosts_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_hosts_report(snapshot))
+
+    def _inspect_environment_variable(self, name: str, *, dry_run: bool) -> StepResult:
+        normalized = normalize_env_var_name(name)
+        if not normalized:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=(
+                    "Name a single environment variable to inspect "
+                    "(Arbora never dumps the whole environment)"
+                ),
+                dry_run=dry_run,
+            )
+        if env_var_name_looks_secret(normalized):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=(
+                    "Refusing to inspect an environment variable whose name looks like a secret"
+                ),
+                dry_run=dry_run,
+            )
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would read process environment variable {normalized} "
+                    "(no Get-ChildItem Env:, no [Environment]::GetEnvironmentVariables dump, "
+                    "no setx)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(environment_variable_script(normalized), timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Environment variable inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_environment_variable_snapshot(text)
+        value = str(snapshot.get("value") or "")
+        if clipboard_looks_secret(value):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_environment_variable_report(snapshot),
+        )
