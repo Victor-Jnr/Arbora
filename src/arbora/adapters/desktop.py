@@ -551,6 +551,18 @@ _IDLE_PS = (
     "} catch { Write-Output 'IDLE_MS='; }"
 )
 
+_UPTIME_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  Write-Output ('UPTIME_MS=' + [Environment]::TickCount64); "
+    "} catch { Write-Output 'UPTIME_MS='; }; "
+    "try { "
+    "  $boot = (Get-CimInstance -ClassName Win32_OperatingSystem -Property LastBootUpTime).LastBootUpTime; "
+    "  if ($boot) { Write-Output ('BOOT=' + $boot.ToString('yyyy-MM-ddTHH:mm:ss')); } "
+    "  else { Write-Output 'BOOT='; } "
+    "} catch { Write-Output 'BOOT='; }"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1291,6 +1303,51 @@ def format_idle_report(snapshot: dict[str, str]) -> str:
     return "Idle for " + " ".join(parts) + "."
 
 
+def parse_uptime_snapshot(stdout: str) -> dict[str, str]:
+    """Parse system uptime milliseconds and last-boot timestamp."""
+    snapshot = {"uptime_ms": "", "boot": ""}
+    mapping = (("UPTIME_MS=", "uptime_ms"), ("BOOT=", "boot"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()
+                break
+    return snapshot
+
+
+def format_uptime_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("uptime_ms") or "").strip()
+    boot = str(snapshot.get("boot") or "").strip()
+    lines: list[str] = []
+    if raw:
+        try:
+            uptime_ms = int(raw)
+        except ValueError:
+            uptime_ms = None
+        if uptime_ms is not None:
+            if uptime_ms < 0:
+                uptime_ms = 0
+            seconds = uptime_ms // 1000
+            days, rem = divmod(seconds, 86400)
+            hours, rem = divmod(rem, 3600)
+            minutes, secs = divmod(rem, 60)
+            parts: list[str] = []
+            if days:
+                parts.append(f"{days} day" + ("s" if days != 1 else ""))
+            if hours:
+                parts.append(f"{hours} hour" + ("s" if hours != 1 else ""))
+            if minutes:
+                parts.append(f"{minutes} minute" + ("s" if minutes != 1 else ""))
+            if secs or not parts:
+                parts.append(f"{secs} second" + ("s" if secs != 1 else ""))
+            lines.append("Uptime: " + " ".join(parts) + ".")
+    if boot:
+        lines.append(f"Last boot: {boot}")
+    if not lines:
+        return "No uptime reported."
+    return "\n".join(lines)
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1649,6 +1706,8 @@ class DesktopAdapter:
             return self._inspect_wallpaper(dry_run=dry_run)
         if action == "inspect_idle":
             return self._inspect_idle(dry_run=dry_run)
+        if action == "inspect_uptime":
+            return self._inspect_uptime(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -2525,6 +2584,40 @@ class DesktopAdapter:
             )
         snapshot = parse_idle_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_idle_report(snapshot))
+
+    def _inspect_uptime(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read system uptime and last boot time "
+                    "(no Shutdown-Computer, no Restart-Computer, no Stop-Computer)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_UPTIME_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Uptime inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_uptime_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_uptime_report(snapshot))
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:
         if dry_run:

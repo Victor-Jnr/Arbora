@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 077 | [Uptime inspect](077-inspect-uptime.md) | 2026-09-06 | Read-only system uptime and last boot; no shutdown |
 | 076 | [Environment variable inspect by name](076-inspect-env-var.md) | 2026-09-06 | Read-only named process env var; never dumps Env: |
 | 075 | [Hosts file inspect](075-inspect-hosts.md) | 2026-09-05 | Read-only hosts mappings; no edits |
 | 074 | [Installed apps inspect](074-inspect-installed-apps.md) | 2026-09-05 | Capped read-only DisplayName list; no Add/Remove dump |
