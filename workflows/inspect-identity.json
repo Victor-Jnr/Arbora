@@ -1,0 +1,20 @@
+{
+  "id": "inspect-identity",
+  "name": "Inspect username and computer name",
+  "description": "Read-only local username and computer name. Does not return domain credentials.",
+  "goal_phrases": [
+    "inspect identity pack",
+    "run inspect identity pack"
+  ],
+  "rationale": "Workflow pack: read-only local username and computer name.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_identity",
+      "args": {},
+      "summary": "Read local username and computer name",
+      "sensitivity": "read",
+      "side_effects": ["Reads Environment.UserName and Environment.MachineName"]
+    }
+  ]
+}

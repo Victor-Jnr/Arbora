@@ -75,6 +75,7 @@ Already in place:
 - read-only Windows hosts file mappings (no edits).
 - read-only named process environment variable (never dumps Env:; secret-like names skipped).
 - read-only system uptime and last boot (no shutdown or restart).
+- read-only local username and computer name (not domain credentials).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -225,7 +226,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 64 | **Environment variable inspect by name** | ✅ Read-only named process env var; never dumps Env:; secret-like names skipped |
 | 65 | **Uptime inspect** | ✅ Read-only system uptime / last boot; does not shutdown or restart |
-| 66 | **Local username / computer name inspect** | Read-only USERNAME and COMPUTERNAME; not domain credentials |
+| 66 | **Local username / computer name inspect** | ✅ Read-only USERNAME and COMPUTERNAME; not domain credentials |
 
 ## Non-negotiables (do not drift)
 
@@ -320,4 +321,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P21 plates 64–65 are done. Next: plate 66 (local username / computer name inspect).
+P21 plates 64–66 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

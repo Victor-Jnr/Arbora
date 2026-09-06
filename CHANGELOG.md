@@ -184,8 +184,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/076-inspect-env-var.md` | Change doc for environment variable inspect by name |
 | `workflows/inspect-uptime.json` | Bundled read-only uptime inspect pack |
 | `documentation/077-inspect-uptime.md` | Change doc for uptime inspect |
+| `workflows/inspect-identity.json` | Bundled read-only username / computer name inspect pack |
+| `documentation/078-inspect-identity.md` | Change doc for local username / computer name inspect |
 
 ---
+
+## 078 — Local username / computer name inspect (2026-09-06)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_identity` (UserName + MachineName; no domain creds) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_identity` |
+| `src/arbora/core/planner.py` | Identity journey; env-var, net user, and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-identity.json` | Bundled inspect-identity pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no whoami/net user; secrets withheld |
+| `tests/test_broker_and_planner.py` | Identity vs env-var USERNAME vs uptime vs diagnose |
+| `tests/test_workflow_packs.py` | Pack match for inspect-identity |
+| `docs/NEXT.md` | Marked P21 plate 66 done |
+| `documentation/078-inspect-identity.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 078 |
+| `README.md` | Documentation latest table |
 
 ## 077 — Uptime inspect (2026-09-06)
 
