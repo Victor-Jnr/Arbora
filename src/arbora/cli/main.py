@@ -87,6 +87,7 @@ Try goals like:
   wallpaper
   idle time
   uptime
+  what's my username
   what's in temp
   empty temp
   open chrome

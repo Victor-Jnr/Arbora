@@ -426,6 +426,28 @@ def test_environment_variable_is_read_only_inspect():
     assert [step.action for step in hosts.steps] == ["inspect_hosts"]
 
 
+def test_identity_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("what's my username")
+    assert [step.action for step in plan.steps] == ["inspect_identity"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("computer name")
+    assert named.steps[0].action == "inspect_identity"
+    called = runtime.planner.plan("what's this pc called")
+    assert called.steps[0].action == "inspect_identity"
+    env_named = runtime.planner.plan("environment variable USERNAME")
+    assert env_named.steps[0].action == "inspect_environment_variable"
+    assert env_named.steps[0].args.get("name") == "USERNAME"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_identity" for step in diagnose.steps)
+    creds = runtime.planner.plan("net user")
+    assert not any(step.action == "inspect_identity" for step in creds.steps)
+    uptime = runtime.planner.plan("uptime")
+    assert [step.action for step in uptime.steps] == ["inspect_uptime"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

@@ -563,6 +563,14 @@ _UPTIME_PS = (
     "} catch { Write-Output 'BOOT='; }"
 )
 
+_IDENTITY_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { Write-Output ('USERNAME=' + [Environment]::UserName); } "
+    "catch { Write-Output 'USERNAME='; }; "
+    "try { Write-Output ('COMPUTER=' + [Environment]::MachineName); } "
+    "catch { Write-Output 'COMPUTER='; }"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1348,6 +1356,31 @@ def format_uptime_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_identity_snapshot(stdout: str) -> dict[str, str]:
+    """Parse local username and computer name; never domain credentials."""
+    snapshot = {"username": "", "computer": ""}
+    mapping = (("USERNAME=", "username"), ("COMPUTER=", "computer"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:128]
+                break
+    return snapshot
+
+
+def format_identity_report(snapshot: dict[str, str]) -> str:
+    user = str(snapshot.get("username") or "").strip()
+    computer = str(snapshot.get("computer") or "").strip()
+    if not user and not computer:
+        return "No local username or computer name reported."
+    lines: list[str] = []
+    if user:
+        lines.append(f"Local username: {user}")
+    if computer:
+        lines.append(f"Computer name: {computer}")
+    return "\n".join(lines)
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1708,6 +1741,8 @@ class DesktopAdapter:
             return self._inspect_idle(dry_run=dry_run)
         if action == "inspect_uptime":
             return self._inspect_uptime(dry_run=dry_run)
+        if action == "inspect_identity":
+            return self._inspect_identity(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -2618,6 +2653,40 @@ class DesktopAdapter:
             )
         snapshot = parse_uptime_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_uptime_report(snapshot))
+
+    def _inspect_identity(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the local username and computer name "
+                    "(no whoami /all, no net user, no cmdkey, no domain credentials)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_IDENTITY_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Identity inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_identity_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_identity_report(snapshot))
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:
         if dry_run:

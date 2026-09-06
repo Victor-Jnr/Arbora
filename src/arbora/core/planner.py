@@ -151,6 +151,8 @@ class GoalPlanner:
             return self._hosts_plan(text)
         if self._looks_like_environment_variable(lower):
             return self._environment_variable_plan(text)
+        if self._looks_like_identity(lower):
+            return self._identity_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -892,6 +894,27 @@ class GoalPlanner:
                     summary=f"Read-only: process environment variable {labeled}",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads one named process environment variable (no Env: dump)",),
+                )
+            ],
+        )
+
+    def _identity_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Identity inspect journey — read-only local username and computer name. "
+                "Does not return domain credentials, SIDs, or password hashes."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_identity",
+                    args={},
+                    summary="Read-only: local username and computer name",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Environment.UserName and Environment.MachineName",),
                 )
             ],
         )
@@ -2742,6 +2765,54 @@ class GoalPlanner:
         if match and match.group(1).lower() not in stop:
             return match.group(1)
         return ""
+
+    @staticmethod
+    def _looks_like_identity(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "environment",
+                "env var",
+                "$env:",
+                "password",
+                "credential",
+                "whoami /all",
+                "whoami /priv",
+                "net user",
+                "cmdkey",
+                "rename computer",
+                "change username",
+                "set computer name",
+                "domain controller",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "what's my username",
+                "whats my username",
+                "what is my username",
+                "what username",
+                "my username",
+                "local username",
+                "computer name",
+                "pc name",
+                "machine name",
+                "device name",
+                "inspect username",
+                "inspect computer name",
+                "inspect identity",
+                "what's this pc called",
+                "whats this pc called",
+                "what is this pc called",
+                "what's this computer called",
+                "whats this computer called",
+                "what is this computer called",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
