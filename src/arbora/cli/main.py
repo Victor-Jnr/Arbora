@@ -83,6 +83,7 @@ Try goals like:
   audio device
   installed apps
   hosts file
+  environment variable PATH
   wallpaper
   idle time
   what's in temp

@@ -1,0 +1,20 @@
+{
+  "id": "inspect-env-var",
+  "name": "Inspect environment variable",
+  "description": "Read one named process environment variable. Never dumps the whole environment.",
+  "goal_phrases": [
+    "inspect env pack",
+    "run inspect env pack"
+  ],
+  "rationale": "Workflow pack: read one named process environment variable.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_environment_variable",
+      "args": { "name": "PATH" },
+      "summary": "Read process environment variable PATH",
+      "sensitivity": "read",
+      "side_effects": ["Reads one named process environment variable (no Env: dump)"]
+    }
+  ]
+}

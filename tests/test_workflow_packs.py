@@ -419,6 +419,18 @@ def test_inspect_hosts_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_env_var_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect env pack")
+    assert pack is not None
+    assert pack.id == "inspect-env-var"
+    plan = pack.to_plan("run inspect env pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_environment_variable"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].args.get("name") == "PATH"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_git_status_workflow_pack_matches():
     pack = match_workflow_pack("run git status pack")
     assert pack is not None

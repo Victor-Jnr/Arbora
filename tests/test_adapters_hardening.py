@@ -27,7 +27,10 @@ from arbora.adapters.desktop import (
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
+    format_environment_variable_report,
     format_windows_update_report,
+    env_var_name_looks_secret,
+    environment_variable_script,
     installed_browser_alias,
     is_safe_http_url,
     open_in_browser_script,
@@ -45,7 +48,9 @@ from arbora.adapters.desktop import (
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
+    parse_environment_variable_snapshot,
     parse_windows_update_snapshot,
+    normalize_env_var_name,
     windows_hosts_path,
     browser_name_from_progid,
     resolve_launch_target,
@@ -1314,6 +1319,94 @@ def test_inspect_hosts_withholds_secret_like_output(tmp_path: Path):
         "arbora.adapters.desktop.windows_hosts_path", return_value=real
     ):
         result = DesktopAdapter().execute("inspect_hosts", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_environment_variable_dry_run():
+    result = DesktopAdapter().execute(
+        "inspect_environment_variable", {"name": "PATH"}, dry_run=True
+    )
+    assert result.ok and result.dry_run
+    assert "path" in result.output.lower()
+    assert "get-childitem" in result.output.lower()
+    assert "getenvironmentvariables" in result.output.lower()
+    with patch("arbora.adapters.desktop.run_powershell") as mocked:
+        DesktopAdapter().execute("inspect_environment_variable", {"name": "PATH"}, dry_run=True)
+    mocked.assert_not_called()
+
+
+def test_normalize_env_var_name_rejects_dump_and_junk():
+    assert normalize_env_var_name("PATH") == "PATH"
+    assert normalize_env_var_name("%TEMP%") == "TEMP"
+    assert normalize_env_var_name("$env:USERPROFILE") == "USERPROFILE"
+    assert normalize_env_var_name("all") is None
+    assert normalize_env_var_name("environment") is None
+    assert normalize_env_var_name("bad name") is None
+    assert normalize_env_var_name("") is None
+    assert env_var_name_looks_secret("AWS_SECRET_ACCESS_KEY")
+    assert env_var_name_looks_secret("GITHUB_TOKEN")
+    assert not env_var_name_looks_secret("PATH")
+    assert not env_var_name_looks_secret("USERPROFILE")
+
+
+def test_format_environment_variable_report_empty_and_value():
+    empty = parse_environment_variable_snapshot("NAME=PATH\nLENGTH=0\nVALUE_BEGIN\n")
+    report = format_environment_variable_report(empty)
+    assert "not set" in report.lower()
+    live = format_environment_variable_report(
+        parse_environment_variable_snapshot("NAME=TEMP\nLENGTH=5\nVALUE_BEGIN\nC:\\tmp")
+    )
+    assert "TEMP" in live
+    assert "C:\\tmp" in live
+
+
+def test_inspect_environment_variable_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="NAME=PATH\nLENGTH=3\nVALUE_BEGIN\nabc", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute(
+            "inspect_environment_variable", {"name": "PATH"}, dry_run=False
+        )
+    assert result.ok
+    assert "PATH" in result.output
+    assert "abc" in result.output
+    command = str(mocked.call_args[0][0]).lower()
+    assert "getenvironmentvariable" in command
+    assert "getenvironmentvariables" not in command
+    assert "get-childitem" not in command
+    assert "gci env" not in command
+    assert "setx" not in command
+    assert environment_variable_script("PATH").count("GetEnvironmentVariable") == 1
+
+
+def test_inspect_environment_variable_refuses_secret_name_without_powershell():
+    with patch("arbora.adapters.desktop.run_powershell") as mocked:
+        result = DesktopAdapter().execute(
+            "inspect_environment_variable", {"name": "AWS_SECRET_ACCESS_KEY"}, dry_run=False
+        )
+    mocked.assert_not_called()
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_environment_variable_refuses_missing_name_without_powershell():
+    with patch("arbora.adapters.desktop.run_powershell") as mocked:
+        result = DesktopAdapter().execute("inspect_environment_variable", {}, dry_run=False)
+    mocked.assert_not_called()
+    assert result.ok is False
+    assert "whole environment" in (result.error or "").lower()
+
+
+def test_inspect_environment_variable_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="NAME=PATH\nLENGTH=16\nVALUE_BEGIN\npassword=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute(
+            "inspect_environment_variable", {"name": "PATH"}, dry_run=False
+        )
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

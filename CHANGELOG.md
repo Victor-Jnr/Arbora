@@ -180,8 +180,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/074-inspect-installed-apps.md` | Change doc for installed apps inspect |
 | `workflows/inspect-hosts.json` | Bundled read-only hosts file inspect pack |
 | `documentation/075-inspect-hosts.md` | Change doc for hosts file inspect |
+| `workflows/inspect-env-var.json` | Bundled read-only named environment variable inspect pack |
+| `documentation/076-inspect-env-var.md` | Change doc for environment variable inspect by name |
 
 ---
+
+## 076 — Environment variable inspect by name (2026-09-06)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_environment_variable` (one named process var; no Env: dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_environment_variable` |
+| `src/arbora/core/planner.py` | Env-var journey; dump/set/unset and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-env-var.json` | Bundled inspect-env-var pack |
+| `tests/test_adapters_hardening.py` | Dry-run; name validation; secret names skipped; secrets withheld |
+| `tests/test_broker_and_planner.py` | Env-var vs dump vs set vs hosts vs diagnose |
+| `tests/test_workflow_packs.py` | Pack match for inspect-env-var |
+| `docs/NEXT.md` | Added P21; marked plate 64 done |
+| `documentation/076-inspect-env-var.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 076 |
+| `README.md` | Documentation latest table |
 
 ## 075 — Hosts file inspect (2026-09-05)
 
