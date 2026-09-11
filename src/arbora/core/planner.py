@@ -157,6 +157,8 @@ class GoalPlanner:
             return self._firewall_plan(text)
         if self._looks_like_bitlocker(lower):
             return self._bitlocker_plan(text)
+        if self._looks_like_dns(lower):
+            return self._dns_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -964,6 +966,27 @@ class GoalPlanner:
                         "Reads Get-BitLockerVolume MountPoint, VolumeStatus, "
                         "ProtectionStatus, EncryptionPercentage",
                     ),
+                )
+            ],
+        )
+
+    def _dns_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "DNS inspect journey — read-only IPv4 DNS servers per interface. "
+                "Does not change DNS or return Wi-Fi keys."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_dns",
+                    args={},
+                    summary="Read-only: IPv4 DNS servers per interface",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Get-DnsClientServerAddress IPv4 (no DNS writes)",),
                 )
             ],
         )
@@ -2941,6 +2964,46 @@ class GoalPlanner:
                 "volume encryption",
             )
         )
+
+    @staticmethod
+    def _looks_like_dns(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "change dns",
+                "set dns",
+                "flush dns",
+                "clear-dns",
+                "set-dnsclient",
+                "register-dns",
+                "add dns",
+                "remove dns",
+                "wifi status",
+                "wi-fi status",
+                "what's my ip",
+                "whats my ip",
+                "ipconfig",
+                "wifi key",
+                "wireless key",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "dns servers",
+                "dns server",
+                "name servers",
+                "name server",
+                "what's my dns",
+                "whats my dns",
+                "what is my dns",
+                "inspect dns",
+                "ipv4 dns",
+            )
+        ) or bool(re.search(r"\bdns\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

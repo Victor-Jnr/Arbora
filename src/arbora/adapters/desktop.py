@@ -590,6 +590,17 @@ _BITLOCKER_PS = (
     "}"
 )
 
+_DNS_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Get-DnsClientServerAddress -AddressFamily IPv4 | "
+    "Where-Object { $_.ServerAddresses } | "
+    "Select-Object -First 20 | "
+    "ForEach-Object { "
+    "  $servers = @($_.ServerAddresses | Select-Object -First 8) -join ','; "
+    "  Write-Output ('IFACE=' + $_.InterfaceAlias + ';DNS=' + $servers) "
+    "}"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1478,6 +1489,35 @@ def format_bitlocker_report(rows: list[tuple[str, str, str, str]]) -> str:
     return "\n".join(lines)
 
 
+def parse_dns_snapshot(stdout: str) -> list[tuple[str, str]]:
+    """Parse IPv4 DNS servers per interface — never Wi-Fi keys or DNS writes."""
+    rows: list[tuple[str, str]] = []
+    for line in (stdout or "").splitlines():
+        if not line.startswith("IFACE="):
+            continue
+        iface = ""
+        servers = ""
+        for part in line.split(";"):
+            if part.startswith("IFACE="):
+                iface = part.split("=", 1)[1].strip()[:64]
+            elif part.startswith("DNS="):
+                raw = part.split("=", 1)[1].strip()[:256]
+                parts = [item.strip() for item in raw.split(",") if item.strip()]
+                servers = ", ".join(parts[:8])
+        if iface and servers:
+            rows.append((iface, servers))
+    return rows[:20]
+
+
+def format_dns_report(rows: list[tuple[str, str]]) -> str:
+    if not rows:
+        return "No IPv4 DNS servers reported."
+    lines = ["IPv4 DNS servers (read-only; no DNS changes):"]
+    for iface, servers in rows:
+        lines.append(f"{iface}: {servers}")
+    return "\n".join(lines)
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1844,6 +1884,8 @@ class DesktopAdapter:
             return self._inspect_firewall(dry_run=dry_run)
         if action == "inspect_bitlocker":
             return self._inspect_bitlocker(dry_run=dry_run)
+        if action == "inspect_dns":
+            return self._inspect_dns(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -2872,6 +2914,40 @@ class DesktopAdapter:
             )
         rows = parse_bitlocker_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_bitlocker_report(rows))
+
+    def _inspect_dns(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read IPv4 DNS servers per interface "
+                    "(no Set-DnsClientServerAddress, no flush, no Wi-Fi keys)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_DNS_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "DNS inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        rows = parse_dns_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_dns_report(rows))
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:
         if dry_run:

@@ -494,6 +494,31 @@ def test_bitlocker_is_read_only_inspect():
     assert [step.action for step in firewall.steps] == ["inspect_firewall"]
 
 
+def test_dns_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("dns servers")
+    assert [step.action for step in plan.steps] == ["inspect_dns"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what's my dns")
+    assert named.steps[0].action == "inspect_dns"
+    names = runtime.planner.plan("name servers")
+    assert names.steps[0].action == "inspect_dns"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_dns" for step in diagnose.steps)
+    wifi = runtime.planner.plan("wifi status")
+    assert [step.action for step in wifi.steps] == ["inspect_network"]
+    ip_addr = runtime.planner.plan("what's my ip")
+    assert [step.action for step in ip_addr.steps] == ["inspect_network"]
+    mutate = runtime.planner.plan("change dns")
+    assert not any(step.action == "inspect_dns" for step in mutate.steps)
+    flush = runtime.planner.plan("flush dns")
+    assert not any(step.action == "inspect_dns" for step in flush.steps)
+    bitlocker = runtime.planner.plan("bitlocker")
+    assert [step.action for step in bitlocker.steps] == ["inspect_bitlocker"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

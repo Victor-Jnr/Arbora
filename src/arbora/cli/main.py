@@ -90,6 +90,7 @@ Try goals like:
   what's my username
   firewall
   bitlocker
+  dns servers
   what's in temp
   empty temp
   open chrome
