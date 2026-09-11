@@ -186,8 +186,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/077-inspect-uptime.md` | Change doc for uptime inspect |
 | `workflows/inspect-identity.json` | Bundled read-only username / computer name inspect pack |
 | `documentation/078-inspect-identity.md` | Change doc for local username / computer name inspect |
+| `workflows/inspect-firewall.json` | Bundled read-only Windows Firewall profile inspect pack |
+| `documentation/079-inspect-firewall.md` | Change doc for firewall profile inspect |
 
 ---
+
+## 079 — Firewall profile inspect (2026-09-11)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_firewall` (profile Name + Enabled; no rule dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_firewall` |
+| `src/arbora/core/planner.py` | Firewall journey; disable/enable phrasing and diagnose unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-firewall.json` | Bundled inspect-firewall pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-NetFirewallRule; secrets withheld |
+| `tests/test_broker_and_planner.py` | Firewall vs wifi vs disable vs identity |
+| `tests/test_workflow_packs.py` | Pack match for inspect-firewall |
+| `docs/NEXT.md` | Marked P22 plate 67 done |
+| `documentation/079-inspect-firewall.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 079 |
+| `README.md` | Documentation latest table |
 
 ## 078 — Local username / computer name inspect (2026-09-06)
 

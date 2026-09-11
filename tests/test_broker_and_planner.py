@@ -448,6 +448,29 @@ def test_identity_is_read_only_inspect():
     assert [step.action for step in uptime.steps] == ["inspect_uptime"]
 
 
+def test_firewall_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("firewall")
+    assert [step.action for step in plan.steps] == ["inspect_firewall"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is the firewall on")
+    assert named.steps[0].action == "inspect_firewall"
+    windows = runtime.planner.plan("windows firewall")
+    assert windows.steps[0].action == "inspect_firewall"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_firewall" for step in diagnose.steps)
+    wifi = runtime.planner.plan("wifi status")
+    assert [step.action for step in wifi.steps] == ["inspect_network"]
+    mutate = runtime.planner.plan("turn off firewall")
+    assert not any(step.action == "inspect_firewall" for step in mutate.steps)
+    disable = runtime.planner.plan("disable firewall")
+    assert not any(step.action == "inspect_firewall" for step in disable.steps)
+    identity = runtime.planner.plan("what's my username")
+    assert [step.action for step in identity.steps] == ["inspect_identity"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

@@ -153,6 +153,8 @@ class GoalPlanner:
             return self._environment_variable_plan(text)
         if self._looks_like_identity(lower):
             return self._identity_plan(text)
+        if self._looks_like_firewall(lower):
+            return self._firewall_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -915,6 +917,27 @@ class GoalPlanner:
                     summary="Read-only: local username and computer name",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Environment.UserName and Environment.MachineName",),
+                )
+            ],
+        )
+
+    def _firewall_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Firewall inspect journey — read-only Domain/Private/Public Enabled flags. "
+                "Does not dump rules or enable/disable the firewall."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_firewall",
+                    args={},
+                    summary="Read-only: Windows Firewall profile on/off",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Get-NetFirewallProfile Name and Enabled (no rule dump)",),
                 )
             ],
         )
@@ -2813,6 +2836,48 @@ class GoalPlanner:
                 "what is this computer called",
             )
         )
+
+    @staticmethod
+    def _looks_like_firewall(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable firewall",
+                "disable the firewall",
+                "disable windows firewall",
+                "enable firewall",
+                "enable the firewall",
+                "enable windows firewall",
+                "turn off",
+                "turn on",
+                "allow rule",
+                "block rule",
+                "firewall rule",
+                "set-netfirewall",
+                "new-netfirewall",
+                "remove-netfirewall",
+                "open firewall",
+                "launch firewall",
+                "start firewall",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "windows firewall",
+                "firewall status",
+                "firewall profile",
+                "firewall profiles",
+                "is the firewall on",
+                "is my firewall on",
+                "is the firewall enabled",
+                "inspect firewall",
+                "firewall on or off",
+            )
+        ) or bool(re.search(r"\bfirewall\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

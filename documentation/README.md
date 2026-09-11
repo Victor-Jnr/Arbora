@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 079 | [Firewall profile inspect](079-inspect-firewall.md) | 2026-09-11 | Read-only firewall profile on/off; no rule dump |
 | 078 | [Local username / computer name inspect](078-inspect-identity.md) | 2026-09-06 | Read-only local username and computer name; not domain creds |
 | 077 | [Uptime inspect](077-inspect-uptime.md) | 2026-09-06 | Read-only system uptime and last boot; no shutdown |
 | 076 | [Environment variable inspect by name](076-inspect-env-var.md) | 2026-09-06 | Read-only named process env var; never dumps Env: |

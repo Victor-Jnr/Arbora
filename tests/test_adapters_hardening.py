@@ -26,6 +26,7 @@ from arbora.adapters.desktop import (
     format_idle_report,
     format_uptime_report,
     format_identity_report,
+    format_firewall_report,
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
@@ -49,6 +50,7 @@ from arbora.adapters.desktop import (
     parse_idle_snapshot,
     parse_uptime_snapshot,
     parse_identity_snapshot,
+    parse_firewall_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
@@ -1262,6 +1264,62 @@ def test_inspect_identity_withholds_secret_like_output():
         result = DesktopAdapter().execute("inspect_identity", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_firewall_dry_run():
+    result = DesktopAdapter().execute("inspect_firewall", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "firewall" in result.output.lower()
+    assert "get-netfirewallrule" in result.output.lower()
+    assert "enable/disable" in result.output.lower()
+
+
+def test_format_firewall_report_empty_and_profiles():
+    empty = parse_firewall_snapshot("")
+    report = format_firewall_report(empty)
+    assert "no firewall profiles" in report.lower()
+    live = format_firewall_report(
+        parse_firewall_snapshot("PROFILE=Domain;ENABLED=True\nPROFILE=Private;ENABLED=False\n")
+    )
+    assert "Domain: on" in live
+    assert "Private: off" in live
+    assert "Get-NetFirewallRule" not in live
+    assert "DisplayName" not in live
+
+
+def test_inspect_firewall_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_firewall", {}, dry_run=False)
+    assert result.ok
+    assert "no firewall profiles" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-netfirewallprofile" in command
+    assert "get-netfirewallrule" not in command
+    assert "set-netfirewallprofile" not in command
+    assert "disable" not in command
+
+
+def test_inspect_firewall_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_firewall", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_firewall_refuses_rule_dump_output():
+    fake = ShellOutcome(ok=True, stdout="Get-NetFirewallRule DisplayName=AllowSSH", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_firewall", {}, dry_run=False)
+    assert result.ok is False
+    assert "rule" in (result.error or "").lower()
 
 
 def test_inspect_audio_device_dry_run():

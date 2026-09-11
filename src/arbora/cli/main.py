@@ -88,6 +88,7 @@ Try goals like:
   idle time
   uptime
   what's my username
+  firewall
   what's in temp
   empty temp
   open chrome

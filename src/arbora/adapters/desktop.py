@@ -571,6 +571,13 @@ _IDENTITY_PS = (
     "catch { Write-Output 'COMPUTER='; }"
 )
 
+_FIREWALL_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Get-NetFirewallProfile | ForEach-Object { "
+    "  Write-Output ('PROFILE=' + $_.Name + ';ENABLED=' + $_.Enabled) "
+    "}"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1381,6 +1388,40 @@ def format_identity_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_firewall_snapshot(stdout: str) -> list[tuple[str, str]]:
+    """Parse profile name and Enabled only — never firewall rules."""
+    rows: list[tuple[str, str]] = []
+    for line in (stdout or "").splitlines():
+        if not line.startswith("PROFILE="):
+            continue
+        name = ""
+        enabled = ""
+        for part in line.split(";"):
+            if part.startswith("PROFILE="):
+                name = part.split("=", 1)[1].strip()[:64]
+            elif part.startswith("ENABLED="):
+                enabled = part.split("=", 1)[1].strip()[:16]
+        if name:
+            rows.append((name, enabled))
+    return rows[:8]
+
+
+def format_firewall_report(rows: list[tuple[str, str]]) -> str:
+    if not rows:
+        return "No firewall profiles reported."
+    lines = ["Windows Firewall profiles (on/off only; no rule dump):"]
+    for name, enabled in rows:
+        flag = enabled.strip().lower()
+        if flag in {"true", "1", "yes"}:
+            state = "on"
+        elif flag in {"false", "0", "no"}:
+            state = "off"
+        else:
+            state = enabled.strip() or "unknown"
+        lines.append(f"{name}: {state}")
+    return "\n".join(lines)
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1743,6 +1784,8 @@ class DesktopAdapter:
             return self._inspect_uptime(dry_run=dry_run)
         if action == "inspect_identity":
             return self._inspect_identity(dry_run=dry_run)
+        if action == "inspect_firewall":
+            return self._inspect_firewall(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -2687,6 +2730,47 @@ class DesktopAdapter:
             )
         snapshot = parse_identity_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_identity_report(snapshot))
+
+    def _inspect_firewall(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Windows Firewall profile Enabled flags "
+                    "(no Get-NetFirewallRule dump, no enable/disable)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_FIREWALL_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Firewall inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        if "get-netfirewallrule" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return a firewall rule dump",
+            )
+        rows = parse_firewall_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_firewall_report(rows))
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:
         if dry_run:
