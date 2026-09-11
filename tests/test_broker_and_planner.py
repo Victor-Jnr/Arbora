@@ -471,6 +471,29 @@ def test_firewall_is_read_only_inspect():
     assert [step.action for step in identity.steps] == ["inspect_identity"]
 
 
+def test_bitlocker_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("bitlocker")
+    assert [step.action for step in plan.steps] == ["inspect_bitlocker"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is the drive encrypted")
+    assert named.steps[0].action == "inspect_bitlocker"
+    disk = runtime.planner.plan("disk encryption status")
+    assert disk.steps[0].action == "inspect_bitlocker"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_bitlocker" for step in diagnose.steps)
+    wifi = runtime.planner.plan("wifi status")
+    assert [step.action for step in wifi.steps] == ["inspect_network"]
+    recovery = runtime.planner.plan("bitlocker recovery key")
+    assert not any(step.action == "inspect_bitlocker" for step in recovery.steps)
+    unlock = runtime.planner.plan("unlock bitlocker")
+    assert not any(step.action == "inspect_bitlocker" for step in unlock.steps)
+    firewall = runtime.planner.plan("firewall")
+    assert [step.action for step in firewall.steps] == ["inspect_firewall"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

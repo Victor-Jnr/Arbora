@@ -27,6 +27,7 @@ from arbora.adapters.desktop import (
     format_uptime_report,
     format_identity_report,
     format_firewall_report,
+    format_bitlocker_report,
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
@@ -51,6 +52,7 @@ from arbora.adapters.desktop import (
     parse_uptime_snapshot,
     parse_identity_snapshot,
     parse_firewall_snapshot,
+    parse_bitlocker_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
@@ -1320,6 +1322,62 @@ def test_inspect_firewall_refuses_rule_dump_output():
         result = DesktopAdapter().execute("inspect_firewall", {}, dry_run=False)
     assert result.ok is False
     assert "rule" in (result.error or "").lower()
+
+
+def test_inspect_bitlocker_dry_run():
+    result = DesktopAdapter().execute("inspect_bitlocker", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "bitlocker" in result.output.lower()
+    assert "recoverypassword" in result.output.lower()
+    assert "keyprotector" in result.output.lower()
+    assert "unlock" in result.output.lower()
+
+
+def test_format_bitlocker_report_empty_and_volumes():
+    empty = parse_bitlocker_snapshot("")
+    report = format_bitlocker_report(empty)
+    assert "no bitlocker volumes" in report.lower()
+    live = format_bitlocker_report(
+        parse_bitlocker_snapshot(
+            "MOUNT=C:;STATUS=FullyEncrypted;PROTECTION=On;PERCENT=100\n"
+            "MOUNT=D:;STATUS=FullyDecrypted;PROTECTION=Off;PERCENT=0\n"
+        )
+    )
+    assert "C: FullyEncrypted, protection on, 100%" in live
+    assert "D: FullyDecrypted, protection off, 0%" in live
+    assert "RecoveryPassword" not in live
+    assert "KeyProtector" not in live
+
+
+def test_inspect_bitlocker_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_bitlocker", {}, dry_run=False)
+    assert result.ok
+    assert "no bitlocker volumes" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-bitlockervolume" in command
+    assert "mountpoint" in command
+    assert "volumestatus" in command
+    assert "protectionstatus" in command
+    assert "encryptionpercentage" in command
+    assert "recoverypassword" not in command
+    assert "keyprotector" not in command
+    assert "unlock-bitlocker" not in command
+    assert "disable-bitlocker" not in command
+    assert "enable-bitlocker" not in command
+
+
+def test_inspect_bitlocker_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="RecoveryPassword=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_bitlocker", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
 
 
 def test_inspect_audio_device_dry_run():

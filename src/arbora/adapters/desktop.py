@@ -578,6 +578,18 @@ _FIREWALL_PS = (
     "}"
 )
 
+_BITLOCKER_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Get-BitLockerVolume | ForEach-Object { "
+    "  Write-Output ("
+    "    'MOUNT=' + $_.MountPoint + "
+    "    ';STATUS=' + $_.VolumeStatus + "
+    "    ';PROTECTION=' + $_.ProtectionStatus + "
+    "    ';PERCENT=' + $_.EncryptionPercentage"
+    "  ) "
+    "}"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1422,6 +1434,50 @@ def format_firewall_report(rows: list[tuple[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def parse_bitlocker_snapshot(stdout: str) -> list[tuple[str, str, str, str]]:
+    """Parse mount, volume status, protection, percent — never recovery keys."""
+    rows: list[tuple[str, str, str, str]] = []
+    for line in (stdout or "").splitlines():
+        if not line.startswith("MOUNT="):
+            continue
+        mount = ""
+        status = ""
+        protection = ""
+        percent = ""
+        for part in line.split(";"):
+            if part.startswith("MOUNT="):
+                mount = part.split("=", 1)[1].strip()[:16]
+            elif part.startswith("STATUS="):
+                status = part.split("=", 1)[1].strip()[:48]
+            elif part.startswith("PROTECTION="):
+                protection = part.split("=", 1)[1].strip()[:24]
+            elif part.startswith("PERCENT="):
+                percent = part.split("=", 1)[1].strip()[:8]
+        if mount:
+            rows.append((mount, status, protection, percent))
+    return rows[:16]
+
+
+def format_bitlocker_report(rows: list[tuple[str, str, str, str]]) -> str:
+    if not rows:
+        return "No BitLocker volumes reported."
+    lines = ["BitLocker volumes (status only; no recovery keys):"]
+    for mount, status, protection, percent in rows:
+        flag = protection.strip().lower()
+        if flag in {"on", "1", "true"}:
+            prot = "protection on"
+        elif flag in {"off", "0", "false"}:
+            prot = "protection off"
+        else:
+            prot = f"protection {protection.strip() or 'unknown'}"
+        volume = status.strip() or "unknown status"
+        if percent.strip() == "":
+            lines.append(f"{mount} {volume}, {prot}")
+        else:
+            lines.append(f"{mount} {volume}, {prot}, {percent.strip()}%")
+    return "\n".join(lines)
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1786,6 +1842,8 @@ class DesktopAdapter:
             return self._inspect_identity(dry_run=dry_run)
         if action == "inspect_firewall":
             return self._inspect_firewall(dry_run=dry_run)
+        if action == "inspect_bitlocker":
+            return self._inspect_bitlocker(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -2771,6 +2829,49 @@ class DesktopAdapter:
             )
         rows = parse_firewall_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_firewall_report(rows))
+
+    def _inspect_bitlocker(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read BitLocker volume status "
+                    "(no RecoveryPassword, no KeyProtector, no unlock)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_BITLOCKER_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "BitLocker inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "recoverypassword",
+                "keyprotector",
+                "numericalpassword",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        rows = parse_bitlocker_snapshot(text)
+        return StepResult(step_id=new_id("res_"), ok=True, output=format_bitlocker_report(rows))
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:
         if dry_run:

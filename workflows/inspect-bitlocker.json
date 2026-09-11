@@ -1,0 +1,22 @@
+{
+  "id": "inspect-bitlocker",
+  "name": "Inspect BitLocker status",
+  "description": "Read-only volume status and protection. Does not return recovery keys.",
+  "goal_phrases": [
+    "inspect bitlocker pack",
+    "run inspect bitlocker pack"
+  ],
+  "rationale": "Workflow pack: read-only BitLocker volume status (no recovery keys).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_bitlocker",
+      "args": {},
+      "summary": "Read BitLocker volume status",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Get-BitLockerVolume MountPoint, VolumeStatus, ProtectionStatus, EncryptionPercentage"
+      ]
+    }
+  ]
+}
