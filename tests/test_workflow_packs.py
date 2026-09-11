@@ -40,6 +40,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-theme" in ids
     assert "inspect-identity" in ids
     assert "inspect-firewall" in ids
+    assert "inspect-bitlocker" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -462,6 +463,17 @@ def test_inspect_firewall_workflow_pack_matches():
     plan = pack.to_plan("run inspect firewall pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_firewall"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_bitlocker_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect bitlocker pack")
+    assert pack is not None
+    assert pack.id == "inspect-bitlocker"
+    plan = pack.to_plan("run inspect bitlocker pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_bitlocker"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

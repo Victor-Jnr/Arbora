@@ -77,6 +77,7 @@ Already in place:
 - read-only system uptime and last boot (no shutdown or restart).
 - read-only local username and computer name (not domain credentials).
 - read-only Windows Firewall profile on/off (no rule dump; no enable/disable).
+- read-only BitLocker volume status (no recovery keys).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -234,7 +235,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 67 | **Firewall profile inspect** | ✅ Read-only Get-NetFirewallProfile Name + Enabled; no rule dump; no enable/disable |
-| 68 | **BitLocker status inspect** | MountPoint, VolumeStatus, ProtectionStatus, EncryptionPercentage. Never RecoveryPassword / KeyProtector |
+| 68 | **BitLocker status inspect** | ✅ Read-only MountPoint / VolumeStatus / ProtectionStatus / EncryptionPercentage; never recovery keys |
 | 69 | **DNS servers inspect** | IPv4 DNS per interface, capped. Do not steal inspect_network / wifi. No DNS changes |
 
 ## Non-negotiables (do not drift)
@@ -330,4 +331,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P22 plate 67 is done. Continue Stage 3 with BitLocker status inspect (plate 68) and DNS servers inspect (plate 69).
+P22 plates 67–68 are done. Continue Stage 3 with DNS servers inspect (plate 69).

@@ -188,8 +188,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/078-inspect-identity.md` | Change doc for local username / computer name inspect |
 | `workflows/inspect-firewall.json` | Bundled read-only Windows Firewall profile inspect pack |
 | `documentation/079-inspect-firewall.md` | Change doc for firewall profile inspect |
+| `workflows/inspect-bitlocker.json` | Bundled read-only BitLocker status inspect pack |
+| `documentation/080-inspect-bitlocker.md` | Change doc for BitLocker status inspect |
 
 ---
+
+## 080 — BitLocker status inspect (2026-09-11)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_bitlocker` (status fields only; no recovery keys) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_bitlocker` |
+| `src/arbora/core/planner.py` | BitLocker journey; unlock/recovery-key phrasing unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-bitlocker.json` | Bundled inspect-bitlocker pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Unlock-BitLocker; secrets withheld |
+| `tests/test_broker_and_planner.py` | BitLocker vs diagnose vs recovery key vs firewall |
+| `tests/test_workflow_packs.py` | Pack match for inspect-bitlocker |
+| `docs/NEXT.md` | Marked P22 plate 68 done |
+| `documentation/080-inspect-bitlocker.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 080 |
+| `README.md` | Documentation latest table |
 
 ## 079 — Firewall profile inspect (2026-09-11)
 

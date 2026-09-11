@@ -89,6 +89,7 @@ Try goals like:
   uptime
   what's my username
   firewall
+  bitlocker
   what's in temp
   empty temp
   open chrome

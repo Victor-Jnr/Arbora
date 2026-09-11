@@ -155,6 +155,8 @@ class GoalPlanner:
             return self._identity_plan(text)
         if self._looks_like_firewall(lower):
             return self._firewall_plan(text)
+        if self._looks_like_bitlocker(lower):
+            return self._bitlocker_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -938,6 +940,30 @@ class GoalPlanner:
                     summary="Read-only: Windows Firewall profile on/off",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Get-NetFirewallProfile Name and Enabled (no rule dump)",),
+                )
+            ],
+        )
+
+    def _bitlocker_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "BitLocker inspect journey — read-only volume status and protection. "
+                "Does not return recovery keys or KeyProtector details."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_bitlocker",
+                    args={},
+                    summary="Read-only: BitLocker volume status (no recovery keys)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=(
+                        "Reads Get-BitLockerVolume MountPoint, VolumeStatus, "
+                        "ProtectionStatus, EncryptionPercentage",
+                    ),
                 )
             ],
         )
@@ -2878,6 +2904,43 @@ class GoalPlanner:
                 "firewall on or off",
             )
         ) or bool(re.search(r"\bfirewall\b", lower))
+
+    @staticmethod
+    def _looks_like_bitlocker(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "unlock",
+                "recovery key",
+                "recovery password",
+                "key protector",
+                "disable bitlocker",
+                "enable bitlocker",
+                "turn off bitlocker",
+                "turn on bitlocker",
+                "suspend bitlocker",
+                "resume bitlocker",
+                "decrypt the drive",
+                "decrypt drive",
+                "encrypt the drive",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "bitlocker",
+                "bit locker",
+                "is the drive encrypted",
+                "is my drive encrypted",
+                "disk encryption status",
+                "drive encryption status",
+                "inspect bitlocker",
+                "volume encryption",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
