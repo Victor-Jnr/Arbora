@@ -1,0 +1,20 @@
+{
+  "id": "inspect-dns",
+  "name": "Inspect DNS servers",
+  "description": "Read-only IPv4 DNS servers per interface. Does not change DNS.",
+  "goal_phrases": [
+    "inspect dns pack",
+    "run inspect dns pack"
+  ],
+  "rationale": "Workflow pack: read-only IPv4 DNS servers per interface.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_dns",
+      "args": {},
+      "summary": "Read IPv4 DNS servers per interface",
+      "sensitivity": "read",
+      "side_effects": ["Reads Get-DnsClientServerAddress IPv4 (no DNS writes)"]
+    }
+  ]
+}

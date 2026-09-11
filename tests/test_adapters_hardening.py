@@ -28,6 +28,7 @@ from arbora.adapters.desktop import (
     format_identity_report,
     format_firewall_report,
     format_bitlocker_report,
+    format_dns_report,
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
@@ -53,6 +54,7 @@ from arbora.adapters.desktop import (
     parse_identity_snapshot,
     parse_firewall_snapshot,
     parse_bitlocker_snapshot,
+    parse_dns_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
@@ -1376,6 +1378,53 @@ def test_inspect_bitlocker_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_bitlocker", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_dns_dry_run():
+    result = DesktopAdapter().execute("inspect_dns", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "dns" in result.output.lower()
+    assert "set-dnsclientserveraddress" in result.output.lower()
+    assert "flush" in result.output.lower()
+    assert "wi-fi" in result.output.lower()
+
+
+def test_format_dns_report_empty_and_servers():
+    empty = parse_dns_snapshot("")
+    report = format_dns_report(empty)
+    assert "no ipv4 dns" in report.lower()
+    live = format_dns_report(
+        parse_dns_snapshot("IFACE=Ethernet;DNS=1.1.1.1,1.0.0.1\nIFACE=Wi-Fi;DNS=8.8.8.8\n")
+    )
+    assert "Ethernet: 1.1.1.1, 1.0.0.1" in live
+    assert "Wi-Fi: 8.8.8.8" in live
+    assert "Set-DnsClientServerAddress" not in live
+
+
+def test_inspect_dns_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_dns", {}, dry_run=False)
+    assert result.ok
+    assert "no ipv4 dns" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-dnsclientserveraddress" in command
+    assert "ipv4" in command
+    assert "set-dnsclientserveraddress" not in command
+    assert "clear-dnsclientcache" not in command
+    assert "netsh" not in command
+
+
+def test_inspect_dns_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_dns", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

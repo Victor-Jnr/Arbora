@@ -190,8 +190,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/079-inspect-firewall.md` | Change doc for firewall profile inspect |
 | `workflows/inspect-bitlocker.json` | Bundled read-only BitLocker status inspect pack |
 | `documentation/080-inspect-bitlocker.md` | Change doc for BitLocker status inspect |
+| `workflows/inspect-dns.json` | Bundled read-only DNS servers inspect pack |
+| `documentation/081-inspect-dns.md` | Change doc for DNS servers inspect |
 
 ---
+
+## 081 — DNS servers inspect (2026-09-11)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_dns` (capped IPv4 DNS per interface; no writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_dns` |
+| `src/arbora/core/planner.py` | DNS journey; wifi/IP and flush/change phrasing unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-dns.json` | Bundled inspect-dns pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Set-DnsClientServerAddress; secrets withheld |
+| `tests/test_broker_and_planner.py` | DNS vs wifi vs change/flush vs BitLocker |
+| `tests/test_workflow_packs.py` | Pack match for inspect-dns |
+| `docs/NEXT.md` | Marked P22 plate 69 done |
+| `documentation/081-inspect-dns.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 081 |
+| `README.md` | Documentation latest table |
 
 ## 080 — BitLocker status inspect (2026-09-11)
 

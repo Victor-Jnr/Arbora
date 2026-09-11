@@ -30,6 +30,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_identity",
             "inspect_firewall",
             "inspect_bitlocker",
+            "inspect_dns",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",
