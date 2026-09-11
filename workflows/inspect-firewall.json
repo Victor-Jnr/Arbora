@@ -1,0 +1,20 @@
+{
+  "id": "inspect-firewall",
+  "name": "Inspect Windows Firewall profiles",
+  "description": "Read-only Domain/Private/Public Enabled flags. Does not dump rules or change the firewall.",
+  "goal_phrases": [
+    "inspect firewall pack",
+    "run inspect firewall pack"
+  ],
+  "rationale": "Workflow pack: read-only Windows Firewall profile on/off.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_firewall",
+      "args": {},
+      "summary": "Read Windows Firewall profile Enabled flags",
+      "sensitivity": "read",
+      "side_effects": ["Reads Get-NetFirewallProfile Name and Enabled (no rule dump)"]
+    }
+  ]
+}

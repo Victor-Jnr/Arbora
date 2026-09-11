@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 079 | [Firewall profile inspect](documentation/079-inspect-firewall.md) |
 | 078 | [Local username / computer name inspect](documentation/078-inspect-identity.md) |
 | 077 | [Uptime inspect](documentation/077-inspect-uptime.md) |
 | 076 | [Environment variable inspect by name](documentation/076-inspect-env-var.md) |
