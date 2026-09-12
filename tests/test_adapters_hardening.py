@@ -30,6 +30,7 @@ from arbora.adapters.desktop import (
     format_bitlocker_report,
     format_dns_report,
     format_windows_version_report,
+    format_pending_reboot_report,
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
@@ -57,6 +58,7 @@ from arbora.adapters.desktop import (
     parse_bitlocker_snapshot,
     parse_dns_snapshot,
     parse_windows_version_snapshot,
+    parse_pending_reboot_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
@@ -1478,6 +1480,57 @@ def test_inspect_windows_version_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_windows_version", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_pending_reboot_dry_run():
+    result = DesktopAdapter().execute("inspect_pending_reboot", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "pending-reboot" in result.output.lower() or "pending reboot" in result.output.lower()
+    assert "restart-computer" in result.output.lower()
+    assert "shutdown" in result.output.lower()
+
+
+def test_format_pending_reboot_report_empty_and_flags():
+    empty = parse_pending_reboot_snapshot("")
+    report = format_pending_reboot_report(empty)
+    assert "no pending-reboot" in report.lower()
+    live = format_pending_reboot_report(
+        parse_pending_reboot_snapshot("WU_REBOOT=True\nCBS_REBOOT=False\nPFRO=False\n")
+    )
+    assert "Pending reboot: yes" in live
+    assert "Windows Update reboot required: yes" in live
+    assert "Component Based Servicing reboot pending: no" in live
+    clear = format_pending_reboot_report(
+        parse_pending_reboot_snapshot("WU_REBOOT=False\nCBS_REBOOT=False\nPFRO=False\n")
+    )
+    assert "Pending reboot: no" in clear
+
+
+def test_inspect_pending_reboot_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_pending_reboot", {}, dry_run=False)
+    assert result.ok
+    assert "no pending-reboot" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "rebootrequired" in command
+    assert "rebootpending" in command
+    assert "pendingfilerenameoperations" in command
+    assert "restart-computer" not in command
+    assert "stop-computer" not in command
+    assert "shutdown" not in command
+
+
+def test_inspect_pending_reboot_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_pending_reboot", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

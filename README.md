@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 083 | [Pending reboot inspect](documentation/083-inspect-pending-reboot.md) |
 | 082 | [Windows version inspect](documentation/082-inspect-windows-version.md) |
 | 081 | [DNS servers inspect](documentation/081-inspect-dns.md) |
 | 080 | [BitLocker status inspect](documentation/080-inspect-bitlocker.md) |
