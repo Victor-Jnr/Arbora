@@ -81,6 +81,7 @@ Already in place:
 - read-only IPv4 DNS servers per interface (no DNS changes; no Wi-Fi keys).
 - read-only Windows version and build (no product key).
 - read-only pending-reboot flags (no restart or shutdown).
+- localhost plan-accept HTTP (`arbora serve`): token, loopback, dry-run default; hard classes still need hard_confirm.
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -247,7 +248,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 70 | **Windows version inspect** | ✅ Read-only Caption / Version / Build / architecture; never a product key |
 | 71 | **Pending reboot inspect** | ✅ Read-only reboot-pending flags; does not restart or shut down |
-| 72 | **Localhost plan-accept HTTP API** | Token-gated loopback `POST /v1/goals` then `POST /v1/plans/{id}/approve`; dry-run default; hard classes still need hard_confirm |
+| 72 | **Localhost plan-accept HTTP API** | ✅ Token-gated loopback `POST /v1/goals` then `POST /v1/plans/{id}/approve`; dry-run default; hard classes still need hard_confirm |
 
 ## Non-negotiables (do not drift)
 
@@ -342,4 +343,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P23 plates 70–71 are done. Continue Stage 3 with the localhost plan-accept HTTP API (plate 72).
+P23 plates 70–72 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

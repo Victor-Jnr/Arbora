@@ -68,12 +68,16 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `src/arbora/cli/session.py` | Runtime wiring and plan formatting helpers |
 | `src/arbora/cli/main.py` | Interactive and one-shot CLI chat shell (+ doctor dispatch) |
 | `src/arbora/cli/doctor.py` | `arbora doctor` health probes and fix hints |
+| `src/arbora/cli/serve.py` | `arbora serve` localhost plan-accept HTTP CLI |
+| `src/arbora/api/__init__.py` | Localhost HTTP API package exports |
+| `src/arbora/api/server.py` | Token-gated plan-accept request dispatcher |
 | `tests/test_broker_and_planner.py` | Broker, planner, trust, and memory regression tests |
 | `tests/test_memory_crypto.py` | Encrypted memory roundtrip, migration, and wipe tests |
 | `tests/test_adapters_hardening.py` | Desktop/files/terminal hardening regression tests |
 | `tests/test_browser_adapter.py` | Browser adapter and research journey tests |
 | `tests/test_setup_status.py` | Status probe and first-run checklist regression tests |
 | `tests/test_doctor.py` | arbora doctor CLI regression tests |
+| `tests/test_api_accept.py` | Localhost plan-accept HTTP API regression tests |
 | `tests/test_desktop_chat.py` | Tkinter desktop chat and Trust UX dialog smoke tests |
 | `tests/test_emergency_stop.py` | Broker emergency-stop skip and no-promote tests |
 | `tests/test_file_undo.py` | Organise apply/undo roundtrip regression tests |
@@ -196,8 +200,26 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/082-inspect-windows-version.md` | Change doc for Windows version inspect |
 | `workflows/inspect-pending-reboot.json` | Bundled read-only pending reboot inspect pack |
 | `documentation/083-inspect-pending-reboot.md` | Change doc for pending reboot inspect |
+| `documentation/084-localhost-plan-accept-api.md` | Change doc for localhost plan-accept HTTP API |
 
 ---
+
+## 084 — Localhost plan-accept HTTP API (2026-09-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/api/server.py` | Token-gated dispatcher: `/v1/goals` then `/v1/plans/{id}/approve` |
+| `src/arbora/api/__init__.py` | API package exports |
+| `src/arbora/cli/serve.py` | `arbora serve` loopback HTTP server |
+| `src/arbora/cli/main.py` | Dispatched `arbora serve` and documented it |
+| `src/arbora/cli/doctor.py` | Shared `doctor_payload()` for GET `/v1/health` |
+| `tests/test_api_accept.py` | Token, auto_approve refusal, accept, hard_confirm, bind host |
+| `docs/prototype.md` | Documented the localhost plan-accept loop |
+| `docs/NEXT.md` | Marked P23 plate 72 done |
+| `documentation/084-localhost-plan-accept-api.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 084 |
+| `README.md` | Public API row + documentation latest table |
+| `CHANGELOG.md` | File roles for api/serve |
 
 ## 083 — Pending reboot inspect (2026-09-12)
 

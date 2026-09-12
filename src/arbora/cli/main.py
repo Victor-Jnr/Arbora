@@ -36,6 +36,7 @@ Commands:
   arbora prefs     Show or set opt-in user preferences
   arbora audit     Export persisted audit events
   arbora memory    Show or export local memory JSON (no encryption keys)
+  arbora serve     Localhost plan-accept HTTP API (token; dry-run default)
   /history        Show recent goals
   /audit          Show recent audit events (/audit export [path])
   /routines       List trusted routines
@@ -131,6 +132,10 @@ def main(argv: list[str] | None = None) -> int:
         from arbora.cli.schedule import run_schedule_cli
 
         return run_schedule_cli(argv[1:])
+    if argv and argv[0] == "serve":
+        from arbora.cli.serve import run_serve
+
+        return run_serve(argv[1:])
 
     parser = argparse.ArgumentParser(description="Arbora personal assistant (prototype)")
     parser.add_argument("--goal", help="Run a single goal non-interactively")
