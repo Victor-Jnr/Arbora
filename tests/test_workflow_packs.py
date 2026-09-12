@@ -42,6 +42,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-firewall" in ids
     assert "inspect-bitlocker" in ids
     assert "inspect-dns" in ids
+    assert "inspect-windows-version" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -486,6 +487,17 @@ def test_inspect_dns_workflow_pack_matches():
     plan = pack.to_plan("run inspect dns pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_dns"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_windows_version_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect windows version pack")
+    assert pack is not None
+    assert pack.id == "inspect-windows-version"
+    plan = pack.to_plan("run inspect windows version pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_windows_version"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

@@ -519,6 +519,27 @@ def test_dns_is_read_only_inspect():
     assert [step.action for step in bitlocker.steps] == ["inspect_bitlocker"]
 
 
+def test_windows_version_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("windows version")
+    assert [step.action for step in plan.steps] == ["inspect_windows_version"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what version of windows")
+    assert named.steps[0].action == "inspect_windows_version"
+    build = runtime.planner.plan("os build")
+    assert build.steps[0].action == "inspect_windows_version"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_windows_version" for step in diagnose.steps)
+    update = runtime.planner.plan("windows update")
+    assert [step.action for step in update.steps] == ["inspect_windows_update"]
+    key = runtime.planner.plan("windows product key")
+    assert not any(step.action == "inspect_windows_version" for step in key.steps)
+    dns = runtime.planner.plan("dns servers")
+    assert [step.action for step in dns.steps] == ["inspect_dns"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

@@ -192,8 +192,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/080-inspect-bitlocker.md` | Change doc for BitLocker status inspect |
 | `workflows/inspect-dns.json` | Bundled read-only DNS servers inspect pack |
 | `documentation/081-inspect-dns.md` | Change doc for DNS servers inspect |
+| `workflows/inspect-windows-version.json` | Bundled read-only Windows version inspect pack |
+| `documentation/082-inspect-windows-version.md` | Change doc for Windows version inspect |
 
 ---
+
+## 082 — Windows version inspect (2026-09-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_windows_version` (Caption/Version/Build/Arch; no product key) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_windows_version` |
+| `src/arbora/core/planner.py` | Version journey; Windows Update and product-key phrasing unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-windows-version.json` | Bundled inspect-windows-version pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no ProductKey; secrets withheld |
+| `tests/test_broker_and_planner.py` | Version vs Windows Update vs product key vs DNS |
+| `tests/test_workflow_packs.py` | Pack match for inspect-windows-version |
+| `docs/NEXT.md` | Marked P23 plate 70 done |
+| `documentation/082-inspect-windows-version.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 082 |
+| `README.md` | Documentation latest table |
 
 ## 081 — DNS servers inspect (2026-09-11)
 

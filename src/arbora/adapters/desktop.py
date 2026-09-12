@@ -601,6 +601,19 @@ _DNS_PS = (
     "}"
 )
 
+_WINDOWS_VERSION_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $os = Get-CimInstance -ClassName Win32_OperatingSystem -Property Caption,Version,BuildNumber,OSArchitecture; "
+    "  Write-Output ('CAPTION=' + $os.Caption); "
+    "  Write-Output ('VERSION=' + $os.Version); "
+    "  Write-Output ('BUILD=' + $os.BuildNumber); "
+    "  Write-Output ('ARCH=' + $os.OSArchitecture); "
+    "} catch { "
+    "  Write-Output 'CAPTION='; Write-Output 'VERSION='; Write-Output 'BUILD='; Write-Output 'ARCH='; "
+    "}"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1518,6 +1531,42 @@ def format_dns_report(rows: list[tuple[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def parse_windows_version_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Caption/Version/Build/Arch only — never a product key."""
+    snapshot = {"caption": "", "version": "", "build": "", "arch": ""}
+    mapping = (
+        ("CAPTION=", "caption"),
+        ("VERSION=", "version"),
+        ("BUILD=", "build"),
+        ("ARCH=", "arch"),
+    )
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:96]
+                break
+    return snapshot
+
+
+def format_windows_version_report(snapshot: dict[str, str]) -> str:
+    caption = str(snapshot.get("caption") or "").strip()
+    version = str(snapshot.get("version") or "").strip()
+    build = str(snapshot.get("build") or "").strip()
+    arch = str(snapshot.get("arch") or "").strip()
+    if not any((caption, version, build)):
+        return "No Windows version reported."
+    lines = []
+    if caption:
+        lines.append(f"Windows: {caption}")
+    if version:
+        lines.append(f"Version: {version}")
+    if build:
+        lines.append(f"Build: {build}")
+    if arch:
+        lines.append(f"Architecture: {arch}")
+    return "\n".join(lines)
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1886,6 +1935,8 @@ class DesktopAdapter:
             return self._inspect_bitlocker(dry_run=dry_run)
         if action == "inspect_dns":
             return self._inspect_dns(dry_run=dry_run)
+        if action == "inspect_windows_version":
+            return self._inspect_windows_version(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -2948,6 +2999,53 @@ class DesktopAdapter:
             )
         rows = parse_dns_snapshot(text)
         return StepResult(step_id=new_id("res_"), ok=True, output=format_dns_report(rows))
+
+    def _inspect_windows_version(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Win32_OperatingSystem Caption/Version/BuildNumber "
+                    "(no ProductKey, no OA3xOriginalProductKey, no DigitalProductId)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_WINDOWS_VERSION_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Windows version inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "productkey",
+                "oa3xoriginalproductkey",
+                "digitalproductid",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_windows_version_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_windows_version_report(snapshot),
+        )
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:
         if dry_run:
