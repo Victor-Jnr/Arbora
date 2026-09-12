@@ -8,6 +8,21 @@ from collections.abc import Sequence
 from arbora.setup_status import Light, ServiceStatus, first_run_checklist
 
 
+def doctor_payload() -> list[dict]:
+    """Machine-readable doctor rows (CLI --json and GET /v1/health)."""
+    steps = first_run_checklist()
+    return [
+        {
+            "name": status.name,
+            "light": status.light.value,
+            "detail": status.detail,
+            "fix_hint": status.fix_hint,
+            "required": step.required,
+        }
+        for step, status in zip(steps, [item.status for item in steps], strict=True)
+    ]
+
+
 def run_doctor(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="arbora doctor",
@@ -21,21 +36,10 @@ def run_doctor(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     steps = first_run_checklist()
-    statuses = [step.status for step in steps]
     if args.json:
         import json
 
-        payload = [
-            {
-                "name": s.name,
-                "light": s.light.value,
-                "detail": s.detail,
-                "fix_hint": s.fix_hint,
-                "required": step.required,
-            }
-            for step, s in zip(steps, statuses, strict=True)
-        ]
-        print(json.dumps(payload, indent=2))
+        print(json.dumps(doctor_payload(), indent=2))
         return _exit_code(steps)
 
     print("Arbora doctor")

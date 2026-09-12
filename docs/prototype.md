@@ -10,6 +10,7 @@
 - Local memory with Fernet encryption at rest (Windows DPAPI-wrapped key)
 - Providers: Ollama (`gpt-oss:20b` by default) and echo stub
 - Interactive CLI chat: plan → approve → execute (`arbora`)
+- Localhost plan-accept HTTP (`arbora serve`): POST `/v1/goals` then POST `/v1/plans/{id}/approve`
 - Desktop chat UI: Tkinter (`arbora-ui`)
 
 ## Run
@@ -52,6 +53,14 @@ arbora --goal "start my workday"
 ```
 
 The third call should match the trusted routine and run without `--yes`.
+
+Localhost plan-accept API (token required, dry-run default, loopback only):
+
+```powershell
+arbora serve --provider echo --token arbora-test-token-1
+# POST http://127.0.0.1:8472/v1/goals
+# POST http://127.0.0.1:8472/v1/plans/{id}/approve
+```
 
 Live execution: add `--execute`. Hard-confirmation steps still need `--hard-yes`.
 

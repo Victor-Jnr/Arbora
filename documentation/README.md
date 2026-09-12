@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 084 | [Localhost plan-accept HTTP API](084-localhost-plan-accept-api.md) | 2026-09-12 | Token-gated loopback plan → accept → execute |
 | 083 | [Pending reboot inspect](083-inspect-pending-reboot.md) | 2026-09-12 | Read-only reboot-pending flags; no restart |
 | 082 | [Windows version inspect](082-inspect-windows-version.md) | 2026-09-12 | Read-only Windows version and build; no product key |
 | 081 | [DNS servers inspect](081-inspect-dns.md) | 2026-09-11 | Read-only IPv4 DNS per interface; no DNS changes |

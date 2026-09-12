@@ -67,7 +67,7 @@ The name *Arbora* (Latin for “tree”) reflects a living system that grows wit
 | Runnable application | CLI prototype (`arbora`) — not a packaged product |
 | Install / setup docs | See [docs/install.md](docs/install.md), [docs/prototype.md](docs/prototype.md), and [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Near-term build order | [docs/NEXT.md](docs/NEXT.md) (source of truth for what we do next) |
-| Public API | Not defined |
+| Public API | Localhost plan-accept HTTP (`arbora serve`); not a public internet API |
 | License | [GPL-3.0](LICENSE) |
 | Collaboration model | Open source |
 
@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 084 | [Localhost plan-accept HTTP API](documentation/084-localhost-plan-accept-api.md) |
 | 083 | [Pending reboot inspect](documentation/083-inspect-pending-reboot.md) |
 | 082 | [Windows version inspect](documentation/082-inspect-windows-version.md) |
 | 081 | [DNS servers inspect](documentation/081-inspect-dns.md) |
