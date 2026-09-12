@@ -614,6 +614,21 @@ _WINDOWS_VERSION_PS = (
     "}"
 )
 
+_PENDING_REBOOT_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "$wu = Test-Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Auto Update\\RebootRequired'; "
+    "$cbs = Test-Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing\\RebootPending'; "
+    "$pfro = $false; "
+    "try { "
+    "  $val = (Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager' "
+    "    -Name PendingFileRenameOperations -ErrorAction SilentlyContinue).PendingFileRenameOperations; "
+    "  if ($val) { $pfro = $true }; "
+    "} catch { }; "
+    "Write-Output ('WU_REBOOT=' + $wu); "
+    "Write-Output ('CBS_REBOOT=' + $cbs); "
+    "Write-Output ('PFRO=' + $pfro)"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1567,6 +1582,49 @@ def format_windows_version_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def _flag_yes_no(raw: str) -> str:
+    flag = raw.strip().lower()
+    if flag in {"true", "1", "yes"}:
+        return "yes"
+    if flag in {"false", "0", "no"}:
+        return "no"
+    return raw.strip() or "unknown"
+
+
+def parse_pending_reboot_snapshot(stdout: str) -> dict[str, str]:
+    """Parse reboot-pending registry flags — never a shutdown command."""
+    snapshot = {"wu": "", "cbs": "", "pfro": ""}
+    mapping = (("WU_REBOOT=", "wu"), ("CBS_REBOOT=", "cbs"), ("PFRO=", "pfro"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:16]
+                break
+    return snapshot
+
+
+def format_pending_reboot_report(snapshot: dict[str, str]) -> str:
+    wu = str(snapshot.get("wu") or "").strip()
+    cbs = str(snapshot.get("cbs") or "").strip()
+    pfro = str(snapshot.get("pfro") or "").strip()
+    if not any((wu, cbs, pfro)):
+        return "No pending-reboot status reported."
+    wu_flag = _flag_yes_no(wu)
+    cbs_flag = _flag_yes_no(cbs)
+    pfro_flag = _flag_yes_no(pfro)
+    pending = "yes" if "yes" in {wu_flag, cbs_flag, pfro_flag} else "no"
+    if {wu_flag, cbs_flag, pfro_flag} & {"unknown"} and pending != "yes":
+        pending = "unknown"
+    return "\n".join(
+        [
+            f"Pending reboot: {pending}",
+            f"Windows Update reboot required: {wu_flag}",
+            f"Component Based Servicing reboot pending: {cbs_flag}",
+            f"Pending file rename operations: {pfro_flag}",
+        ]
+    )
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1937,6 +1995,8 @@ class DesktopAdapter:
             return self._inspect_dns(dry_run=dry_run)
         if action == "inspect_windows_version":
             return self._inspect_windows_version(dry_run=dry_run)
+        if action == "inspect_pending_reboot":
+            return self._inspect_pending_reboot(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3045,6 +3105,44 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_windows_version_report(snapshot),
+        )
+
+    def _inspect_pending_reboot(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read pending-reboot registry flags "
+                    "(no Restart-Computer, no Stop-Computer, no shutdown)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_PENDING_REBOOT_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Pending reboot inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_pending_reboot_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_pending_reboot_report(snapshot),
         )
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:

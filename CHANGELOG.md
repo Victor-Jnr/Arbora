@@ -194,8 +194,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/081-inspect-dns.md` | Change doc for DNS servers inspect |
 | `workflows/inspect-windows-version.json` | Bundled read-only Windows version inspect pack |
 | `documentation/082-inspect-windows-version.md` | Change doc for Windows version inspect |
+| `workflows/inspect-pending-reboot.json` | Bundled read-only pending reboot inspect pack |
+| `documentation/083-inspect-pending-reboot.md` | Change doc for pending reboot inspect |
 
 ---
+
+## 083 — Pending reboot inspect (2026-09-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_pending_reboot` (WU/CBS/PFRO flags; no restart) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_pending_reboot` |
+| `src/arbora/core/planner.py` | Pending-reboot journey; restart-now and uptime unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-pending-reboot.json` | Bundled inspect-pending-reboot pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Restart-Computer; secrets withheld |
+| `tests/test_broker_and_planner.py` | Pending reboot vs uptime vs restart-now vs version |
+| `tests/test_workflow_packs.py` | Pack match for inspect-pending-reboot |
+| `docs/NEXT.md` | Marked P23 plate 71 done |
+| `documentation/083-inspect-pending-reboot.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 083 |
+| `README.md` | Documentation latest table |
 
 ## 082 — Windows version inspect (2026-09-12)
 

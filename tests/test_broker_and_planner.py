@@ -540,6 +540,27 @@ def test_windows_version_is_read_only_inspect():
     assert [step.action for step in dns.steps] == ["inspect_dns"]
 
 
+def test_pending_reboot_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("pending reboot")
+    assert [step.action for step in plan.steps] == ["inspect_pending_reboot"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("does this pc need a restart")
+    assert named.steps[0].action == "inspect_pending_reboot"
+    restart = runtime.planner.plan("is a restart pending")
+    assert restart.steps[0].action == "inspect_pending_reboot"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_pending_reboot" for step in diagnose.steps)
+    uptime = runtime.planner.plan("uptime")
+    assert [step.action for step in uptime.steps] == ["inspect_uptime"]
+    mutate = runtime.planner.plan("restart now")
+    assert not any(step.action == "inspect_pending_reboot" for step in mutate.steps)
+    version = runtime.planner.plan("windows version")
+    assert [step.action for step in version.steps] == ["inspect_windows_version"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

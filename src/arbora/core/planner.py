@@ -161,6 +161,8 @@ class GoalPlanner:
             return self._dns_plan(text)
         if self._looks_like_windows_version(lower):
             return self._windows_version_plan(text)
+        if self._looks_like_pending_reboot(lower):
+            return self._pending_reboot_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1011,6 +1013,29 @@ class GoalPlanner:
                     sensitivity=Sensitivity.READ,
                     side_effects=(
                         "Reads Win32_OperatingSystem Caption, Version, BuildNumber, OSArchitecture",
+                    ),
+                )
+            ],
+        )
+
+    def _pending_reboot_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Pending reboot inspect journey — read-only reboot-pending flags. "
+                "Does not restart or shut down the PC."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_pending_reboot",
+                    args={},
+                    summary="Read-only: pending reboot flags (no restart)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=(
+                        "Reads WU RebootRequired, CBS RebootPending, and PendingFileRenameOperations",
                     ),
                 )
             ],
@@ -3058,6 +3083,44 @@ class GoalPlanner:
                 "windows build",
                 "windows edition",
                 "inspect windows version",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_pending_reboot(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "shutdown",
+                "shut down",
+                "restart now",
+                "reboot now",
+                "restart-computer",
+                "stop-computer",
+                "restart the computer",
+                "reboot the computer",
+                "restart the pc",
+                "reboot the pc",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "pending reboot",
+                "reboot pending",
+                "restart pending",
+                "does this pc need a restart",
+                "does this computer need a restart",
+                "do i need to restart",
+                "do i need to reboot",
+                "needs a reboot",
+                "need a reboot",
+                "inspect reboot",
+                "inspect pending reboot",
+                "is a restart pending",
             )
         )
 

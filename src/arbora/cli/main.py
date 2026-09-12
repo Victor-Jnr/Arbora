@@ -92,6 +92,7 @@ Try goals like:
   bitlocker
   dns servers
   windows version
+  pending reboot
   what's in temp
   empty temp
   open chrome

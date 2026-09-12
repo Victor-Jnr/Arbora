@@ -1,0 +1,22 @@
+{
+  "id": "inspect-pending-reboot",
+  "name": "Inspect pending reboot",
+  "description": "Read-only reboot-pending flags. Does not restart or shut down.",
+  "goal_phrases": [
+    "inspect pending reboot pack",
+    "run inspect pending reboot pack"
+  ],
+  "rationale": "Workflow pack: read-only pending reboot flags (no restart).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_pending_reboot",
+      "args": {},
+      "summary": "Read pending reboot flags",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads WU RebootRequired, CBS RebootPending, and PendingFileRenameOperations"
+      ]
+    }
+  ]
+}
