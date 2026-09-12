@@ -29,6 +29,7 @@ from arbora.adapters.desktop import (
     format_firewall_report,
     format_bitlocker_report,
     format_dns_report,
+    format_windows_version_report,
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
@@ -55,6 +56,7 @@ from arbora.adapters.desktop import (
     parse_firewall_snapshot,
     parse_bitlocker_snapshot,
     parse_dns_snapshot,
+    parse_windows_version_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
@@ -1425,6 +1427,57 @@ def test_inspect_dns_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_dns", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_windows_version_dry_run():
+    result = DesktopAdapter().execute("inspect_windows_version", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "caption" in result.output.lower()
+    assert "productkey" in result.output.lower()
+    assert "digitalproductid" in result.output.lower()
+
+
+def test_format_windows_version_report_empty_and_build():
+    empty = parse_windows_version_snapshot("")
+    report = format_windows_version_report(empty)
+    assert "no windows version" in report.lower()
+    live = format_windows_version_report(
+        parse_windows_version_snapshot(
+            "CAPTION=Microsoft Windows 11 Pro\nVERSION=10.0.26200\nBUILD=26200\nARCH=64-bit\n"
+        )
+    )
+    assert "Windows: Microsoft Windows 11 Pro" in live
+    assert "Version: 10.0.26200" in live
+    assert "Build: 26200" in live
+    assert "Architecture: 64-bit" in live
+    assert "ProductKey" not in live
+
+
+def test_inspect_windows_version_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_windows_version", {}, dry_run=False)
+    assert result.ok
+    assert "no windows version" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "win32_operatingsystem" in command
+    assert "caption" in command
+    assert "buildnumber" in command
+    assert "productkey" not in command
+    assert "oa3xoriginalproductkey" not in command
+    assert "digitalproductid" not in command
+
+
+def test_inspect_windows_version_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="ProductKey=XXXXX-XXXXX", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_windows_version", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

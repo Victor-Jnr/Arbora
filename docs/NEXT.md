@@ -79,11 +79,12 @@ Already in place:
 - read-only Windows Firewall profile on/off (no rule dump; no enable/disable).
 - read-only BitLocker volume status (no recovery keys).
 - read-only IPv4 DNS servers per interface (no DNS changes; no Wi-Fi keys).
+- read-only Windows version and build (no product key).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P22).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P23).
 
 ---
 
@@ -239,6 +240,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 68 | **BitLocker status inspect** | ✅ Read-only MountPoint / VolumeStatus / ProtectionStatus / EncryptionPercentage; never recovery keys |
 | 69 | **DNS servers inspect** | ✅ Read-only capped IPv4 DNS per interface; does not steal inspect_network / wifi; no DNS changes |
 
+### P23 — Stage 3 Windows version, reboot, and plan-accept API
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 70 | **Windows version inspect** | ✅ Read-only Caption / Version / Build / architecture; never a product key |
+| 71 | **Pending reboot inspect** | Read-only reboot-pending flags; does not restart or shut down |
+| 72 | **Localhost plan-accept HTTP API** | Token-gated loopback `POST /v1/goals` then `POST /v1/plans/{id}/approve`; dry-run default; hard classes still need hard_confirm |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -332,4 +341,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P22 plates 67–69 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P23 plate 70 is done. Continue Stage 3 with pending reboot inspect (plate 71) and the localhost plan-accept HTTP API (plate 72).

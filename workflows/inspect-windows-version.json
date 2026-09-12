@@ -1,0 +1,22 @@
+{
+  "id": "inspect-windows-version",
+  "name": "Inspect Windows version",
+  "description": "Read-only Windows Caption, Version, Build, and architecture. Does not return a product key.",
+  "goal_phrases": [
+    "inspect windows version pack",
+    "run inspect windows version pack"
+  ],
+  "rationale": "Workflow pack: read-only Windows version and build (no product key).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_windows_version",
+      "args": {},
+      "summary": "Read Windows version and build",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Win32_OperatingSystem Caption, Version, BuildNumber, OSArchitecture"
+      ]
+    }
+  ]
+}

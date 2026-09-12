@@ -91,6 +91,7 @@ Try goals like:
   firewall
   bitlocker
   dns servers
+  windows version
   what's in temp
   empty temp
   open chrome

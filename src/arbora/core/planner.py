@@ -159,6 +159,8 @@ class GoalPlanner:
             return self._bitlocker_plan(text)
         if self._looks_like_dns(lower):
             return self._dns_plan(text)
+        if self._looks_like_windows_version(lower):
+            return self._windows_version_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -987,6 +989,29 @@ class GoalPlanner:
                     summary="Read-only: IPv4 DNS servers per interface",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Get-DnsClientServerAddress IPv4 (no DNS writes)",),
+                )
+            ],
+        )
+
+    def _windows_version_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Windows version inspect journey — read-only Caption, Version, Build, and architecture. "
+                "Does not return a product key."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_windows_version",
+                    args={},
+                    summary="Read-only: Windows version and build (no product key)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=(
+                        "Reads Win32_OperatingSystem Caption, Version, BuildNumber, OSArchitecture",
+                    ),
                 )
             ],
         )
@@ -3004,6 +3029,37 @@ class GoalPlanner:
                 "ipv4 dns",
             )
         ) or bool(re.search(r"\bdns\b", lower))
+
+    @staticmethod
+    def _looks_like_windows_version(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "windows update",
+                "product key",
+                "activation",
+                "license key",
+                "install windows",
+                "upgrade windows",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "windows version",
+                "what windows am i on",
+                "what version of windows",
+                "which windows",
+                "os version",
+                "os build",
+                "windows build",
+                "windows edition",
+                "inspect windows version",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
