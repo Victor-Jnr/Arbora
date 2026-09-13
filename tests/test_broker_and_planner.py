@@ -117,6 +117,28 @@ def test_close_window_journey_is_mutate_not_kill():
     assert launch.steps[0].action == "launch_app"
 
 
+def test_type_in_window_journey_launches_notepad_and_halts():
+    runtime = _runtime()
+    plan = runtime.planner.plan("type hello in notepad")
+    assert [step.action for step in plan.steps] == ["launch_app", "focus_window", "type_in_window"]
+    assert plan.steps[0].args["name"] == "notepad"
+    assert plan.steps[1].args["title_contains"] == "Notepad"
+    assert plan.steps[2].args["title_contains"] == "Notepad"
+    assert plan.steps[2].args["text"] == "hello"
+    assert plan.steps[2].adapter == "desktop"
+    assert plan.steps[2].sensitivity == Sensitivity.MUTATE
+    assert all(step.halt_on_failure for step in plan.steps)
+    assert not plan.has_hard_confirmation_steps
+    opened = runtime.planner.plan("open notepad and type hello there")
+    assert [step.action for step in opened.steps] == ["launch_app", "focus_window", "type_in_window"]
+    assert opened.steps[2].args["text"] == "hello there"
+    note = runtime.planner.plan("save a note about typing in notepad")
+    assert any(step.action == "write_text" for step in note.steps)
+    assert not any(step.action == "type_in_window" for step in note.steps)
+    launch = runtime.planner.plan("open chrome")
+    assert [step.action for step in launch.steps] == ["launch_app", "focus_window"]
+
+
 def test_open_url_in_chrome_uses_installed_browser_not_playwright():
     runtime = _runtime()
     plan = runtime.planner.plan("open https://example.com in chrome")

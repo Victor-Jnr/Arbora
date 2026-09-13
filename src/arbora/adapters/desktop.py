@@ -95,6 +95,7 @@ def resolve_launch_target(name: str) -> str:
 
 CLIPBOARD_PREVIEW_CHARS = 120
 CLIPBOARD_SAVE_MAX_CHARS = 20_000
+TYPE_IN_WINDOW_MAX_CHARS = 4_000
 BROWSER_URL_MAX_CHARS = 2_000
 INSTALLED_BROWSER_ALIASES = frozenset(
     {
@@ -1686,6 +1687,23 @@ def format_foreground_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def format_type_in_window_report(stdout: str, needle: str, nchars: int) -> str:
+    snapshot = {"title": "", "process": "", "chars": str(nchars)}
+    for line in (stdout or "").splitlines():
+        if line.startswith("TITLE="):
+            snapshot["title"] = line.split("=", 1)[1].strip()[:128]
+        elif line.startswith("PROCESS="):
+            snapshot["process"] = line.split("=", 1)[1].strip()[:128]
+        elif line.startswith("CHARS="):
+            snapshot["chars"] = line.split("=", 1)[1].strip()[:16]
+    title = snapshot["title"] or needle
+    process = snapshot["process"]
+    chars = snapshot["chars"] or str(nchars)
+    if process:
+        return f"Typed {chars} characters into {title} ({process})."
+    return f"Typed {chars} characters into {title}."
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1941,9 +1959,99 @@ def close_window_script(needle: str) -> str:
         "} | Select-Object -First 1; "
         "if (-not $proc) { Write-Error \"No window matched '$needle'\"; exit 1 }; "
         "$sent = $proc.CloseMainWindow(); "
-        "if (-not $sent) { Write-Error \"CloseMainWindow failed for '$($proc.MainWindowTitle)'\"; exit 1 }; "
+        "        if (-not $sent) { Write-Error \"CloseMainWindow failed for '$($proc.MainWindowTitle)'\"; exit 1 }; "
         "Write-Output (\"Sent WM_CLOSE to {0} (pid {1}) title={2}\" "
         "-f $proc.ProcessName, $proc.Id, $proc.MainWindowTitle)"
+    )
+
+
+def type_in_window_script(needle: str, text: str) -> str:
+    """Focus a titled window, verify foreground, then set text without SendKeys."""
+    quoted_needle = ps_quote(needle)
+    quoted_text = ps_quote(text)
+    return (
+        "$ErrorActionPreference = 'Stop'; "
+        "Add-Type -TypeDefinition @'\n"
+        "using System;\n"
+        "using System.Runtime.InteropServices;\n"
+        "using System.Text;\n"
+        "public class ArboraTypeWin {\n"
+        "  [DllImport(\"user32.dll\")] public static extern IntPtr GetForegroundWindow();\n"
+        "  [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n"
+        "  [DllImport(\"user32.dll\")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);\n"
+        "  [DllImport(\"user32.dll\", CharSet=CharSet.Unicode)]\n"
+        "  public static extern IntPtr FindWindowEx(IntPtr parent, IntPtr childAfter, string cls, string title);\n"
+        "  [DllImport(\"user32.dll\", CharSet=CharSet.Unicode, EntryPoint=\"SendMessage\")]\n"
+        "  public static extern IntPtr SendMessageText(IntPtr hWnd, uint msg, IntPtr wParam, string lParam);\n"
+        "  [DllImport(\"user32.dll\", CharSet=CharSet.Unicode, EntryPoint=\"SendMessage\")]\n"
+        "  public static extern int SendMessageGet(IntPtr hWnd, uint msg, int wParam, StringBuilder lParam);\n"
+        "}\n"
+        "'@ -ErrorAction SilentlyContinue; "
+        f"$needle = {quoted_needle}; "
+        f"$text = {quoted_text}; "
+        "$wantNotepad = ($needle.ToLowerInvariant() -eq 'notepad'); "
+        "if ($wantNotepad) { "
+        "  $proc = Get-Process -Name notepad -ErrorAction SilentlyContinue | "
+        "    Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1 "
+        "} else { "
+        "  $proc = Get-Process | Where-Object { "
+        "    $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -and "
+        "    ($_.MainWindowTitle -like ('*' + $needle + '*') -or "
+        "     $_.ProcessName -like ('*' + $needle + '*')) "
+        "  } | Select-Object -First 1 "
+        "}; "
+        "if (-not $proc) { Write-Error \"No window matched '$needle'\"; exit 1 }; "
+        "$hwnd = $proc.MainWindowHandle; "
+        "[void][ArboraTypeWin]::ShowWindowAsync($hwnd, 9); "
+        "Start-Sleep -Milliseconds 250; "
+        "[void][ArboraTypeWin]::SetForegroundWindow($hwnd); "
+        "Start-Sleep -Milliseconds 250; "
+        "$fg = [ArboraTypeWin]::GetForegroundWindow(); "
+        "if ($fg.ToInt64() -ne ([IntPtr]$hwnd).ToInt64()) { "
+        "  Write-Error 'Foreground window did not match the target'; exit 1 "
+        "}; "
+        "$verified = $null; "
+        "try { "
+        "  Add-Type -AssemblyName UIAutomationClient -ErrorAction Stop; "
+        "  $root = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$hwnd); "
+        "  if ($root) { "
+        "    $scope = [System.Windows.Automation.TreeScope]::Descendants; "
+        "    $docType = [System.Windows.Automation.ControlType]::Document; "
+        "    $editType = [System.Windows.Automation.ControlType]::Edit; "
+        "    $docCond = New-Object System.Windows.Automation.PropertyCondition( "
+        "      [System.Windows.Automation.AutomationElement]::ControlTypeProperty, $docType); "
+        "    $editCond = New-Object System.Windows.Automation.PropertyCondition( "
+        "      [System.Windows.Automation.AutomationElement]::ControlTypeProperty, $editType); "
+        "    $el = $root.FindFirst($scope, $docCond); "
+        "    if (-not $el) { $el = $root.FindFirst($scope, $editCond) }; "
+        "    if (-not $el) { $el = $root }; "
+        "    $vp = $el.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern); "
+        "    $vp.SetValue($text); "
+        "    $verified = [string]$vp.Current.Value "
+        "  } "
+        "} catch { $verified = $null }; "
+        "if ($null -eq $verified) { "
+        "  $edit = [ArboraTypeWin]::FindWindowEx([IntPtr]$hwnd, [IntPtr]::Zero, 'Edit', $null); "
+        "  if ($edit -eq [IntPtr]::Zero) { "
+        "    Write-Error 'No editable Document or Edit control found in the target window'; exit 1 "
+        "  }; "
+        "  [void][ArboraTypeWin]::SendMessageText($edit, 0x000C, [IntPtr]::Zero, $text); "
+        "  $sb = New-Object System.Text.StringBuilder ($text.Length + 64); "
+        "  [void][ArboraTypeWin]::SendMessageGet($edit, 0x000D, $sb.Capacity, $sb); "
+        "  $verified = $sb.ToString() "
+        "}; "
+        "$okMatch = ($verified -eq $text); "
+        "if (-not $okMatch -and $text.Length -gt 0) { "
+        "  $n = [Math]::Min(80, $text.Length); "
+        "  $okMatch = ($verified.Length -eq $text.Length -and $verified.StartsWith($text.Substring(0, $n))) "
+        "}; "
+        "if (-not $okMatch) { "
+        "  Write-Error 'Typed text did not match the window contents'; exit 1 "
+        "}; "
+        "Write-Output 'TYPED=ok'; "
+        "Write-Output ('TITLE=' + $proc.MainWindowTitle); "
+        "Write-Output ('PROCESS=' + $proc.ProcessName); "
+        "Write-Output ('CHARS=' + $text.Length)"
     )
 
 
@@ -1995,6 +2103,12 @@ class DesktopAdapter:
         if action == "focus_window":
             return self._focus_window(
                 str(args.get("title_contains", args.get("name", ""))),
+                dry_run=dry_run,
+            )
+        if action == "type_in_window":
+            return self._type_in_window(
+                str(args.get("title_contains", args.get("name", ""))),
+                str(args.get("text", args.get("content", ""))),
                 dry_run=dry_run,
             )
         if action == "inspect_clipboard":
@@ -2206,6 +2320,78 @@ class DesktopAdapter:
                 error=outcome.error or f"Failed to focus '{needle}'",
             )
         return StepResult(step_id=new_id("res_"), ok=True, output=outcome.stdout or f"Focused '{needle}'")
+
+    def _type_in_window(self, title_contains: str, text: str, *, dry_run: bool) -> StepResult:
+        needle = title_contains.strip()
+        payload = text if isinstance(text, str) else str(text)
+        if not needle:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="type_in_window requires args.title_contains or args.name",
+                dry_run=dry_run,
+            )
+        if not payload:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="type_in_window requires args.text",
+                dry_run=dry_run,
+            )
+        if clipboard_looks_secret(payload):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to type text that looks like a secret",
+                dry_run=dry_run,
+            )
+        if len(payload) > TYPE_IN_WINDOW_MAX_CHARS:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error=(
+                    f"type_in_window refuses more than {TYPE_IN_WINDOW_MAX_CHARS} characters"
+                ),
+                dry_run=dry_run,
+            )
+        preview = " ".join(payload.split())[:80]
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    f"[dry-run] Would type {len(payload)} characters into a window matching "
+                    f"'{needle}' via UI Automation ValuePattern or WM_SETTEXT "
+                    f"(no SendKeys). Preview: {preview}"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        command = type_in_window_script(needle, payload)
+        lowered = command.lower()
+        if "sendkeys" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to run a type script that uses SendKeys",
+            )
+        outcome = run_powershell(command, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or f"Failed to type into '{needle}'",
+            )
+        report = format_type_in_window_report(outcome.stdout or "", needle, len(payload))
+        return StepResult(step_id=new_id("res_"), ok=True, output=report)
 
     def _inspect_clipboard(self, *, reveal: bool, dry_run: bool) -> StepResult:
         if dry_run:

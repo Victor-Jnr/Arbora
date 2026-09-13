@@ -191,6 +191,8 @@ class GoalPlanner:
             return self._temp_plan(text)
         if self._looks_like_close_window(lower):
             return self._close_window_plan(text)
+        if self._looks_like_type_in_window(lower):
+            return self._type_in_window_plan(text)
         if self._looks_like_open_in_browser(lower):
             return self._open_in_browser_plan(text)
         if self._looks_like_launch_app(lower):
@@ -1705,6 +1707,145 @@ class GoalPlanner:
         if match:
             return match.group(1).strip().strip("\"'")
         return text
+
+    def _type_in_window_plan(self, goal: str) -> Plan:
+        title, text, should_launch = self._type_in_window_parts(goal)
+        alias = self._app_alias_from_goal(goal.lower()) or "notepad"
+        if title.lower() == "notepad":
+            alias = "notepad"
+        steps: list[ToolStep] = []
+        if should_launch:
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="launch_app",
+                    args={"name": alias},
+                    summary=f"Launch {alias}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Starts a process",),
+                    halt_on_failure=True,
+                )
+            )
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="focus_window",
+                    args={"title_contains": title},
+                    summary=f"Focus the {title} window",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Brings an existing window to the foreground",),
+                    halt_on_failure=True,
+                )
+            )
+        steps.append(
+            ToolStep(
+                id=new_id("step_"),
+                adapter="desktop",
+                action="type_in_window",
+                args={"title_contains": title, "text": text},
+                summary=f"Type {len(text)} characters into {title} after foreground verify",
+                sensitivity=Sensitivity.MUTATE,
+                side_effects=(
+                    "Focuses a matched window, verifies it is foreground, "
+                    "then sets Document/Edit text (no SendKeys)",
+                ),
+                halt_on_failure=True,
+            )
+        )
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Type-in-window journey — match a titled window, verify it is "
+                "foreground, then set its text via UI Automation or WM_SETTEXT. "
+                "Does not inject global SendKeys. Remaining steps halt if focus or type fails."
+            ),
+            steps=steps,
+        )
+
+    @staticmethod
+    def _type_in_window_parts(goal: str) -> tuple[str, str, bool]:
+        lower = goal.lower()
+        alias = GoalPlanner._app_alias_from_goal(lower)
+        should_launch = bool(re.search(r"\b(open|launch|start)\b", lower))
+        quoted = re.search(
+            r"""\btype\s+["'](.+?)["']\s+(?:in|into)\s+(?:the\s+)?(.+?)(?:\s+window)?\s*$""",
+            goal,
+            flags=re.I,
+        )
+        titled = re.search(
+            r"\btype\s+(?:the\s+)?(?:text\s+)?(.+?)\s+(?:in|into)\s+(?:the\s+)?(.+?)(?:\s+window)?\s*$",
+            goal,
+            flags=re.I,
+        )
+        if quoted:
+            text, window = quoted.group(1), quoted.group(2)
+        elif titled:
+            text, window = titled.group(1), titled.group(2)
+        else:
+            typed = re.search(r"\btype\s+(?:the\s+)?(?:text\s+)?(.+)$", goal, flags=re.I)
+            text = typed.group(1).strip() if typed else ""
+            window = alias or "Notepad"
+        text = re.split(r"\s+and\s+save\b", text, maxsplit=1, flags=re.I)[0].strip()
+        window = re.split(r"\s+and\s+save\b", window, maxsplit=1, flags=re.I)[0].strip()
+        window = re.sub(r"^(the\s+)", "", window, flags=re.I)
+        window = re.sub(r"\s+(window|app)$", "", window, flags=re.I).strip(" .")
+        focus = {
+            "chrome": "Chrome",
+            "edge": "Edge",
+            "firefox": "Firefox",
+            "vscode": "Visual Studio Code",
+            "discord": "Discord",
+            "spotify": "Spotify",
+            "wt": "Terminal",
+            "notepad": "Notepad",
+            "calc": "Calculator",
+            "slack": "Slack",
+        }
+        if alias == "notepad" or window.lower() in {"notepad", "notepads"}:
+            window = "Notepad"
+            should_launch = True
+        elif alias:
+            window = focus.get(alias, window or alias)
+        if not window:
+            window = "Notepad"
+        if len(text) > 4000:
+            text = text[:4000]
+        return window, text, should_launch
+
+    @staticmethod
+    def _looks_like_type_in_window(lower: str) -> bool:
+        if any(
+            phrase in lower
+            for phrase in (
+                "save a note",
+                "write a note",
+                "add a note",
+                "leave a note",
+                "save note",
+                "jot down",
+            )
+        ):
+            return False
+        if any(
+            word in lower
+            for word in (
+                "diagnos",
+                "troubleshoot",
+                "research",
+                "http://",
+                "https://",
+                "sendkeys",
+            )
+        ):
+            return False
+        if re.search(r"\btype\s+\S.+\s+(?:in|into)\s+\S", lower):
+            return True
+        if re.search(r"\b(?:open|launch|start)\b", lower) and re.search(r"\btype\s+\S", lower):
+            return GoalPlanner._app_alias_from_goal(lower) is not None
+        return False
 
     def _open_in_browser_plan(self, goal: str) -> Plan:
         url = self._http_url_from_goal(goal)

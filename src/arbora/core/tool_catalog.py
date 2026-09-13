@@ -8,6 +8,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "list_running_apps",
             "launch_app",
             "focus_window",
+            "type_in_window",
             "inspect_clipboard",
             "save_clipboard_text",
             "speak_text",

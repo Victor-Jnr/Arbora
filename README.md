@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 086 | [Type into a titled window](documentation/086-type-in-window.md) |
 | 085 | [Foreground window inspect and halt-on-failure](documentation/085-inspect-foreground.md) |
 | 084 | [Localhost plan-accept HTTP API](documentation/084-localhost-plan-accept-api.md) |
 | 083 | [Pending reboot inspect](documentation/083-inspect-pending-reboot.md) |

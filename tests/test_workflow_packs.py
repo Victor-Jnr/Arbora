@@ -45,6 +45,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-windows-version" in ids
     assert "inspect-pending-reboot" in ids
     assert "inspect-foreground" in ids
+    assert "type-in-window" in ids
 
 
 def test_match_workflow_pack_prefers_longest_phrase():
@@ -524,6 +525,18 @@ def test_inspect_foreground_workflow_pack_matches():
     assert [step.action for step in plan.steps] == ["inspect_foreground"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_type_in_window_workflow_pack_matches():
+    pack = match_workflow_pack("run type in window pack")
+    assert pack is not None
+    assert pack.id == "type-in-window"
+    plan = pack.to_plan("run type in window pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["launch_app", "focus_window", "type_in_window"]
+    assert all(step.halt_on_failure for step in plan.steps)
+    assert plan.steps[2].args["text"] == "Hello from Arbora."
+    assert plan.steps[2].sensitivity.value == "mutate"
 
 
 def test_git_status_workflow_pack_matches():

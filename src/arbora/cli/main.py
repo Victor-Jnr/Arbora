@@ -95,6 +95,7 @@ Try goals like:
   windows version
   pending reboot
   foreground window
+  type hello in notepad
   what's in temp
   empty temp
   open chrome

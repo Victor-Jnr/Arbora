@@ -1,0 +1,48 @@
+{
+  "id": "type-in-window",
+  "name": "Type into a titled window",
+  "description": "Launch Notepad, focus it, verify foreground, then set text via UI Automation or WM_SETTEXT. Does not SendKeys.",
+  "goal_phrases": [
+    "type in window pack",
+    "run type in window pack"
+  ],
+  "rationale": "Workflow pack: type into Notepad after foreground verify (no SendKeys).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "launch_app",
+      "args": {
+        "name": "notepad"
+      },
+      "summary": "Launch notepad",
+      "sensitivity": "mutate",
+      "side_effects": ["Starts a process"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "desktop",
+      "action": "focus_window",
+      "args": {
+        "title_contains": "Notepad"
+      },
+      "summary": "Focus the Notepad window",
+      "sensitivity": "mutate",
+      "side_effects": ["Brings an existing window to the foreground"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "desktop",
+      "action": "type_in_window",
+      "args": {
+        "title_contains": "Notepad",
+        "text": "Hello from Arbora."
+      },
+      "summary": "Type into Notepad after foreground verify",
+      "sensitivity": "mutate",
+      "side_effects": [
+        "Focuses a matched window, verifies it is foreground, then sets Document/Edit text (no SendKeys)"
+      ],
+      "halt_on_failure": true
+    }
+  ]
+}

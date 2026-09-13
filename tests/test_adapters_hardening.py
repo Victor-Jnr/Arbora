@@ -9,10 +9,12 @@ from unittest.mock import patch
 from arbora.adapters.desktop import (
     APP_ALIASES,
     CLIPBOARD_SAVE_MAX_CHARS,
+    TYPE_IN_WINDOW_MAX_CHARS,
     DesktopAdapter,
     clipboard_looks_secret,
     clipboard_save_payload,
     close_window_script,
+    type_in_window_script,
     format_battery_report,
     format_clipboard_report,
     format_default_browser_report,
@@ -608,6 +610,80 @@ def test_close_window_mocked_powershell():
     assert "closemainwindow" in command
     assert "taskkill" not in command
     assert "stop-process" not in command
+
+
+def test_type_in_window_requires_title_and_text():
+    missing_title = DesktopAdapter().execute("type_in_window", {"text": "hello"}, dry_run=True)
+    assert missing_title.ok is False
+    assert "title" in (missing_title.error or "").lower()
+    missing_text = DesktopAdapter().execute(
+        "type_in_window", {"title_contains": "Notepad"}, dry_run=True
+    )
+    assert missing_text.ok is False
+    assert "text" in (missing_text.error or "").lower()
+
+
+def test_type_in_window_dry_run_and_script_forbid_sendkeys():
+    result = DesktopAdapter().execute(
+        "type_in_window",
+        {"title_contains": "Notepad", "text": "hello from arbora"},
+        dry_run=True,
+    )
+    assert result.ok and result.dry_run
+    assert "17" in result.output or "characters" in result.output.lower()
+    assert "sendkeys" in result.output.lower()
+    assert "valuepattern" in result.output.lower() or "wm_settext" in result.output.lower()
+    script = type_in_window_script("Notepad", "hello from arbora").lower()
+    assert "sendkeys" not in script
+    assert "getforegroundwindow" in script
+    assert "setforegroundwindow" in script
+    assert "valuepattern" in script
+    assert "0x000c" in script
+    assert "get-process -name notepad" in script
+
+
+def test_type_in_window_mocked_powershell():
+    fake = ShellOutcome(
+        ok=True,
+        stdout="TYPED=ok\nTITLE=Untitled - Notepad\nPROCESS=notepad\nCHARS=5\n",
+        stderr="",
+    )
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute(
+            "type_in_window",
+            {"title_contains": "Notepad", "text": "hello"},
+            dry_run=False,
+        )
+    assert result.ok
+    assert "5" in result.output
+    assert "notepad" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "sendkeys" not in command
+    assert "getforegroundwindow" in command
+    assert "valuepattern" in command
+    assert "0x000c" in command
+
+
+def test_type_in_window_refuses_secrets_and_oversize():
+    secret = DesktopAdapter().execute(
+        "type_in_window",
+        {"title_contains": "Notepad", "text": "password=hunter2"},
+        dry_run=True,
+    )
+    assert secret.ok is False
+    assert "secret" in (secret.error or "").lower()
+    huge = DesktopAdapter().execute(
+        "type_in_window",
+        {
+            "title_contains": "Notepad",
+            "text": ("Hello from Arbora. " * 300)[: TYPE_IN_WINDOW_MAX_CHARS + 1],
+        },
+        dry_run=True,
+    )
+    assert huge.ok is False
+    assert str(TYPE_IN_WINDOW_MAX_CHARS) in (huge.error or "")
 
 
 def test_open_in_browser_requires_url_and_browser():
