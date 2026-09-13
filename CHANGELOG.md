@@ -203,8 +203,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/084-localhost-plan-accept-api.md` | Change doc for localhost plan-accept HTTP API |
 | `workflows/inspect-foreground.json` | Bundled read-only foreground window inspect pack |
 | `documentation/085-inspect-foreground.md` | Change doc for foreground inspect and halt-on-failure |
+| `workflows/type-in-window.json` | Bundled type-into-titled-window pack (no SendKeys) |
+| `documentation/086-type-in-window.md` | Change doc for type into a titled window |
 
 ---
+
+## 086 — Type into a titled window (2026-09-13)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `type_in_window` (foreground verify; UIA / WM_SETTEXT; no SendKeys) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.type_in_window` |
+| `src/arbora/core/planner.py` | Type-in-window journey before launch-only; halt on failure |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/type-in-window.json` | Bundled type-in-window pack |
+| `tests/test_adapters_hardening.py` | Dry-run; no SendKeys; secrets and oversize refused |
+| `tests/test_broker_and_planner.py` | Notepad type vs save-note vs open chrome |
+| `tests/test_workflow_packs.py` | Pack match for type-in-window |
+| `docs/NEXT.md` | Marked P24 plate 74 done |
+| `documentation/086-type-in-window.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 086 |
+| `README.md` | Documentation latest table |
 
 ## 085 — Foreground window inspect and halt-on-failure (2026-09-13)
 
