@@ -561,6 +561,179 @@ def test_pending_reboot_is_read_only_inspect():
     assert [step.action for step in version.steps] == ["inspect_windows_version"]
 
 
+def test_foreground_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("foreground window")
+    assert [step.action for step in plan.steps] == ["inspect_foreground"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("what's in front")
+    assert named.steps[0].action == "inspect_foreground"
+    focused = runtime.planner.plan("which window is focused")
+    assert focused.steps[0].action == "inspect_foreground"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_foreground" for step in diagnose.steps)
+    reboot = runtime.planner.plan("pending reboot")
+    assert [step.action for step in reboot.steps] == ["inspect_pending_reboot"]
+
+
+def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
+    runtime = _runtime(tmp_path)
+
+    class _FailThenRun:
+        name = "desktop"
+
+        def execute(self, action: str, args: dict, *, dry_run: bool = False):
+            from arbora.core.types import StepResult
+
+            if action == "inspect_foreground":
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="foreground mismatch",
+                    dry_run=dry_run,
+                )
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"ran {action}",
+                dry_run=dry_run,
+            )
+
+    runtime.broker.register_adapter(_FailThenRun())
+    failed = ToolStep(
+        id=new_id("step_"),
+        adapter="desktop",
+        action="inspect_foreground",
+        args={},
+        summary="verify foreground",
+        sensitivity=Sensitivity.READ,
+        halt_on_failure=True,
+    )
+    second = ToolStep(
+        id=new_id("step_"),
+        adapter="desktop",
+        action="launch_app",
+        args={"name": "notepad"},
+        summary="should not run",
+        sensitivity=Sensitivity.MUTATE,
+    )
+    plan = Plan(id=new_id("plan_"), goal="halt demo", steps=[failed, second])
+    results = runtime.broker.execute_plan(plan, approve_all(plan), dry_run=True)
+    assert len(results) == 2
+    assert results[0].ok is False
+    assert results[1].ok is False
+    assert "previous step failed" in (results[1].error or "").lower()
+    kinds = [event.kind for event in runtime.audit.events()]
+    assert "plan_halted_step_failed" in kinds
+    assert "plan_stopped" not in kinds
+
+
+def test_halt_on_failure_skips_after_denied_step(tmp_path: Path):
+    runtime = _runtime(tmp_path)
+    calls: list[str] = []
+
+    class _Track:
+        name = "desktop"
+
+        def execute(self, action: str, args: dict, *, dry_run: bool = False):
+            from arbora.core.types import StepResult
+
+            calls.append(action)
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"ran {action}",
+                dry_run=dry_run,
+            )
+
+    runtime.broker.register_adapter(_Track())
+    first = ToolStep(
+        id=new_id("step_"),
+        adapter="desktop",
+        action="inspect_foreground",
+        args={},
+        summary="denied verify",
+        sensitivity=Sensitivity.READ,
+        halt_on_failure=True,
+    )
+    second = ToolStep(
+        id=new_id("step_"),
+        adapter="desktop",
+        action="launch_app",
+        args={"name": "notepad"},
+        summary="should not run",
+        sensitivity=Sensitivity.MUTATE,
+    )
+    plan = Plan(id=new_id("plan_"), goal="halt denied", steps=[first, second])
+    decision = ApprovalDecision(
+        plan_id=plan.id,
+        approved_step_ids=frozenset(),
+        rejected_step_ids=frozenset(step.id for step in plan.steps),
+    )
+    results = runtime.broker.execute_plan(plan, decision, dry_run=True)
+    assert len(results) == 2
+    assert results[0].ok is False
+    assert results[1].ok is False
+    assert "previous step failed" in (results[1].error or "").lower()
+    assert calls == []
+    kinds = [event.kind for event in runtime.audit.events()]
+    assert "plan_halted_step_failed" in kinds
+
+
+def test_failed_step_without_halt_continues(tmp_path: Path):
+    runtime = _runtime(tmp_path)
+
+    class _FailThenRun:
+        name = "desktop"
+        calls: list[str] = []
+
+        def execute(self, action: str, args: dict, *, dry_run: bool = False):
+            from arbora.core.types import StepResult
+
+            type(self).calls.append(action)
+            if action == "inspect_foreground":
+                return StepResult(
+                    step_id=new_id("res_"),
+                    ok=False,
+                    output="",
+                    error="foreground mismatch",
+                    dry_run=dry_run,
+                )
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=f"ran {action}",
+                dry_run=dry_run,
+            )
+
+    _FailThenRun.calls = []
+    runtime.broker.register_adapter(_FailThenRun())
+    failed = ToolStep(
+        id=new_id("step_"),
+        adapter="desktop",
+        action="inspect_foreground",
+        args={},
+        summary="verify foreground",
+        sensitivity=Sensitivity.READ,
+    )
+    second = ToolStep(
+        id=new_id("step_"),
+        adapter="desktop",
+        action="launch_app",
+        args={"name": "notepad"},
+        summary="still runs",
+        sensitivity=Sensitivity.MUTATE,
+    )
+    plan = Plan(id=new_id("plan_"), goal="continue demo", steps=[failed, second])
+    results = runtime.broker.execute_plan(plan, approve_all(plan), dry_run=True)
+    assert results[0].ok is False
+    assert results[1].ok is True
+    assert _FailThenRun.calls == ["inspect_foreground", "launch_app"]
+
+
 def test_format_table_is_not_treated_as_destructive():
     planner = GoalPlanner()
     plan = planner._plan_from_provider_json(

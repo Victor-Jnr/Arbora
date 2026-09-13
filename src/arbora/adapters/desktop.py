@@ -629,6 +629,32 @@ _PENDING_REBOOT_PS = (
     "Write-Output ('PFRO=' + $pfro)"
 )
 
+_FOREGROUND_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Add-Type -TypeDefinition @'\n"
+    "using System;\n"
+    "using System.Runtime.InteropServices;\n"
+    "using System.Text;\n"
+    "public class ArboraFg {\n"
+    "  [DllImport(\"user32.dll\")] public static extern IntPtr GetForegroundWindow();\n"
+    "  [DllImport(\"user32.dll\", CharSet=CharSet.Unicode)]\n"
+    "  public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int maxCount);\n"
+    "  [DllImport(\"user32.dll\")]\n"
+    "  public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);\n"
+    "}\n"
+    "'@ -ErrorAction SilentlyContinue; "
+    "$h = [ArboraFg]::GetForegroundWindow(); "
+    "$sb = New-Object System.Text.StringBuilder 512; "
+    "[void][ArboraFg]::GetWindowText($h, $sb, 512); "
+    "$procId = [uint32]0; "
+    "[void][ArboraFg]::GetWindowThreadProcessId($h, [ref]$procId); "
+    "Write-Output ('HWND=' + $h.ToInt64()); "
+    "Write-Output ('TITLE=' + $sb.ToString()); "
+    "Write-Output ('PID=' + $procId); "
+    "$p = Get-Process -Id $procId -ErrorAction SilentlyContinue; "
+    "Write-Output ('PROCESS=' + $(if ($p) { $p.ProcessName } else { '' }))"
+)
+
 _AUDIO_DEVICE_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1625,6 +1651,41 @@ def format_pending_reboot_report(snapshot: dict[str, str]) -> str:
     )
 
 
+def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
+    """Parse foreground window title, process, and pid — no keystrokes."""
+    snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
+    mapping = (
+        ("TITLE=", "title"),
+        ("PROCESS=", "process"),
+        ("PID=", "pid"),
+        ("HWND=", "hwnd"),
+    )
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:128]
+                break
+    return snapshot
+
+
+def format_foreground_report(snapshot: dict[str, str]) -> str:
+    title = str(snapshot.get("title") or "").strip()
+    process = str(snapshot.get("process") or "").strip()
+    pid = str(snapshot.get("pid") or "").strip()
+    if not any((title, process, pid)):
+        return "No foreground window reported."
+    lines = []
+    if title:
+        lines.append(f"Foreground window: {title}")
+    else:
+        lines.append("Foreground window: (no title)")
+    if process:
+        lines.append(f"Process: {process}")
+    if pid:
+        lines.append(f"PID: {pid}")
+    return "\n".join(lines)
+
+
 def parse_audio_device_snapshot(stdout: str) -> dict[str, str]:
     """Parse the default playback endpoint friendly name."""
     snapshot = {"name": "", "flow": ""}
@@ -1997,6 +2058,8 @@ class DesktopAdapter:
             return self._inspect_windows_version(dry_run=dry_run)
         if action == "inspect_pending_reboot":
             return self._inspect_pending_reboot(dry_run=dry_run)
+        if action == "inspect_foreground":
+            return self._inspect_foreground(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3143,6 +3206,44 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_pending_reboot_report(snapshot),
+        )
+
+    def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read the foreground window title, process, and PID "
+                    "(no SendKeys, no SetForegroundWindow)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_FOREGROUND_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Foreground inspect failed",
+            )
+        text = outcome.stdout or ""
+        lowered = text.lower()
+        if "password" in lowered or "key content" in lowered or "keycontent" in lowered:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_foreground_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_foreground_report(snapshot),
         )
 
     def _inspect_audio_device(self, *, dry_run: bool) -> StepResult:

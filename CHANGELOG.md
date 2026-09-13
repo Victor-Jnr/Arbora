@@ -201,8 +201,30 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `workflows/inspect-pending-reboot.json` | Bundled read-only pending reboot inspect pack |
 | `documentation/083-inspect-pending-reboot.md` | Change doc for pending reboot inspect |
 | `documentation/084-localhost-plan-accept-api.md` | Change doc for localhost plan-accept HTTP API |
+| `workflows/inspect-foreground.json` | Bundled read-only foreground window inspect pack |
+| `documentation/085-inspect-foreground.md` | Change doc for foreground inspect and halt-on-failure |
 
 ---
+
+## 085 — Foreground window inspect and halt-on-failure (2026-09-13)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_foreground` (title/process/PID; no SendKeys) |
+| `src/arbora/core/types.py` | Added `ToolStep.halt_on_failure` |
+| `src/arbora/core/broker.py` | Skip remaining steps after a failed or denied halt_on_failure step |
+| `src/arbora/workflows/packs.py` | Honour pack `halt_on_failure` |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_foreground` |
+| `src/arbora/core/planner.py` | Foreground inspect journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-foreground.json` | Bundled inspect-foreground pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no SendKeys; secrets withheld |
+| `tests/test_broker_and_planner.py` | Foreground vs diagnose; halt vs continue |
+| `tests/test_workflow_packs.py` | Pack match for inspect-foreground |
+| `docs/NEXT.md` | Marked P24 plate 73 done |
+| `documentation/085-inspect-foreground.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 085 |
+| `README.md` | Documentation latest table |
 
 ## 084 — Localhost plan-accept HTTP API (2026-09-12)
 

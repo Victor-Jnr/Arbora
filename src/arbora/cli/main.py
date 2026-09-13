@@ -94,6 +94,7 @@ Try goals like:
   dns servers
   windows version
   pending reboot
+  foreground window
   what's in temp
   empty temp
   open chrome

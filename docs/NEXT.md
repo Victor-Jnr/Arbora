@@ -82,11 +82,12 @@ Already in place:
 - read-only Windows version and build (no product key).
 - read-only pending-reboot flags (no restart or shutdown).
 - localhost plan-accept HTTP (`arbora serve`): token, loopback, dry-run default; hard classes still need hard_confirm.
+- read-only foreground window title, process, and PID (no typing).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P23).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P24).
 
 ---
 
@@ -250,6 +251,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 71 | **Pending reboot inspect** | ✅ Read-only reboot-pending flags; does not restart or shut down |
 | 72 | **Localhost plan-accept HTTP API** | ✅ Token-gated loopback `POST /v1/goals` then `POST /v1/plans/{id}/approve`; dry-run default; hard classes still need hard_confirm |
 
+### P24 — Stage 3 typed Notepad with verify
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 73 | **Foreground inspect + halt-on-failure** | ✅ Read-only focused window; failed `halt_on_failure` steps skip the rest of the plan |
+| 74 | **Type into a titled window** | UI Automation / WM_SETTEXT into a matched window only after foreground verify; no global SendKeys |
+| 75 | **Notepad type + named save** | Launch Notepad, type approved text, write a named `.txt`; halt if focus/type fails |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -343,4 +352,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P23 plates 70–72 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P24 plate 73 is done. Continue with type-into-titled-window (plate 74) and Notepad type+named save (plate 75).

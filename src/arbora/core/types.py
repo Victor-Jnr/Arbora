@@ -56,6 +56,7 @@ class ToolStep:
     summary: str
     sensitivity: Sensitivity
     side_effects: tuple[str, ...] = ()
+    halt_on_failure: bool = False
 
     def requires_hard_confirmation(self) -> bool:
         return self.sensitivity in HARD_CONFIRMATION_CLASSES

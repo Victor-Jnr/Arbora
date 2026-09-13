@@ -33,6 +33,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_dns",
             "inspect_windows_version",
             "inspect_pending_reboot",
+            "inspect_foreground",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",
