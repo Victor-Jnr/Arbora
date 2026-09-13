@@ -84,6 +84,7 @@ Already in place:
 - localhost plan-accept HTTP (`arbora serve`): token, loopback, dry-run default; hard classes still need hard_confirm.
 - read-only foreground window title, process, and PID (no typing).
 - type into a titled window after foreground verify (UI Automation / WM_SETTEXT; no SendKeys).
+- type into Notepad then write a named `.txt` in the notes folder (halt if focus/type fails).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -258,7 +259,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 73 | **Foreground inspect + halt-on-failure** | ✅ Read-only focused window; failed `halt_on_failure` steps skip the rest of the plan |
 | 74 | **Type into a titled window** | ✅ UI Automation / WM_SETTEXT into a matched window only after foreground verify; no global SendKeys |
-| 75 | **Notepad type + named save** | Launch Notepad, type approved text, write a named `.txt`; halt if focus/type fails |
+| 75 | **Notepad type + named save** | ✅ Launch Notepad, type approved text, write a named `.txt`; halt if focus/type fails |
 
 ## Non-negotiables (do not drift)
 
@@ -353,4 +354,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P24 plate 74 is done. Continue with Notepad type+named save (plate 75).
+P24 plates 73–75 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

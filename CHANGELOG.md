@@ -205,8 +205,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/085-inspect-foreground.md` | Change doc for foreground inspect and halt-on-failure |
 | `workflows/type-in-window.json` | Bundled type-into-titled-window pack (no SendKeys) |
 | `documentation/086-type-in-window.md` | Change doc for type into a titled window |
+| `workflows/type-in-notepad.json` | Bundled Notepad type + named notes file pack |
+| `documentation/087-notepad-type-save.md` | Change doc for Notepad type and named save |
 
 ---
+
+## 087 — Notepad type and named save (2026-09-13)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Named `.txt` save after type-in-window; basename-only sanitise |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/type-in-notepad.json` | Bundled type-in-notepad pack |
+| `tests/test_broker_and_planner.py` | Save-as path, `..` strip, vs save-note |
+| `tests/test_workflow_packs.py` | Pack match for type-in-notepad |
+| `docs/NEXT.md` | Marked P24 plate 75 done |
+| `documentation/087-notepad-type-save.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 087 |
+| `README.md` | Documentation latest table |
 
 ## 086 — Type into a titled window (2026-09-13)
 

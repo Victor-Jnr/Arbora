@@ -1754,14 +1754,50 @@ class GoalPlanner:
                 halt_on_failure=True,
             )
         )
+        filename = self._named_txt_filename(goal)
+        if filename:
+            notes_root = self._notes_dir()
+            note_path = notes_root / filename
+            content = text if text.endswith("\n") else f"{text}\n"
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="ensure_directory",
+                    args={"path": str(notes_root)},
+                    summary=f"Ensure notes folder exists at {notes_root}",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("May create a directory",),
+                    halt_on_failure=True,
+                )
+            )
+            steps.append(
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="write_text",
+                    args={"path": str(note_path), "content": content},
+                    summary=f"Write {note_path.name} in the notes folder",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Creates or overwrites a local text file",),
+                    halt_on_failure=True,
+                )
+            )
+        rationale = (
+            "Type-in-window journey — match a titled window, verify it is "
+            "foreground, then set its text via UI Automation or WM_SETTEXT. "
+            "Does not inject global SendKeys. Remaining steps halt if focus or type fails."
+        )
+        if filename:
+            rationale = (
+                "Notepad type-and-save journey — launch/focus Notepad, type after "
+                "foreground verify, then write a named .txt in the notes folder "
+                "(not a Save As dialog). Halts if launch, focus, type, or write fails."
+            )
         return Plan(
             id=new_id("plan_"),
             goal=goal,
-            rationale=(
-                "Type-in-window journey — match a titled window, verify it is "
-                "foreground, then set its text via UI Automation or WM_SETTEXT. "
-                "Does not inject global SendKeys. Remaining steps halt if focus or type fails."
-            ),
+            rationale=rationale,
             steps=steps,
         )
 
@@ -1788,8 +1824,18 @@ class GoalPlanner:
             typed = re.search(r"\btype\s+(?:the\s+)?(?:text\s+)?(.+)$", goal, flags=re.I)
             text = typed.group(1).strip() if typed else ""
             window = alias or "Notepad"
-        text = re.split(r"\s+and\s+save\b", text, maxsplit=1, flags=re.I)[0].strip()
-        window = re.split(r"\s+and\s+save\b", window, maxsplit=1, flags=re.I)[0].strip()
+        text = re.split(
+            r"\s+(?:and\s+)?save\s+(?:it\s+)?(?:as|to)\b",
+            text,
+            maxsplit=1,
+            flags=re.I,
+        )[0].strip()
+        window = re.split(
+            r"\s+(?:and\s+)?save\s+(?:it\s+)?(?:as|to)\b",
+            window,
+            maxsplit=1,
+            flags=re.I,
+        )[0].strip()
         window = re.sub(r"^(the\s+)", "", window, flags=re.I)
         window = re.sub(r"\s+(window|app)$", "", window, flags=re.I).strip(" .")
         focus = {
@@ -1846,6 +1892,34 @@ class GoalPlanner:
         if re.search(r"\b(?:open|launch|start)\b", lower) and re.search(r"\btype\s+\S", lower):
             return GoalPlanner._app_alias_from_goal(lower) is not None
         return False
+
+    @staticmethod
+    def _named_txt_filename(goal: str) -> str | None:
+        match = re.search(
+            r"\bsave(?:\s+it)?\s+(?:as|to)\s+[\"']?([^\"'\n]+?)[\"']?\s*$",
+            goal.strip(),
+            flags=re.I,
+        )
+        if not match:
+            return None
+        return GoalPlanner._sanitize_txt_filename(match.group(1))
+
+    @staticmethod
+    def _sanitize_txt_filename(raw: str) -> str:
+        name = raw.strip().strip("\"'")
+        name = name.replace("\\", "/").split("/")[-1]
+        name = name.replace("..", "")
+        name = re.sub(r'[<>:"/\\|?*]', "", name)
+        name = name.strip(" .")
+        if not name:
+            name = "arbora-note"
+        if name.lower().endswith(".txt"):
+            stem = name[:-4].strip(" .") or "arbora-note"
+        elif "." in name:
+            stem = name.rsplit(".", 1)[0].strip(" .") or "arbora-note"
+        else:
+            stem = name
+        return f"{stem[:64]}.txt"
 
     def _open_in_browser_plan(self, goal: str) -> Plan:
         url = self._http_url_from_goal(goal)

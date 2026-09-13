@@ -1,0 +1,71 @@
+{
+  "id": "type-in-notepad",
+  "name": "Type in Notepad and save a named file",
+  "description": "Launch Notepad, type after foreground verify, then write a named .txt in the notes folder. Not a Save As dialog. No SendKeys.",
+  "goal_phrases": [
+    "type in notepad pack",
+    "run type in notepad pack"
+  ],
+  "rationale": "Workflow pack: type into Notepad then write hello.txt in notes.",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "launch_app",
+      "args": {
+        "name": "notepad"
+      },
+      "summary": "Launch notepad",
+      "sensitivity": "mutate",
+      "side_effects": ["Starts a process"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "desktop",
+      "action": "focus_window",
+      "args": {
+        "title_contains": "Notepad"
+      },
+      "summary": "Focus the Notepad window",
+      "sensitivity": "mutate",
+      "side_effects": ["Brings an existing window to the foreground"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "desktop",
+      "action": "type_in_window",
+      "args": {
+        "title_contains": "Notepad",
+        "text": "Hello from Arbora."
+      },
+      "summary": "Type into Notepad after foreground verify",
+      "sensitivity": "mutate",
+      "side_effects": [
+        "Focuses a matched window, verifies it is foreground, then sets Document/Edit text (no SendKeys)"
+      ],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "files",
+      "action": "ensure_directory",
+      "args": {
+        "path": "~/ArboraNotes"
+      },
+      "summary": "Ensure notes folder exists",
+      "sensitivity": "mutate",
+      "side_effects": ["May create a directory"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "files",
+      "action": "write_text",
+      "args": {
+        "path": "~/ArboraNotes/hello.txt",
+        "content": "Hello from Arbora.\n"
+      },
+      "summary": "Write hello.txt in the notes folder",
+      "sensitivity": "mutate",
+      "side_effects": ["Creates or overwrites a local text file"],
+      "halt_on_failure": true
+    }
+  ]
+}
