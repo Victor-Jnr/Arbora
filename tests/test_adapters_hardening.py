@@ -31,6 +31,7 @@ from arbora.adapters.desktop import (
     format_dns_report,
     format_windows_version_report,
     format_pending_reboot_report,
+    format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
     format_hosts_report,
@@ -59,6 +60,7 @@ from arbora.adapters.desktop import (
     parse_dns_snapshot,
     parse_windows_version_snapshot,
     parse_pending_reboot_snapshot,
+    parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
     parse_hosts_snapshot,
@@ -1531,6 +1533,51 @@ def test_inspect_pending_reboot_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_pending_reboot", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_foreground_dry_run():
+    result = DesktopAdapter().execute("inspect_foreground", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "foreground" in result.output.lower()
+    assert "sendkeys" in result.output.lower()
+    assert "setforegroundwindow" in result.output.lower()
+
+
+def test_format_foreground_report_empty_and_window():
+    empty = parse_foreground_snapshot("")
+    report = format_foreground_report(empty)
+    assert "no foreground" in report.lower()
+    live = format_foreground_report(
+        parse_foreground_snapshot("HWND=123\nTITLE=Untitled - Notepad\nPID=4242\nPROCESS=notepad\n")
+    )
+    assert "Foreground window: Untitled - Notepad" in live
+    assert "Process: notepad" in live
+    assert "PID: 4242" in live
+
+
+def test_inspect_foreground_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_foreground", {}, dry_run=False)
+    assert result.ok
+    assert "no foreground" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "getforegroundwindow" in command
+    assert "getwindowtext" in command
+    assert "sendkeys" not in command
+    assert "setforegroundwindow" not in command
+
+
+def test_inspect_foreground_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="password=hunter2", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_foreground", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

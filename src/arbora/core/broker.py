@@ -209,9 +209,11 @@ class PermissionBroker:
             )
 
         stopped = False
+        halt_kind = ""
         for index, step in enumerate(plan.steps):
             if self._stop_requested:
                 stopped = True
+                halt_kind = "emergency_stop"
                 for skipped in plan.steps[index:]:
                     result = StepResult(
                         step_id=skipped.id,
@@ -255,6 +257,11 @@ class PermissionBroker:
                     plan_id=plan.id,
                     step_id=step.id,
                 )
+                if step.halt_on_failure:
+                    stopped = True
+                    halt_kind = "step_failed"
+                    self._skip_remaining_steps(plan, index, results, dry_run)
+                    break
                 continue
 
             adapter = self._adapters[step.adapter]
@@ -276,17 +283,53 @@ class PermissionBroker:
                 output=result.output[:500],
                 error=result.error,
             )
+            if not result.ok and step.halt_on_failure:
+                stopped = True
+                halt_kind = "step_failed"
+                self._skip_remaining_steps(plan, index, results, dry_run)
+                break
 
         if stopped:
-            self._audit.record(
-                "plan_stopped",
-                f"Plan {plan.id} halted by emergency stop",
-                plan_id=plan.id,
-            )
+            if halt_kind == "step_failed":
+                self._audit.record(
+                    "plan_halted_step_failed",
+                    f"Plan {plan.id} halted after a failed required step",
+                    plan_id=plan.id,
+                )
+            else:
+                self._audit.record(
+                    "plan_stopped",
+                    f"Plan {plan.id} halted by emergency stop",
+                    plan_id=plan.id,
+                )
         elif decision.promote_to_trusted and decision.trusted_name:
             self._promote(plan, decision.trusted_name, fingerprint)
 
         return results
+
+    def _skip_remaining_steps(
+        self,
+        plan: Plan,
+        failed_index: int,
+        results: list[StepResult],
+        dry_run: bool,
+    ) -> None:
+        for skipped in plan.steps[failed_index + 1 :]:
+            results.append(
+                StepResult(
+                    step_id=skipped.id,
+                    ok=False,
+                    output="",
+                    error="Previous step failed — remaining steps skipped",
+                    dry_run=dry_run,
+                )
+            )
+            self._audit.record(
+                "step_skipped_halt",
+                f"Skipped after failed step: {skipped.summary}",
+                plan_id=plan.id,
+                step_id=skipped.id,
+            )
 
     def promote_plan(self, plan: Plan, name: str) -> TrustedRoutine:
         """Record a trusted routine for this plan fingerprint without executing it."""

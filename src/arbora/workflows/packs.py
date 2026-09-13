@@ -50,6 +50,7 @@ class WorkflowPack:
                     summary=str(item.get("summary") or f"{adapter}.{action}"),
                     sensitivity=sensitivity,
                     side_effects=tuple(str(s) for s in side),
+                    halt_on_failure=bool(item.get("halt_on_failure")),
                 )
             )
         if not steps:

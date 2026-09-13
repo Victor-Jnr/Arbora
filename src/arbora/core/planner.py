@@ -163,6 +163,8 @@ class GoalPlanner:
             return self._windows_version_plan(text)
         if self._looks_like_pending_reboot(lower):
             return self._pending_reboot_plan(text)
+        if self._looks_like_foreground(lower):
+            return self._foreground_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1037,6 +1039,27 @@ class GoalPlanner:
                     side_effects=(
                         "Reads WU RebootRequired, CBS RebootPending, and PendingFileRenameOperations",
                     ),
+                )
+            ],
+        )
+
+    def _foreground_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Foreground inspect journey — read-only title, process, and PID of the "
+                "window that currently has focus. Does not type or steal focus."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_foreground",
+                    args={},
+                    summary="Read-only: foreground window title and process",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads GetForegroundWindow title, process, and PID",),
                 )
             ],
         )
@@ -3121,6 +3144,36 @@ class GoalPlanner:
                 "inspect reboot",
                 "inspect pending reboot",
                 "is a restart pending",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_foreground(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "sendkeys",
+                "type in",
+                "type into",
+                "steal focus",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "foreground window",
+                "what's in front",
+                "whats in front",
+                "what is in front",
+                "which window is focused",
+                "which window is in front",
+                "active window",
+                "inspect foreground",
+                "what's focused",
+                "whats focused",
             )
         )
 
