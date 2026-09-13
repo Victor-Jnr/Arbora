@@ -96,6 +96,7 @@ Try goals like:
   pending reboot
   foreground window
   type hello in notepad
+  type hello in notepad and save as hello.txt
   what's in temp
   empty temp
   open chrome

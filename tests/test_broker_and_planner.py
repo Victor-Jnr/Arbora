@@ -139,6 +139,32 @@ def test_type_in_window_journey_launches_notepad_and_halts():
     assert [step.action for step in launch.steps] == ["launch_app", "focus_window"]
 
 
+def test_notepad_type_and_named_save_writes_notes_txt():
+    runtime = _runtime()
+    plan = runtime.planner.plan("type hello in notepad and save as foo.txt")
+    assert [step.action for step in plan.steps] == [
+        "launch_app",
+        "focus_window",
+        "type_in_window",
+        "ensure_directory",
+        "write_text",
+    ]
+    assert all(step.halt_on_failure for step in plan.steps)
+    write = plan.steps[-1]
+    assert write.args["path"].replace("\\", "/").endswith("/foo.txt")
+    assert write.args["content"] == "hello\n"
+    docx = runtime.planner.plan("open notepad and type hello and save as report.docx")
+    assert docx.steps[-1].args["path"].replace("\\", "/").endswith("/report.txt")
+    assert "save as" not in plan.rationale.lower() or "notes" in plan.rationale.lower()
+    sneaky = runtime.planner.plan(r"type hi in notepad and save as ..\Windows\secret.txt")
+    assert sneaky.steps[-1].args["path"].replace("\\", "/").endswith("/secret.txt")
+    assert "windows" not in sneaky.steps[-1].args["path"].lower()
+    note = runtime.planner.plan("save a note about typing in notepad")
+    assert not any(step.action == "type_in_window" for step in note.steps)
+    plain = runtime.planner.plan("type hello in notepad")
+    assert not any(step.action == "write_text" for step in plain.steps)
+
+
 def test_open_url_in_chrome_uses_installed_browser_not_playwright():
     runtime = _runtime()
     plan = runtime.planner.plan("open https://example.com in chrome")
