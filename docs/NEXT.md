@@ -8,6 +8,7 @@
 | --- | --- |
 | [README.md](../README.md) | Product vision, safety contract, long-term roadmap stages |
 | [docs/prototype.md](prototype.md) | How to run what exists today |
+| [docs/sandbox.md](sandbox.md) | Isolated lab one-shot HTTP execute (`POST /v1/execute`) |
 | [documentation/](../documentation/README.md) | What already shipped (commit-tied history) |
 | **This file** | Ordered plates for the next stretch toward MVP |
 
@@ -82,6 +83,7 @@ Already in place:
 - read-only Windows version and build (no product key).
 - read-only pending-reboot flags (no restart or shutdown).
 - localhost plan-accept HTTP (`arbora serve`): token, loopback, dry-run default; hard classes still need hard_confirm.
+- opt-in sandbox auto-execute (`POST /v1/execute`) on isolated lab hosts; off by default.
 - read-only foreground window title, process, and PID (no typing).
 - type into a titled window after foreground verify (UI Automation / WM_SETTEXT; no SendKeys).
 - type into Notepad then write a named `.txt` in the notes folder (halt if focus/type fails).
@@ -89,7 +91,7 @@ Already in place:
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P24).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P25).
 
 ---
 
@@ -261,6 +263,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 74 | **Type into a titled window** | ✅ UI Automation / WM_SETTEXT into a matched window only after foreground verify; no global SendKeys |
 | 75 | **Notepad type + named save** | ✅ Launch Notepad, type approved text, write a named `.txt`; halt if focus/type fails |
 
+### P25 — Stage 3 sandbox execute, Defender, and disk
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 76 | **Sandbox auto-execute HTTP** | ✅ Opt-in `POST /v1/execute` on isolated lab hosts; off by default |
+| 77 | **Defender status inspect** | Read-only Defender on/off and signature date; no threat dump; no disable/scan |
+| 78 | **Logical disk free space inspect** | Read-only free/total GB per local drive; no format, chkdsk, or wipe |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -354,4 +364,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P24 plates 73–75 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P25 plate **76** (sandbox auto-execute) is done. Next is **P25 #77 — Defender status inspect**.

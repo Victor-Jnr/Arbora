@@ -11,6 +11,7 @@
 - Providers: Ollama (`gpt-oss:20b` by default) and echo stub
 - Interactive CLI chat: plan → approve → execute (`arbora`)
 - Localhost plan-accept HTTP (`arbora serve`): POST `/v1/goals` then POST `/v1/plans/{id}/approve`
+- Optional sandbox auto-execute: `POST /v1/execute` when started with `--sandbox-auto-execute` (see [sandbox.md](sandbox.md))
 - Desktop chat UI: Tkinter (`arbora-ui`)
 
 ## Run
@@ -62,7 +63,14 @@ arbora serve --provider echo --token arbora-test-token-1
 # POST http://127.0.0.1:8472/v1/plans/{id}/approve
 ```
 
-Live execution: add `--execute`. Hard-confirmation steps still need `--hard-yes`.
+Isolated lab host (one-shot plan+run, still broker-gated): see **[sandbox.md](sandbox.md)**.
+
+```powershell
+arbora serve --provider echo --token arbora-test-token-1 --sandbox-auto-execute
+# POST http://127.0.0.1:8472/v1/execute
+```
+
+Live CLI execution: add `--execute`. Hard-confirmation steps still need `--hard-yes`.
 
 Research dry-run:
 

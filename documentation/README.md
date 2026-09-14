@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 088 | [Sandbox auto-execute HTTP](088-sandbox-auto-execute.md) | 2026-09-14 | Opt-in one-shot `POST /v1/execute` for isolated lab hosts |
 | 087 | [Notepad type and named save](087-notepad-type-save.md) | 2026-09-13 | Type into Notepad then write a named notes `.txt` |
 | 086 | [Type into a titled window](086-type-in-window.md) | 2026-09-13 | Type into a matched window after foreground verify; no SendKeys |
 | 085 | [Foreground window inspect and halt-on-failure](085-inspect-foreground.md) | 2026-09-13 | Read-only focused window; halt remaining steps on required failure |

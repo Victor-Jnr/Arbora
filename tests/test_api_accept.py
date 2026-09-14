@@ -12,9 +12,14 @@ from arbora.core.types import Sensitivity
 from arbora.setup_status import FirstRunStep, Light, ServiceStatus
 
 
-def _session(tmp_path: Path, token: str = "arbora-test-token-1") -> ApiSession:
+def _session(
+    tmp_path: Path,
+    token: str = "arbora-test-token-1",
+    *,
+    sandbox_auto_execute: bool = False,
+) -> ApiSession:
     runtime = build_runtime(memory_root=tmp_path / "memory", provider="echo")
-    return ApiSession(runtime=runtime, token=token)
+    return ApiSession(runtime=runtime, token=token, sandbox_auto_execute=sandbox_auto_execute)
 
 
 def _headers(token: str = "arbora-test-token-1") -> dict[str, str]:
@@ -71,6 +76,7 @@ def test_health_requires_token_and_returns_doctor_rows(tmp_path: Path):
     assert status == 200
     assert payload["checks"][0]["name"] == "Memory"
     assert payload["checks"][0]["light"] == "green"
+    assert payload["sandbox_auto_execute"] is False
 
 
 def test_goals_reject_auto_approve(tmp_path: Path):
@@ -156,6 +162,54 @@ def test_explicit_step_ids_are_accepted(tmp_path: Path):
     )
     assert status == 200
     assert report["results"][0]["ok"] is True
+
+
+def test_sandbox_execute_forbidden_by_default(tmp_path: Path):
+    session = _session(tmp_path)
+    status, payload = _call(session, "POST", "/v1/execute", {"goal": "windows version"})
+    assert status == 403
+    assert "sandbox" in payload["error"].lower()
+
+
+def test_sandbox_execute_plans_and_runs_in_one_call(tmp_path: Path):
+    session = _session(tmp_path, sandbox_auto_execute=True)
+    status, health = _call(session, "GET", "/v1/health")
+    assert status == 200
+    assert health["sandbox_auto_execute"] is True
+    status, payload = _call(session, "POST", "/v1/execute", {"goal": "windows version"})
+    assert status == 200
+    assert payload["accepted"] is True
+    assert payload["sandbox_auto_execute"] is True
+    assert payload["dry_run"] is True
+    assert payload["plan"]["steps"][0]["action"] == "inspect_windows_version"
+    assert payload["results"][0]["ok"] is True
+    assert payload["results"][0]["dry_run"] is True
+
+
+def test_sandbox_execute_still_rejects_auto_approve_flag(tmp_path: Path):
+    session = _session(tmp_path, sandbox_auto_execute=True)
+    status, payload = _call(
+        session,
+        "POST",
+        "/v1/execute",
+        {"goal": "windows version", "auto_approve": True},
+    )
+    assert status == 400
+    assert "execute" in payload["error"].lower()
+
+
+def test_sandbox_execute_hard_steps_still_need_hard_confirm(tmp_path: Path):
+    session = _session(tmp_path, sandbox_auto_execute=True)
+    status, payload = _call(session, "POST", "/v1/execute", {"goal": "empty the recycle bin"})
+    assert status == 200
+    hard = [
+        item
+        for item, step in zip(payload["results"], payload["plan"]["steps"], strict=True)
+        if step["requires_hard_confirmation"]
+    ]
+    assert hard
+    assert all(item["ok"] is False for item in hard)
+    assert any("hard confirmation" in (item["error"] or "").lower() for item in hard)
 
 
 def test_make_token_is_long_enough():

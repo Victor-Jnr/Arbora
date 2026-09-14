@@ -29,3 +29,5 @@ API callers can create a plan with `POST /v1/goals`, then explicitly accept step
 pytest tests/test_api_accept.py tests/test_doctor.py
 arbora serve --provider echo --token arbora-test-token-1
 ```
+
+Opt-in one-shot execute for isolated lab hosts: [docs/sandbox.md](../docs/sandbox.md).

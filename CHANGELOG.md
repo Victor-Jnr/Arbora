@@ -207,8 +207,27 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/086-type-in-window.md` | Change doc for type into a titled window |
 | `workflows/type-in-notepad.json` | Bundled Notepad type + named notes file pack |
 | `documentation/087-notepad-type-save.md` | Change doc for Notepad type and named save |
+| `docs/sandbox.md` | Operator guide for opt-in sandbox auto-execute |
+| `documentation/088-sandbox-auto-execute.md` | Change doc for sandbox auto-execute HTTP |
 
 ---
+
+## 088 — Sandbox auto-execute HTTP (2026-09-14)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/api/server.py` | Added `POST /v1/execute`; health reports `sandbox_auto_execute` |
+| `src/arbora/cli/serve.py` | `--sandbox-auto-execute` and `ARBORA_SANDBOX_AUTO_EXECUTE` |
+| `src/arbora/cli/main.py` | Documented the sandbox serve flag |
+| `tests/test_api_accept.py` | 403 when off; one-shot execute when on; hard confirm unchanged |
+| `docs/sandbox.md` | Operator start-up and API guide |
+| `docs/prototype.md` | Linked sandbox serve |
+| `docs/install.md` | Linked sandbox guide |
+| `docs/NEXT.md` | Recorded P25 plate 76 (sandbox auto-execute) |
+| `documentation/084-localhost-plan-accept-api.md` | Linked sandbox operator guide |
+| `documentation/088-sandbox-auto-execute.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 088 |
+| `README.md` | Public API row + documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
 
