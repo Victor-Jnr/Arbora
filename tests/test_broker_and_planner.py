@@ -647,6 +647,27 @@ def test_defender_is_read_only_inspect():
     assert [step.action for step in reboot.steps] == ["inspect_pending_reboot"]
 
 
+def test_disk_space_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("free disk space")
+    assert [step.action for step in plan.steps] == ["inspect_disk_space"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("how much disk is free")
+    assert named.steps[0].action == "inspect_disk_space"
+    inspect = runtime.planner.plan("inspect disk space")
+    assert inspect.steps[0].action == "inspect_disk_space"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_disk_space" for step in diagnose.steps)
+    largest = runtime.planner.plan("largest folder on C")
+    assert not any(step.action == "inspect_disk_space" for step in largest.steps)
+    defender = runtime.planner.plan("defender status")
+    assert [step.action for step in defender.steps] == ["inspect_defender"]
+    mutate = runtime.planner.plan("format c drive")
+    assert not any(step.action == "inspect_disk_space" for step in mutate.steps)
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

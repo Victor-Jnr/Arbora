@@ -167,6 +167,8 @@ class GoalPlanner:
             return self._foreground_plan(text)
         if self._looks_like_defender(lower):
             return self._defender_plan(text)
+        if self._looks_like_disk_space(lower):
+            return self._disk_space_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1086,6 +1088,29 @@ class GoalPlanner:
                     sensitivity=Sensitivity.READ,
                     side_effects=(
                         "Reads Get-MpComputerStatus enabled flags and AntivirusSignatureLastUpdated",
+                    ),
+                )
+            ],
+        )
+
+    def _disk_space_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Disk space inspect journey — read-only free and total GB per local drive. "
+                "Does not format, run chkdsk, or wipe a volume."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_disk_space",
+                    args={},
+                    summary="Read-only: local disk free space (no format or chkdsk)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=(
+                        "Reads Win32_LogicalDisk Size and FreeSpace for fixed drives",
                     ),
                 )
             ],
@@ -3454,6 +3479,44 @@ class GoalPlanner:
                 "real time protection",
             )
         ) or bool(re.search(r"\bdefender\b", lower))
+
+    @staticmethod
+    def _looks_like_disk_space(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "chkdsk",
+                "format-volume",
+                "clear-disk",
+                "format c",
+                "wipe",
+                "largest folder",
+                "biggest folder",
+            )
+        ):
+            return False
+        if any(word in lower for word in ("folder", "directory")):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "free disk space",
+                "disk free space",
+                "available disk",
+                "how much disk is free",
+                "how much free disk",
+                "how much space is left",
+                "inspect disk space",
+                "inspect disk",
+                "logical disk",
+                "drive free space",
+                "free space on this pc",
+                "free space on this computer",
+                "how much room on disk",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

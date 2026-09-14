@@ -211,6 +211,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/088-sandbox-auto-execute.md` | Change doc for sandbox auto-execute HTTP |
 | `workflows/inspect-defender.json` | Bundled read-only Defender status inspect pack |
 | `documentation/089-inspect-defender.md` | Change doc for Defender status inspect |
+| `workflows/inspect-disk-space.json` | Bundled read-only local disk free space inspect pack |
+| `documentation/090-inspect-disk-space.md` | Change doc for logical disk free space inspect |
 
 ---
 
@@ -247,6 +249,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented defender status as a sandbox dry-run goal |
 | `documentation/089-inspect-defender.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 089 |
+| `README.md` | Documentation latest table |
+
+## 090 — Logical disk free space inspect (2026-09-14)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_disk_space` (fixed-volume free/total GB; no format or chkdsk) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_disk_space` |
+| `src/arbora/core/planner.py` | Disk free-space inspect journey; diagnose still uses the diagnostic pack |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-disk-space.json` | Bundled inspect-disk-space pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no format-volume/chkdsk; secrets withheld |
+| `tests/test_broker_and_planner.py` | Free-space vs diagnose / largest-folder / format |
+| `tests/test_workflow_packs.py` | Pack match for inspect-disk-space |
+| `docs/NEXT.md` | Marked P25 plate 78 done |
+| `docs/sandbox.md` | Documented free disk space as a sandbox dry-run goal |
+| `documentation/090-inspect-disk-space.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 090 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

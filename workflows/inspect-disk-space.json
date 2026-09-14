@@ -1,0 +1,22 @@
+{
+  "id": "inspect-disk-space",
+  "name": "Inspect disk space",
+  "description": "Read-only free and total GB per local fixed drive. Does not format, chkdsk, or wipe.",
+  "goal_phrases": [
+    "inspect disk space pack",
+    "run inspect disk space pack"
+  ],
+  "rationale": "Workflow pack: read-only local disk free space (no format or chkdsk).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_disk_space",
+      "args": {},
+      "summary": "Read local disk free space",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Win32_LogicalDisk Size and FreeSpace for fixed drives"
+      ]
+    }
+  ]
+}

@@ -34,6 +34,7 @@ from arbora.adapters.desktop import (
     format_windows_version_report,
     format_pending_reboot_report,
     format_defender_report,
+    format_disk_space_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -64,6 +65,7 @@ from arbora.adapters.desktop import (
     parse_windows_version_snapshot,
     parse_pending_reboot_snapshot,
     parse_defender_snapshot,
+    parse_disk_space_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1660,6 +1662,53 @@ def test_inspect_defender_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_defender", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_disk_space_dry_run():
+    result = DesktopAdapter().execute("inspect_disk_space", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "win32_logicaldisk" in result.output.lower()
+    assert "format-volume" in result.output.lower()
+    assert "chkdsk" in result.output.lower()
+    assert "clear-disk" in result.output.lower()
+
+
+def test_format_disk_space_report_empty_and_drives():
+    empty = parse_disk_space_snapshot("")
+    report = format_disk_space_report(empty)
+    assert "no local disk" in report.lower()
+    live = format_disk_space_report(
+        parse_disk_space_snapshot("DRIVE=C:;SIZE_GB=476.5;FREE_GB=120.2\nDRIVE=D:;SIZE_GB=931.0;FREE_GB=400.0\n")
+    )
+    assert "C: 120.2 GB free of 476.5 GB" in live
+    assert "D: 400.0 GB free of 931.0 GB" in live
+    assert "format" not in live.lower() or "no format" in live.lower()
+
+
+def test_inspect_disk_space_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_disk_space", {}, dry_run=False)
+    assert result.ok
+    assert "no local disk" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "win32_logicaldisk" in command
+    assert "drivetype=3" in command.replace(" ", "")
+    assert "format-volume" not in command
+    assert "clear-disk" not in command
+    assert "chkdsk" not in command
+
+
+def test_inspect_disk_space_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="Format-Volume C:", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_disk_space", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
