@@ -209,6 +209,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/087-notepad-type-save.md` | Change doc for Notepad type and named save |
 | `docs/sandbox.md` | Operator guide for opt-in sandbox auto-execute |
 | `documentation/088-sandbox-auto-execute.md` | Change doc for sandbox auto-execute HTTP |
+| `workflows/inspect-defender.json` | Bundled read-only Defender status inspect pack |
+| `documentation/089-inspect-defender.md` | Change doc for Defender status inspect |
 
 ---
 
@@ -228,6 +230,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/088-sandbox-auto-execute.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 088 |
 | `README.md` | Public API row + documentation latest table |
+
+## 089 — Defender status inspect (2026-09-14)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_defender` (on/off flags + signature date; no threat dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_defender` |
+| `src/arbora/core/planner.py` | Defender inspect journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-defender.json` | Bundled inspect-defender pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no scan/disable; secrets withheld |
+| `tests/test_broker_and_planner.py` | Defender vs diagnose / disable / firewall |
+| `tests/test_workflow_packs.py` | Pack match for inspect-defender |
+| `docs/NEXT.md` | Marked P25 plate 77 done |
+| `docs/sandbox.md` | Documented defender status as a sandbox dry-run goal |
+| `documentation/089-inspect-defender.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 089 |
+| `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
 

@@ -1,0 +1,22 @@
+{
+  "id": "inspect-defender",
+  "name": "Inspect Defender",
+  "description": "Read-only Defender on/off flags and signature date. Does not dump threats or change settings.",
+  "goal_phrases": [
+    "inspect defender pack",
+    "run inspect defender pack"
+  ],
+  "rationale": "Workflow pack: read-only Defender status (no threat dump, no disable).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_defender",
+      "args": {},
+      "summary": "Read Defender status flags",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Get-MpComputerStatus enabled flags and AntivirusSignatureLastUpdated"
+      ]
+    }
+  ]
+}

@@ -87,6 +87,7 @@ Already in place:
 - read-only foreground window title, process, and PID (no typing).
 - type into a titled window after foreground verify (UI Automation / WM_SETTEXT; no SendKeys).
 - type into Notepad then write a named `.txt` in the notes folder (halt if focus/type fails).
+- read-only Defender on/off flags and signature date (no threat dump; no disable/scan).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -268,7 +269,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 76 | **Sandbox auto-execute HTTP** | ✅ Opt-in `POST /v1/execute` on isolated lab hosts; off by default |
-| 77 | **Defender status inspect** | Read-only Defender on/off and signature date; no threat dump; no disable/scan |
+| 77 | **Defender status inspect** | ✅ Read-only Defender on/off and signature date; no threat dump; no disable/scan |
 | 78 | **Logical disk free space inspect** | Read-only free/total GB per local drive; no format, chkdsk, or wipe |
 
 ## Non-negotiables (do not drift)
@@ -364,4 +365,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P25 plate **76** (sandbox auto-execute) is done. Next is **P25 #77 — Defender status inspect**.
+P25 plates **76–77** are done. Next is **P25 #78 — Logical disk free space inspect**.
