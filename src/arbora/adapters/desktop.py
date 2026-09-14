@@ -651,6 +651,16 @@ _DEFENDER_PS = (
     "}"
 )
 
+_DISK_SPACE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Get-CimInstance -ClassName Win32_LogicalDisk -Filter 'DriveType=3' | "
+    "Select-Object -First 8 | ForEach-Object { "
+    "  $size = 0; if ($_.Size) { $size = [math]::Round(($_.Size / 1GB), 1) }; "
+    "  $free = 0; if ($_.FreeSpace) { $free = [math]::Round(($_.FreeSpace / 1GB), 1) }; "
+    "  Write-Output ('DRIVE=' + $_.DeviceID + ';SIZE_GB=' + $size + ';FREE_GB=' + $free) "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1723,6 +1733,38 @@ def format_defender_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_disk_space_snapshot(stdout: str) -> list[tuple[str, str, str]]:
+    """Parse local fixed-disk free/total GB — never format or chkdsk output."""
+    rows: list[tuple[str, str, str]] = []
+    for line in (stdout or "").splitlines():
+        if not line.startswith("DRIVE="):
+            continue
+        drive = ""
+        size_gb = ""
+        free_gb = ""
+        for part in line.split(";"):
+            if part.startswith("DRIVE="):
+                drive = part.split("=", 1)[1].strip()[:8]
+            elif part.startswith("SIZE_GB="):
+                size_gb = part.split("=", 1)[1].strip()[:16]
+            elif part.startswith("FREE_GB="):
+                free_gb = part.split("=", 1)[1].strip()[:16]
+        if drive:
+            rows.append((drive, size_gb, free_gb))
+    return rows[:8]
+
+
+def format_disk_space_report(rows: list[tuple[str, str, str]]) -> str:
+    if not rows:
+        return "No local disk space reported."
+    lines = ["Local disks (fixed volumes only; no format or chkdsk):"]
+    for drive, size_gb, free_gb in rows:
+        size = size_gb.strip() or "unknown"
+        free = free_gb.strip() or "unknown"
+        lines.append(f"{drive} {free} GB free of {size} GB")
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2247,6 +2289,8 @@ class DesktopAdapter:
             return self._inspect_foreground(dry_run=dry_run)
         if action == "inspect_defender":
             return self._inspect_defender(dry_run=dry_run)
+        if action == "inspect_disk_space":
+            return self._inspect_disk_space(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3513,6 +3557,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_defender_report(snapshot),
+        )
+
+    def _inspect_disk_space(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Win32_LogicalDisk DriveType=3 free/total GB "
+                    "(no Format-Volume, no Clear-Disk, no chkdsk)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_DISK_SPACE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Disk space inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "format-volume",
+                "clear-disk",
+                "chkdsk",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        rows = parse_disk_space_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_disk_space_report(rows),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

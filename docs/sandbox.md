@@ -191,6 +191,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `windows version` | Read-only version / build |
 | `pending reboot` | Read-only reboot-pending flags |
 | `defender status` | Read-only Defender on/off and signature date |
+| `free disk space` | Read-only local disk free/total GB |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---
