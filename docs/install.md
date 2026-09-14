@@ -85,4 +85,6 @@ Exit codes: `0` all green, `2` optional warnings/failures, `1` required check fa
 - Not a cloud-hosted service
 - Does not grant Arbora unsupervised system control — plan → approve → execute still applies
 
+Localhost HTTP (`arbora serve`) is loopback-only and token-gated. Isolated lab hosts that need a one-shot plan+run can enable sandbox auto-execute — see **[sandbox.md](sandbox.md)**. That flag is off by default and does not skip the broker, dry-run default, or hard confirmation.
+
 More prototype notes: [prototype.md](prototype.md). Near-term build order: [NEXT.md](NEXT.md).

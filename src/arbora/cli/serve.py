@@ -26,7 +26,8 @@ def run_serve(argv: Sequence[str] | None = None) -> int:
         prog="arbora serve",
         description=(
             "Localhost HTTP plan-accept API. POST /v1/goals then "
-            "POST /v1/plans/{id}/approve. Dry-run default; hard classes need hard_confirm."
+            "POST /v1/plans/{id}/approve. Optional sandbox: POST /v1/execute. "
+            "Dry-run default; hard classes need hard_confirm."
         ),
     )
     parser.add_argument("--host", default="127.0.0.1", help="Loopback bind address")
@@ -41,6 +42,16 @@ def run_serve(argv: Sequence[str] | None = None) -> int:
         "--provider",
         default=None,
         help="Model provider: ollama (default), echo, or openai",
+    )
+    parser.add_argument(
+        "--sandbox-auto-execute",
+        action="store_true",
+        help=(
+            "Enable POST /v1/execute (plan + accept non-hard steps in one call). "
+            "For isolated lab hosts only. Still loopback, token, dry-run default, "
+            "and hard_confirm for hard classes. Also set by ARBORA_SANDBOX_AUTO_EXECUTE=1. "
+            "See docs/sandbox.md."
+        ),
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
@@ -63,10 +74,14 @@ def run_serve(argv: Sequence[str] | None = None) -> int:
         return 2
 
     runtime = build_runtime(memory_root=args.memory_dir, provider=args.provider, seed_samples=True)
-    session = ApiSession(runtime=runtime, token=token)
+    sandbox = bool(args.sandbox_auto_execute) or _env_flag("ARBORA_SANDBOX_AUTO_EXECUTE")
+    session = ApiSession(runtime=runtime, token=token, sandbox_auto_execute=sandbox)
     httpd = ThreadingHTTPServer((host, int(args.port)), _handler_for(session))
     print(f"Arbora plan-accept API on http://{host}:{args.port}")
     print("POST /v1/goals then POST /v1/plans/{id}/approve  (Authorization: Bearer <token>)")
+    if sandbox:
+        print("SANDBOX AUTO-EXECUTE is on: POST /v1/execute plans and runs non-hard steps in one call")
+        print("Hard classes still need hard_confirm. Dry-run still defaults to true.")
     if generated:
         print(f"API token (shown once): {token}")
     try:
@@ -110,3 +125,7 @@ def _handler_for(session: ApiSession) -> type[BaseHTTPRequestHandler]:
             self._handle()
 
     return Handler
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}

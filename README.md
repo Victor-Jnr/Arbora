@@ -67,7 +67,7 @@ The name *Arbora* (Latin for “tree”) reflects a living system that grows wit
 | Runnable application | CLI prototype (`arbora`) — not a packaged product |
 | Install / setup docs | See [docs/install.md](docs/install.md), [docs/prototype.md](docs/prototype.md), and [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Near-term build order | [docs/NEXT.md](docs/NEXT.md) (source of truth for what we do next) |
-| Public API | Localhost plan-accept HTTP (`arbora serve`); not a public internet API |
+| Public API | Localhost plan-accept HTTP (`arbora serve`); optional sandbox one-shot execute; not a public internet API |
 | License | [GPL-3.0](LICENSE) |
 | Collaboration model | Open source |
 
@@ -622,10 +622,11 @@ Exact language and package boundaries continue to evolve in Stage 1. What must n
 
 ## Documentation
 
-Commit-tied change history lives in [`documentation/`](documentation/README.md). Each meaningful commit adds the next numbered file (`001-…`, `002-…`, …) and updates that index. Per-file roles and one-line change summaries live in [`CHANGELOG.md`](CHANGELOG.md). Design notes that are not commit-tied stay under [`docs/`](docs/). Near-term build order (what we do next) is **[docs/NEXT.md](docs/NEXT.md)**. Private-tester install: **[docs/install.md](docs/install.md)**.
+Commit-tied change history lives in [`documentation/`](documentation/README.md). Each meaningful commit adds the next numbered file (`001-…`, `002-…`, …) and updates that index. Per-file roles and one-line change summaries live in [`CHANGELOG.md`](CHANGELOG.md). Design notes that are not commit-tied stay under [`docs/`](docs/). Near-term build order (what we do next) is **[docs/NEXT.md](docs/NEXT.md)**. Private-tester install: **[docs/install.md](docs/install.md)**. Isolated lab HTTP: **[docs/sandbox.md](docs/sandbox.md)**.
 
 | Latest | Document |
 | --- | --- |
+| 088 | [Sandbox auto-execute HTTP](documentation/088-sandbox-auto-execute.md) |
 | 087 | [Notepad type and named save](documentation/087-notepad-type-save.md) |
 | 086 | [Type into a titled window](documentation/086-type-in-window.md) |
 | 085 | [Foreground window inspect and halt-on-failure](documentation/085-inspect-foreground.md) |

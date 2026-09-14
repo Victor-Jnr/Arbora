@@ -48,6 +48,7 @@ class ApiSession:
     runtime: Runtime
     token: str
     pending: dict[str, PendingPlan] = field(default_factory=dict)
+    sandbox_auto_execute: bool = False
 
 
 def make_token() -> str:
@@ -93,7 +94,12 @@ def _dispatch(
     _require_token(session, headers)
 
     if method == "GET" and route == "/v1/health":
-        return 200, {"checks": doctor_payload()}
+        return 200, {
+            "checks": doctor_payload(),
+            "sandbox_auto_execute": session.sandbox_auto_execute,
+        }
+    if method == "POST" and route == "/v1/execute":
+        return 200, _sandbox_execute(session, _read_json(body))
     if method == "POST" and route == "/v1/goals":
         return 200, _create_plan(session, _read_json(body))
     if method == "GET" and route == "/v1/audit":
@@ -280,17 +286,80 @@ def _approve_plan(session: ApiSession, plan_id: str, payload: dict[str, Any]) ->
     return {
         "plan_id": plan.id,
         "dry_run": dry_run,
-        "results": [
-            {
-                "step_id": item.step_id,
-                "ok": item.ok,
-                "output": (item.output or "")[:MAX_RESULT_CHARS],
-                "error": item.error,
-                "dry_run": item.dry_run,
-            }
-            for item in results
-        ],
+        "results": _results_payload(results),
     }
+
+
+def _sandbox_execute(session: ApiSession, payload: dict[str, Any]) -> dict[str, Any]:
+    """Plan and run in one call. Off unless sandbox_auto_execute is enabled."""
+    if not session.sandbox_auto_execute:
+        raise ApiError(
+            403,
+            "sandbox auto-execute is not enabled; start arbora serve with "
+            "--sandbox-auto-execute or ARBORA_SANDBOX_AUTO_EXECUTE=1",
+        )
+    if payload.get("auto_approve") is True:
+        raise ApiError(
+            400,
+            "auto_approve is not accepted; sandbox mode uses POST /v1/execute",
+        )
+    goal = str(payload.get("goal") or "").strip()
+    if not goal:
+        raise ApiError(400, "goal is required")
+    dry_run = bool(payload["dry_run"]) if "dry_run" in payload else True
+    hard_confirm = bool(payload.get("hard_confirm"))
+    plan = session.runtime.planner.plan(goal)
+    record_goal(session.runtime.memory, goal)
+    session.runtime.audit.record(
+        "plan_created",
+        plan.rationale or plan.goal,
+        plan_id=plan.id,
+        goal=goal,
+        via="http_api_sandbox",
+    )
+    decision = _decision_from_accept(
+        plan,
+        approved_step_ids=[],
+        rejected_step_ids=[],
+        accept_all_non_hard=True,
+        hard_confirm=hard_confirm,
+        promote=None,
+    )
+    hard_ids = frozenset(step.id for step in plan.steps if step.requires_hard_confirmation())
+    hard_confirmed = hard_ids if hard_confirm else frozenset()
+    results = session.runtime.broker.execute_plan(
+        plan,
+        decision,
+        dry_run=dry_run,
+        hard_confirmed_step_ids=hard_confirmed,
+    )
+    session.runtime.audit.record(
+        "plan_finished",
+        f"Plan {plan.id} finished via http_api_sandbox",
+        plan_id=plan.id,
+        via="http_api_sandbox",
+    )
+    return {
+        "plan": _plan_to_dict(plan),
+        "plan_id": plan.id,
+        "dry_run": dry_run,
+        "sandbox_auto_execute": True,
+        "accepted": True,
+        "results": _results_payload(results),
+    }
+
+
+def _results_payload(results: list[Any]) -> list[dict[str, Any]]:
+    return [
+        {
+            "step_id": item.step_id,
+            "ok": item.ok,
+            "output": (item.output or "")[:MAX_RESULT_CHARS],
+            "error": item.error,
+            "dry_run": item.dry_run,
+        }
+        for item in results
+    ]
 
 
 def _decision_from_accept(

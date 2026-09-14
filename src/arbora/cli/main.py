@@ -36,7 +36,7 @@ Commands:
   arbora prefs     Show or set opt-in user preferences
   arbora audit     Export persisted audit events
   arbora memory    Show or export local memory JSON (no encryption keys)
-  arbora serve     Localhost plan-accept HTTP API (token; dry-run default)
+  arbora serve     Localhost plan-accept HTTP API (token; dry-run default; optional --sandbox-auto-execute)
   /history        Show recent goals
   /audit          Show recent audit events (/audit export [path])
   /routines       List trusted routines
