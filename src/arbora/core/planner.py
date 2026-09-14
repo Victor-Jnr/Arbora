@@ -165,6 +165,8 @@ class GoalPlanner:
             return self._pending_reboot_plan(text)
         if self._looks_like_foreground(lower):
             return self._foreground_plan(text)
+        if self._looks_like_defender(lower):
+            return self._defender_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1062,6 +1064,29 @@ class GoalPlanner:
                     summary="Read-only: foreground window title and process",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads GetForegroundWindow title, process, and PID",),
+                )
+            ],
+        )
+
+    def _defender_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Defender inspect journey — read-only on/off flags and signature date. "
+                "Does not dump threats, change preferences, or start a scan."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_defender",
+                    args={},
+                    summary="Read-only: Defender status (no threat dump, no disable)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=(
+                        "Reads Get-MpComputerStatus enabled flags and AntivirusSignatureLastUpdated",
+                    ),
                 )
             ],
         )
@@ -3391,6 +3416,44 @@ class GoalPlanner:
                 "whats focused",
             )
         )
+
+    @staticmethod
+    def _looks_like_defender(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable",
+                "turn off",
+                "uninstall",
+                "exclude",
+                "exclusion",
+                "threat",
+                "quarantine",
+                "full scan",
+                "quick scan",
+                "start-mpscan",
+                "set-mppreference",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "defender status",
+                "windows defender",
+                "microsoft defender",
+                "is defender on",
+                "is defender enabled",
+                "inspect defender",
+                "antivirus status",
+                "is antivirus on",
+                "real-time protection",
+                "realtime protection",
+                "real time protection",
+            )
+        ) or bool(re.search(r"\bdefender\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

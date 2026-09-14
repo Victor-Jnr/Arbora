@@ -95,6 +95,7 @@ Try goals like:
   windows version
   pending reboot
   foreground window
+  defender status
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

@@ -45,6 +45,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-windows-version" in ids
     assert "inspect-pending-reboot" in ids
     assert "inspect-foreground" in ids
+    assert "inspect-defender" in ids
     assert "type-in-window" in ids
     assert "type-in-notepad" in ids
 
@@ -524,6 +525,17 @@ def test_inspect_foreground_workflow_pack_matches():
     plan = pack.to_plan("run inspect foreground pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_foreground"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_defender_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect defender pack")
+    assert pack is not None
+    assert pack.id == "inspect-defender"
+    plan = pack.to_plan("run inspect defender pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_defender"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

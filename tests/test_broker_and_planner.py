@@ -626,6 +626,27 @@ def test_foreground_is_read_only_inspect():
     assert [step.action for step in reboot.steps] == ["inspect_pending_reboot"]
 
 
+def test_defender_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("defender status")
+    assert [step.action for step in plan.steps] == ["inspect_defender"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is defender on")
+    assert named.steps[0].action == "inspect_defender"
+    protection = runtime.planner.plan("real-time protection")
+    assert protection.steps[0].action == "inspect_defender"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_defender" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable defender")
+    assert not any(step.action == "inspect_defender" for step in mutate.steps)
+    firewall = runtime.planner.plan("firewall")
+    assert [step.action for step in firewall.steps] == ["inspect_firewall"]
+    reboot = runtime.planner.plan("pending reboot")
+    assert [step.action for step in reboot.steps] == ["inspect_pending_reboot"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

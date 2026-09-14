@@ -630,6 +630,27 @@ _PENDING_REBOOT_PS = (
     "Write-Output ('PFRO=' + $pfro)"
 )
 
+_DEFENDER_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $s = Get-MpComputerStatus -ErrorAction Stop; "
+    "  Write-Output ('AM_SERVICE=' + $s.AMServiceEnabled); "
+    "  Write-Output ('ANTIVIRUS=' + $s.AntivirusEnabled); "
+    "  Write-Output ('REALTIME=' + $s.RealTimeProtectionEnabled); "
+    "  Write-Output ('IOAV=' + $s.IoavProtectionEnabled); "
+    "  Write-Output ('ANTISPYWARE=' + $s.AntispywareEnabled); "
+    "  Write-Output ('NIS=' + $s.NISEnabled); "
+    "  $updated = $s.AntivirusSignatureLastUpdated; "
+    "  if ($updated) { "
+    "    Write-Output ('SIG_LAST=' + $updated.ToUniversalTime().ToString('yyyy-MM-dd')) "
+    "  } else { Write-Output 'SIG_LAST=' }; "
+    "} catch { "
+    "  Write-Output 'AM_SERVICE='; Write-Output 'ANTIVIRUS='; Write-Output 'REALTIME='; "
+    "  Write-Output 'IOAV='; Write-Output 'ANTISPYWARE='; Write-Output 'NIS='; "
+    "  Write-Output 'SIG_LAST='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1652,6 +1673,56 @@ def format_pending_reboot_report(snapshot: dict[str, str]) -> str:
     )
 
 
+def parse_defender_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Defender on/off flags and signature date — never threats or exclusions."""
+    snapshot = {
+        "am_service": "",
+        "antivirus": "",
+        "realtime": "",
+        "ioav": "",
+        "antispyware": "",
+        "nis": "",
+        "sig_last": "",
+    }
+    mapping = (
+        ("AM_SERVICE=", "am_service"),
+        ("ANTIVIRUS=", "antivirus"),
+        ("REALTIME=", "realtime"),
+        ("IOAV=", "ioav"),
+        ("ANTISPYWARE=", "antispyware"),
+        ("NIS=", "nis"),
+        ("SIG_LAST=", "sig_last"),
+    )
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:32]
+                break
+    return snapshot
+
+
+def format_defender_report(snapshot: dict[str, str]) -> str:
+    flags = (
+        ("antivirus", "Defender antivirus"),
+        ("realtime", "Real-time protection"),
+        ("am_service", "Antimalware service"),
+        ("ioav", "Download inspection (IOAV)"),
+        ("antispyware", "Antispyware"),
+        ("nis", "Network inspection"),
+    )
+    lines = []
+    for key, label in flags:
+        raw = str(snapshot.get(key) or "").strip()
+        if raw:
+            lines.append(f"{label}: {_flag_yes_no(raw)}")
+    sig = str(snapshot.get("sig_last") or "").strip()
+    if sig:
+        lines.append(f"Signatures last updated: {sig}")
+    if not lines:
+        return "No Defender status reported."
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2174,6 +2245,8 @@ class DesktopAdapter:
             return self._inspect_pending_reboot(dry_run=dry_run)
         if action == "inspect_foreground":
             return self._inspect_foreground(dry_run=dry_run)
+        if action == "inspect_defender":
+            return self._inspect_defender(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3392,6 +3465,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_pending_reboot_report(snapshot),
+        )
+
+    def _inspect_defender(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Get-MpComputerStatus on/off flags and signature date "
+                    "(no Get-MpThreat, no Set-MpPreference, no Start-MpScan)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_DEFENDER_PS, timeout_seconds=30)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Defender inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "get-mpthreat",
+                "threatid",
+                "quarantine",
+                "exclusionpath",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_defender_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_defender_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

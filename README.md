@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 089 | [Defender status inspect](documentation/089-inspect-defender.md) |
 | 088 | [Sandbox auto-execute HTTP](documentation/088-sandbox-auto-execute.md) |
 | 087 | [Notepad type and named save](documentation/087-notepad-type-save.md) |
 | 086 | [Type into a titled window](documentation/086-type-in-window.md) |

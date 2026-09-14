@@ -190,6 +190,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `foreground window` | Read-only focused window title / process |
 | `windows version` | Read-only version / build |
 | `pending reboot` | Read-only reboot-pending flags |
+| `defender status` | Read-only Defender on/off and signature date |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

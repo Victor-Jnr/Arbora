@@ -33,6 +33,7 @@ from arbora.adapters.desktop import (
     format_dns_report,
     format_windows_version_report,
     format_pending_reboot_report,
+    format_defender_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -62,6 +63,7 @@ from arbora.adapters.desktop import (
     parse_dns_snapshot,
     parse_windows_version_snapshot,
     parse_pending_reboot_snapshot,
+    parse_defender_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1609,6 +1611,55 @@ def test_inspect_pending_reboot_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_pending_reboot", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_defender_dry_run():
+    result = DesktopAdapter().execute("inspect_defender", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "get-mpcomputerstatus" in result.output.lower()
+    assert "get-mpthreat" in result.output.lower()
+    assert "set-mppreference" in result.output.lower()
+    assert "start-mpscan" in result.output.lower()
+
+
+def test_format_defender_report_empty_and_flags():
+    empty = parse_defender_snapshot("")
+    report = format_defender_report(empty)
+    assert "no defender" in report.lower()
+    live = format_defender_report(
+        parse_defender_snapshot(
+            "AM_SERVICE=True\nANTIVIRUS=True\nREALTIME=False\nIOAV=True\n"
+            "ANTISPYWARE=True\nNIS=False\nSIG_LAST=2026-09-14\n"
+        )
+    )
+    assert "Defender antivirus: yes" in live
+    assert "Real-time protection: no" in live
+    assert "Signatures last updated: 2026-09-14" in live
+
+
+def test_inspect_defender_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_defender", {}, dry_run=False)
+    assert result.ok
+    assert "no defender" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-mpcomputerstatus" in command
+    assert "get-mpthreat" not in command
+    assert "set-mppreference" not in command
+    assert "start-mpscan" not in command
+
+
+def test_inspect_defender_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="ThreatID=42", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_defender", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
