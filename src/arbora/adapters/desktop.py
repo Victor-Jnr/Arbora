@@ -677,6 +677,18 @@ _MEMORY_PS = (
     "}"
 )
 
+_POWER_PLAN_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $plan = Get-CimInstance -Namespace root\\cimv2\\power -ClassName Win32_PowerPlan | "
+    "    Where-Object { $_.IsActive } | Select-Object -First 1; "
+    "  if ($plan) { Write-Output ('NAME=' + $plan.ElementName) } "
+    "  else { Write-Output 'NAME=' }; "
+    "} catch { "
+    "  Write-Output 'NAME='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1803,6 +1815,23 @@ def format_memory_report(snapshot: dict[str, str]) -> str:
     return f"RAM: {free_s} MB free of {total_s} MB"
 
 
+def parse_power_plan_snapshot(stdout: str) -> dict[str, str]:
+    """Parse the active power plan name — never a GUID dump or setactive."""
+    snapshot = {"name": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("NAME="):
+            snapshot["name"] = line.split("=", 1)[1].strip()[:96]
+            break
+    return snapshot
+
+
+def format_power_plan_report(snapshot: dict[str, str]) -> str:
+    name = str(snapshot.get("name") or "").strip()
+    if not name:
+        return "No active power plan reported."
+    return f"Active power plan: {name}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2331,6 +2360,8 @@ class DesktopAdapter:
             return self._inspect_disk_space(dry_run=dry_run)
         if action == "inspect_memory":
             return self._inspect_memory(dry_run=dry_run)
+        if action == "inspect_power_plan":
+            return self._inspect_power_plan(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3690,6 +3721,52 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_memory_report(snapshot),
+        )
+
+    def _inspect_power_plan(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Win32_PowerPlan IsActive ElementName "
+                    "(no powercfg /setactive, no /change, no hibernate on)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_POWER_PLAN_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Power plan inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "/setactive",
+                "powercfg-setactive",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_power_plan_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_power_plan_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

@@ -171,6 +171,8 @@ class GoalPlanner:
             return self._disk_space_plan(text)
         if self._looks_like_memory(lower):
             return self._memory_plan(text)
+        if self._looks_like_power_plan(lower):
+            return self._power_plan_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1137,6 +1139,27 @@ class GoalPlanner:
                     side_effects=(
                         "Reads Win32_OperatingSystem TotalVisibleMemorySize and FreePhysicalMemory",
                     ),
+                )
+            ],
+        )
+
+    def _power_plan_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Power plan inspect journey — read-only active plan name. "
+                "Does not change the scheme or call powercfg /setactive."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_power_plan",
+                    args={},
+                    summary="Read-only: active power plan (no scheme change)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Win32_PowerPlan ElementName where IsActive is true",),
                 )
             ],
         )
@@ -3576,6 +3599,37 @@ class GoalPlanner:
                 "total ram",
                 "ram free",
                 "ram status",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_power_plan(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "set power",
+                "change power",
+                "switch power",
+                "/setactive",
+                "setactive",
+                "hibernate",
+                "sleep now",
+                "high performance now",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "power plan",
+                "power scheme",
+                "active power plan",
+                "inspect power plan",
+                "current power plan",
+                "what power plan",
+                "which power plan",
             )
         )
 

@@ -98,6 +98,7 @@ Try goals like:
   defender status
   free disk space
   how much ram
+  power plan
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

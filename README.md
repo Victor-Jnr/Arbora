@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 092 | [Power plan inspect](documentation/092-inspect-power-plan.md) |
 | 091 | [Physical RAM inspect](documentation/091-inspect-memory.md) |
 | 090 | [Logical disk free space inspect](documentation/090-inspect-disk-space.md) |
 | 089 | [Defender status inspect](documentation/089-inspect-defender.md) |
