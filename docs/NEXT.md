@@ -89,11 +89,12 @@ Already in place:
 - type into Notepad then write a named `.txt` in the notes folder (halt if focus/type fails).
 - read-only Defender on/off flags and signature date (no threat dump; no disable/scan).
 - read-only local disk free/total GB (no format, chkdsk, or wipe).
+- read-only physical RAM free/total MB (no process dump).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P25).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P26).
 
 ---
 
@@ -273,6 +274,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 77 | **Defender status inspect** | ✅ Read-only Defender on/off and signature date; no threat dump; no disable/scan |
 | 78 | **Logical disk free space inspect** | ✅ Read-only free/total GB per local drive; no format, chkdsk, or wipe |
 
+### P26 — Stage 3 RAM, power plan, and CPU
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 79 | **Physical RAM inspect** | ✅ Read-only free/total MB; no process dump |
+| 80 | **Power plan inspect** | Read-only active power plan name; no powercfg /setactive |
+| 81 | **CPU load inspect** | Read-only processor name, logical cores, and load percent; no affinity changes |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -366,4 +375,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P25 plates 76–78 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P26 plate **79** (physical RAM inspect) is done. Next is **P26 #80 — Power plan inspect**.

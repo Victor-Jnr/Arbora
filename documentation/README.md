@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 091 | [Physical RAM inspect](091-inspect-memory.md) | 2026-09-20 | Read-only RAM free/total MB; no process dump |
 | 090 | [Logical disk free space inspect](090-inspect-disk-space.md) | 2026-09-14 | Read-only free/total GB per local drive; no format or chkdsk |
 | 089 | [Defender status inspect](089-inspect-defender.md) | 2026-09-14 | Read-only Defender on/off and signature date; no scan or disable |
 | 088 | [Sandbox auto-execute HTTP](088-sandbox-auto-execute.md) | 2026-09-14 | Opt-in one-shot `POST /v1/execute` for isolated lab hosts |

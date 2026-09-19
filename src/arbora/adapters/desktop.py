@@ -661,6 +661,22 @@ _DISK_SPACE_PS = (
     "}"
 )
 
+_MEMORY_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $os = Get-CimInstance -ClassName Win32_OperatingSystem "
+    "    -Property TotalVisibleMemorySize,FreePhysicalMemory; "
+    "  $totalMb = 0; if ($os.TotalVisibleMemorySize) { "
+    "    $totalMb = [math]::Round(($os.TotalVisibleMemorySize / 1024), 0) }; "
+    "  $freeMb = 0; if ($os.FreePhysicalMemory) { "
+    "    $freeMb = [math]::Round(($os.FreePhysicalMemory / 1024), 0) }; "
+    "  Write-Output ('TOTAL_MB=' + $totalMb); "
+    "  Write-Output ('FREE_MB=' + $freeMb); "
+    "} catch { "
+    "  Write-Output 'TOTAL_MB='; Write-Output 'FREE_MB='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1765,6 +1781,28 @@ def format_disk_space_report(rows: list[tuple[str, str, str]]) -> str:
     return "\n".join(lines)
 
 
+def parse_memory_snapshot(stdout: str) -> dict[str, str]:
+    """Parse physical RAM free/total MB — never a process dump."""
+    snapshot = {"total_mb": "", "free_mb": ""}
+    mapping = (("TOTAL_MB=", "total_mb"), ("FREE_MB=", "free_mb"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:16]
+                break
+    return snapshot
+
+
+def format_memory_report(snapshot: dict[str, str]) -> str:
+    total = str(snapshot.get("total_mb") or "").strip()
+    free = str(snapshot.get("free_mb") or "").strip()
+    if not total and not free:
+        return "No RAM status reported."
+    total_s = total or "unknown"
+    free_s = free or "unknown"
+    return f"RAM: {free_s} MB free of {total_s} MB"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2291,6 +2329,8 @@ class DesktopAdapter:
             return self._inspect_defender(dry_run=dry_run)
         if action == "inspect_disk_space":
             return self._inspect_disk_space(dry_run=dry_run)
+        if action == "inspect_memory":
+            return self._inspect_memory(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3604,6 +3644,52 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_disk_space_report(rows),
+        )
+
+    def _inspect_memory(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Win32_OperatingSystem TotalVisibleMemorySize "
+                    "and FreePhysicalMemory (no Get-Process dump, no WorkingSet)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_MEMORY_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Memory inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "get-process",
+                "workingset",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_memory_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_memory_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

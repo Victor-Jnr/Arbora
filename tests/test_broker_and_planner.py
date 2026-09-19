@@ -668,6 +668,25 @@ def test_disk_space_is_read_only_inspect():
     assert not any(step.action == "inspect_disk_space" for step in mutate.steps)
 
 
+def test_memory_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("how much ram")
+    assert [step.action for step in plan.steps] == ["inspect_memory"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("inspect memory")
+    assert named.steps[0].action == "inspect_memory"
+    free = runtime.planner.plan("free ram")
+    assert free.steps[0].action == "inspect_memory"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_memory" for step in diagnose.steps)
+    usage = runtime.planner.plan("memory usage")
+    assert not any(step.action == "inspect_memory" for step in usage.steps)
+    disk = runtime.planner.plan("free disk space")
+    assert [step.action for step in disk.steps] == ["inspect_disk_space"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 
