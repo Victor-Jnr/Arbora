@@ -215,6 +215,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/090-inspect-disk-space.md` | Change doc for logical disk free space inspect |
 | `workflows/inspect-memory.json` | Bundled read-only physical RAM inspect pack |
 | `documentation/091-inspect-memory.md` | Change doc for physical RAM inspect |
+| `workflows/inspect-power-plan.json` | Bundled read-only active power plan inspect pack |
+| `documentation/092-inspect-power-plan.md` | Change doc for power plan inspect |
 
 ---
 
@@ -287,6 +289,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented how much ram as a sandbox dry-run goal |
 | `documentation/091-inspect-memory.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 091 |
+| `README.md` | Documentation latest table |
+
+## 092 — Power plan inspect (2026-09-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_power_plan` (active plan name; no powercfg /setactive) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_power_plan` |
+| `src/arbora/core/planner.py` | Power plan inspect journey; battery status stays inspect_battery |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-power-plan.json` | Bundled inspect-power-plan pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no setactive; secrets withheld |
+| `tests/test_broker_and_planner.py` | Power plan vs diagnose / set / battery / RAM |
+| `tests/test_workflow_packs.py` | Pack match for inspect-power-plan |
+| `docs/NEXT.md` | Marked P26 plate 80 done |
+| `docs/sandbox.md` | Documented power plan as a sandbox dry-run goal |
+| `documentation/092-inspect-power-plan.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 092 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

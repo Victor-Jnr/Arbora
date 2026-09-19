@@ -36,6 +36,7 @@ from arbora.adapters.desktop import (
     format_defender_report,
     format_disk_space_report,
     format_memory_report,
+    format_power_plan_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -68,6 +69,7 @@ from arbora.adapters.desktop import (
     parse_defender_snapshot,
     parse_disk_space_snapshot,
     parse_memory_snapshot,
+    parse_power_plan_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1753,6 +1755,47 @@ def test_inspect_memory_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_memory", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_power_plan_dry_run():
+    result = DesktopAdapter().execute("inspect_power_plan", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "win32_powerplan" in result.output.lower()
+    assert "/setactive" in result.output.lower()
+    assert "/change" in result.output.lower()
+
+
+def test_format_power_plan_report_empty_and_name():
+    empty = parse_power_plan_snapshot("")
+    report = format_power_plan_report(empty)
+    assert "no active power plan" in report.lower()
+    live = format_power_plan_report(parse_power_plan_snapshot("NAME=Balanced\n"))
+    assert "Active power plan: Balanced" in live
+
+
+def test_inspect_power_plan_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_power_plan", {}, dry_run=False)
+    assert result.ok
+    assert "no active power plan" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "win32_powerplan" in command
+    assert "isactive" in command
+    assert "setactive" not in command
+    assert "powercfg" not in command
+
+
+def test_inspect_power_plan_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="powercfg /setactive abc", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_power_plan", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

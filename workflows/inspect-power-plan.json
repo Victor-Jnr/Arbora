@@ -1,0 +1,22 @@
+{
+  "id": "inspect-power-plan",
+  "name": "Inspect power plan",
+  "description": "Read-only active power plan name. Does not change the scheme.",
+  "goal_phrases": [
+    "inspect power plan pack",
+    "run inspect power plan pack"
+  ],
+  "rationale": "Workflow pack: read-only active power plan (no scheme change).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_power_plan",
+      "args": {},
+      "summary": "Read the active power plan name",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Win32_PowerPlan ElementName where IsActive is true"
+      ]
+    }
+  ]
+}

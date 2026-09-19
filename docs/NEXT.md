@@ -90,6 +90,7 @@ Already in place:
 - read-only Defender on/off flags and signature date (no threat dump; no disable/scan).
 - read-only local disk free/total GB (no format, chkdsk, or wipe).
 - read-only physical RAM free/total MB (no process dump).
+- read-only active power plan name (no scheme change).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -279,7 +280,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 79 | **Physical RAM inspect** | ✅ Read-only free/total MB; no process dump |
-| 80 | **Power plan inspect** | Read-only active power plan name; no powercfg /setactive |
+| 80 | **Power plan inspect** | ✅ Read-only active power plan name; no powercfg /setactive |
 | 81 | **CPU load inspect** | Read-only processor name, logical cores, and load percent; no affinity changes |
 
 ## Non-negotiables (do not drift)
@@ -375,4 +376,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P26 plate **79** (physical RAM inspect) is done. Next is **P26 #80 — Power plan inspect**.
+P26 plates **79–80** are done. Next is **P26 #81 — CPU load inspect**.
