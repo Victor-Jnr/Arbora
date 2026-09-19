@@ -169,6 +169,8 @@ class GoalPlanner:
             return self._defender_plan(text)
         if self._looks_like_disk_space(lower):
             return self._disk_space_plan(text)
+        if self._looks_like_memory(lower):
+            return self._memory_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1111,6 +1113,29 @@ class GoalPlanner:
                     sensitivity=Sensitivity.READ,
                     side_effects=(
                         "Reads Win32_LogicalDisk Size and FreeSpace for fixed drives",
+                    ),
+                )
+            ],
+        )
+
+    def _memory_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "RAM inspect journey — read-only physical memory free and total. "
+                "Does not dump processes or working-set lists."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_memory",
+                    args={},
+                    summary="Read-only: physical RAM free/total (no process dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=(
+                        "Reads Win32_OperatingSystem TotalVisibleMemorySize and FreePhysicalMemory",
                     ),
                 )
             ],
@@ -3515,6 +3540,42 @@ class GoalPlanner:
                 "free space on this pc",
                 "free space on this computer",
                 "how much room on disk",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_memory(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "memory usage",
+                "what's using",
+                "whats using",
+                "get-process",
+                "working set",
+                "process dump",
+                "wipe memory",
+                "export memory",
+                "encrypted memory",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "how much ram",
+                "how much memory",
+                "free ram",
+                "available ram",
+                "inspect ram",
+                "inspect memory",
+                "physical memory",
+                "installed ram",
+                "total ram",
+                "ram free",
+                "ram status",
             )
         )
 

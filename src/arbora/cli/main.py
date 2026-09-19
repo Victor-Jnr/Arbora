@@ -97,6 +97,7 @@ Try goals like:
   foreground window
   defender status
   free disk space
+  how much ram
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

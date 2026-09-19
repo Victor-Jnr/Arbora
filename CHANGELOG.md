@@ -213,6 +213,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/089-inspect-defender.md` | Change doc for Defender status inspect |
 | `workflows/inspect-disk-space.json` | Bundled read-only local disk free space inspect pack |
 | `documentation/090-inspect-disk-space.md` | Change doc for logical disk free space inspect |
+| `workflows/inspect-memory.json` | Bundled read-only physical RAM inspect pack |
+| `documentation/091-inspect-memory.md` | Change doc for physical RAM inspect |
 
 ---
 
@@ -267,6 +269,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented free disk space as a sandbox dry-run goal |
 | `documentation/090-inspect-disk-space.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 090 |
+| `README.md` | Documentation latest table |
+
+## 091 — Physical RAM inspect (2026-09-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_memory` (physical RAM free/total MB; no process dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_memory` |
+| `src/arbora/core/planner.py` | RAM inspect journey; “memory usage” still uses the diagnostic pack |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-memory.json` | Bundled inspect-memory pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-Process; secrets withheld |
+| `tests/test_broker_and_planner.py` | RAM vs diagnose / memory usage / disk |
+| `tests/test_workflow_packs.py` | Pack match for inspect-memory |
+| `docs/NEXT.md` | Marked P26 plate 79 done |
+| `docs/sandbox.md` | Documented how much ram as a sandbox dry-run goal |
+| `documentation/091-inspect-memory.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 091 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

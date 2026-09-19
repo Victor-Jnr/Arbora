@@ -35,6 +35,7 @@ from arbora.adapters.desktop import (
     format_pending_reboot_report,
     format_defender_report,
     format_disk_space_report,
+    format_memory_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -66,6 +67,7 @@ from arbora.adapters.desktop import (
     parse_pending_reboot_snapshot,
     parse_defender_snapshot,
     parse_disk_space_snapshot,
+    parse_memory_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1709,6 +1711,48 @@ def test_inspect_disk_space_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_disk_space", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_memory_dry_run():
+    result = DesktopAdapter().execute("inspect_memory", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "win32_operatingsystem" in result.output.lower()
+    assert "get-process" in result.output.lower()
+    assert "workingset" in result.output.lower()
+
+
+def test_format_memory_report_empty_and_values():
+    empty = parse_memory_snapshot("")
+    report = format_memory_report(empty)
+    assert "no ram" in report.lower()
+    live = format_memory_report(parse_memory_snapshot("TOTAL_MB=16384\nFREE_MB=8192\n"))
+    assert "RAM: 8192 MB free of 16384 MB" in live
+
+
+def test_inspect_memory_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_memory", {}, dry_run=False)
+    assert result.ok
+    assert "no ram" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "win32_operatingsystem" in command
+    assert "totalvisiblememorysize" in command
+    assert "freephysicalmemory" in command
+    assert "get-process" not in command
+    assert "workingset" not in command
+
+
+def test_inspect_memory_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="Get-Process WorkingSet", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_memory", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
