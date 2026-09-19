@@ -689,6 +689,18 @@ _POWER_PLAN_PS = (
     "}"
 )
 
+_CPU_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $p = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1; "
+    "  Write-Output ('NAME=' + $p.Name); "
+    "  Write-Output ('CORES=' + $p.NumberOfLogicalProcessors); "
+    "  Write-Output ('LOAD=' + $p.LoadPercentage); "
+    "} catch { "
+    "  Write-Output 'NAME='; Write-Output 'CORES='; Write-Output 'LOAD='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1832,6 +1844,35 @@ def format_power_plan_report(snapshot: dict[str, str]) -> str:
     return f"Active power plan: {name}"
 
 
+def parse_cpu_snapshot(stdout: str) -> dict[str, str]:
+    """Parse processor name, logical cores, and load — never a process dump."""
+    snapshot = {"name": "", "cores": "", "load": ""}
+    mapping = (("NAME=", "name"), ("CORES=", "cores"), ("LOAD=", "load"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                limit = 96 if key == "name" else 16
+                snapshot[key] = line.split("=", 1)[1].strip()[:limit]
+                break
+    return snapshot
+
+
+def format_cpu_report(snapshot: dict[str, str]) -> str:
+    name = str(snapshot.get("name") or "").strip()
+    cores = str(snapshot.get("cores") or "").strip()
+    load = str(snapshot.get("load") or "").strip()
+    lines = []
+    if name:
+        lines.append(f"Processor: {name}")
+    if cores:
+        lines.append(f"Logical processors: {cores}")
+    if load:
+        lines.append(f"Load: {load}%")
+    if not lines:
+        return "No CPU status reported."
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2362,6 +2403,8 @@ class DesktopAdapter:
             return self._inspect_memory(dry_run=dry_run)
         if action == "inspect_power_plan":
             return self._inspect_power_plan(dry_run=dry_run)
+        if action == "inspect_cpu":
+            return self._inspect_cpu(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3767,6 +3810,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_power_plan_report(snapshot),
+        )
+
+    def _inspect_cpu(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Win32_Processor Name, NumberOfLogicalProcessors, "
+                    "and LoadPercentage (no Get-Process dump, no Set-Process affinity)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_CPU_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "CPU inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "get-process",
+                "set-process",
+                "processoraffinity",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_cpu_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_cpu_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

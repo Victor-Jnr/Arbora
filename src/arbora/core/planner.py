@@ -173,6 +173,8 @@ class GoalPlanner:
             return self._memory_plan(text)
         if self._looks_like_power_plan(lower):
             return self._power_plan_plan(text)
+        if self._looks_like_cpu(lower):
+            return self._cpu_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1160,6 +1162,29 @@ class GoalPlanner:
                     summary="Read-only: active power plan (no scheme change)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Win32_PowerPlan ElementName where IsActive is true",),
+                )
+            ],
+        )
+
+    def _cpu_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "CPU inspect journey — read-only processor name, logical cores, and load. "
+                "Does not dump processes or change affinity."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_cpu",
+                    args={},
+                    summary="Read-only: CPU name, cores, and load (no process dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=(
+                        "Reads Win32_Processor Name, NumberOfLogicalProcessors, LoadPercentage",
+                    ),
                 )
             ],
         )
@@ -3630,6 +3655,39 @@ class GoalPlanner:
                 "current power plan",
                 "what power plan",
                 "which power plan",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_cpu(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "slow pc",
+                "slow computer",
+                "what's using",
+                "whats using",
+                "affinity",
+                "set-process",
+                "overclock",
+                "get-process",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "cpu load",
+                "cpu usage",
+                "cpu percent",
+                "processor load",
+                "processor usage",
+                "inspect cpu",
+                "how busy is the cpu",
+                "how busy is my cpu",
+                "cpu status",
             )
         )
 

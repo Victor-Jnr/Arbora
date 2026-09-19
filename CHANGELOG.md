@@ -217,6 +217,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/091-inspect-memory.md` | Change doc for physical RAM inspect |
 | `workflows/inspect-power-plan.json` | Bundled read-only active power plan inspect pack |
 | `documentation/092-inspect-power-plan.md` | Change doc for power plan inspect |
+| `workflows/inspect-cpu.json` | Bundled read-only CPU load inspect pack |
+| `documentation/093-inspect-cpu.md` | Change doc for CPU load inspect |
 
 ---
 
@@ -307,6 +309,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented power plan as a sandbox dry-run goal |
 | `documentation/092-inspect-power-plan.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 092 |
+| `README.md` | Documentation latest table |
+
+## 093 — CPU load inspect (2026-09-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_cpu` (name, logical cores, load percent; no process dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_cpu` |
+| `src/arbora/core/planner.py` | CPU inspect journey; “slow pc” still uses the diagnostic pack |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-cpu.json` | Bundled inspect-cpu pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-Process/affinity; secrets withheld |
+| `tests/test_broker_and_planner.py` | CPU vs diagnose / slow pc / power plan / RAM |
+| `tests/test_workflow_packs.py` | Pack match for inspect-cpu |
+| `docs/NEXT.md` | Marked P26 plate 81 done |
+| `docs/sandbox.md` | Documented cpu load as a sandbox dry-run goal |
+| `documentation/093-inspect-cpu.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 093 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

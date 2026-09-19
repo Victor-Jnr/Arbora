@@ -194,6 +194,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `free disk space` | Read-only local disk free/total GB |
 | `how much ram` | Read-only physical RAM free/total |
 | `power plan` | Read-only active power plan name |
+| `cpu load` | Read-only CPU name, cores, and load |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

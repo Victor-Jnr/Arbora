@@ -1,0 +1,22 @@
+{
+  "id": "inspect-cpu",
+  "name": "Inspect CPU",
+  "description": "Read-only processor name, logical cores, and load percent. Does not dump processes or change affinity.",
+  "goal_phrases": [
+    "inspect cpu pack",
+    "run inspect cpu pack"
+  ],
+  "rationale": "Workflow pack: read-only CPU name, cores, and load (no process dump).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_cpu",
+      "args": {},
+      "summary": "Read CPU name, cores, and load",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Win32_Processor Name, NumberOfLogicalProcessors, LoadPercentage"
+      ]
+    }
+  ]
+}

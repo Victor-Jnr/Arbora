@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 093 | [CPU load inspect](093-inspect-cpu.md) | 2026-09-20 | Read-only CPU name, cores, and load; no process dump |
 | 092 | [Power plan inspect](092-inspect-power-plan.md) | 2026-09-20 | Read-only active power plan name; no scheme change |
 | 091 | [Physical RAM inspect](091-inspect-memory.md) | 2026-09-20 | Read-only RAM free/total MB; no process dump |
 | 090 | [Logical disk free space inspect](090-inspect-disk-space.md) | 2026-09-14 | Read-only free/total GB per local drive; no format or chkdsk |
