@@ -37,6 +37,7 @@ from arbora.adapters.desktop import (
     format_disk_space_report,
     format_memory_report,
     format_power_plan_report,
+    format_cpu_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -70,6 +71,7 @@ from arbora.adapters.desktop import (
     parse_disk_space_snapshot,
     parse_memory_snapshot,
     parse_power_plan_snapshot,
+    parse_cpu_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1796,6 +1798,53 @@ def test_inspect_power_plan_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_power_plan", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_cpu_dry_run():
+    result = DesktopAdapter().execute("inspect_cpu", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "win32_processor" in result.output.lower()
+    assert "get-process" in result.output.lower()
+    assert "set-process" in result.output.lower()
+    assert "affinity" in result.output.lower()
+
+
+def test_format_cpu_report_empty_and_values():
+    empty = parse_cpu_snapshot("")
+    report = format_cpu_report(empty)
+    assert "no cpu" in report.lower()
+    live = format_cpu_report(
+        parse_cpu_snapshot("NAME=Arbora CPU\nCORES=8\nLOAD=12\n")
+    )
+    assert "Processor: Arbora CPU" in live
+    assert "Logical processors: 8" in live
+    assert "Load: 12%" in live
+
+
+def test_inspect_cpu_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_cpu", {}, dry_run=False)
+    assert result.ok
+    assert "no cpu" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "win32_processor" in command
+    assert "loadpercentage" in command
+    assert "get-process" not in command
+    assert "set-process" not in command
+    assert "affinity" not in command
+
+
+def test_inspect_cpu_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="Set-Process ProcessorAffinity", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_cpu", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

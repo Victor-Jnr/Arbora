@@ -708,6 +708,27 @@ def test_power_plan_is_read_only_inspect():
     assert [step.action for step in ram.steps] == ["inspect_memory"]
 
 
+def test_cpu_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("cpu load")
+    assert [step.action for step in plan.steps] == ["inspect_cpu"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("inspect cpu")
+    assert named.steps[0].action == "inspect_cpu"
+    usage = runtime.planner.plan("cpu usage")
+    assert usage.steps[0].action == "inspect_cpu"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_cpu" for step in diagnose.steps)
+    slow = runtime.planner.plan("slow pc")
+    assert not any(step.action == "inspect_cpu" for step in slow.steps)
+    power = runtime.planner.plan("power plan")
+    assert [step.action for step in power.steps] == ["inspect_power_plan"]
+    ram = runtime.planner.plan("how much ram")
+    assert [step.action for step in ram.steps] == ["inspect_memory"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 
