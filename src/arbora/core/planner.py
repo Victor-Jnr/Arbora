@@ -179,6 +179,8 @@ class GoalPlanner:
             return self._secure_boot_plan(text)
         if self._looks_like_tpm(lower):
             return self._tpm_plan(text)
+        if self._looks_like_bluetooth(lower):
+            return self._bluetooth_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1231,6 +1233,27 @@ class GoalPlanner:
                     summary="Read-only: TPM present/ready/enabled (no owner auth)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Get-Tpm TpmPresent, TpmReady, TpmEnabled, TpmActivated",),
+                )
+            ],
+        )
+
+    def _bluetooth_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Bluetooth inspect journey — read-only adapter name and status. "
+                "Does not dump MAC addresses or paired devices, and does not enable or disable the radio."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_bluetooth",
+                    args={},
+                    summary="Read-only: Bluetooth adapter name and status (no MAC)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Get-NetAdapter name and Status for Bluetooth adapters",),
                 )
             ],
         )
@@ -3793,6 +3816,36 @@ class GoalPlanner:
                 "trusted platform module",
             )
         ) or bool(re.search(r"\btpm\b", lower))
+
+    @staticmethod
+    def _looks_like_bluetooth(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable bluetooth",
+                "enable bluetooth",
+                "turn off bluetooth",
+                "turn on bluetooth",
+                "pair",
+                "pairing",
+                "mac address",
+                "disable-netadapter",
+                "enable-netadapter",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "bluetooth status",
+                "bluetooth adapter",
+                "inspect bluetooth",
+                "is bluetooth on",
+                "bluetooth radio",
+            )
+        ) or bool(re.search(r"\bbluetooth\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

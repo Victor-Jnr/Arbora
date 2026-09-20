@@ -223,6 +223,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/094-inspect-secure-boot.md` | Change doc for Secure Boot inspect |
 | `workflows/inspect-tpm.json` | Bundled read-only TPM status inspect pack |
 | `documentation/095-inspect-tpm.md` | Change doc for TPM inspect |
+| `workflows/inspect-bluetooth.json` | Bundled read-only Bluetooth adapter inspect pack |
+| `documentation/096-inspect-bluetooth.md` | Change doc for Bluetooth radio inspect |
 
 ---
 
@@ -367,6 +369,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented tpm status as a sandbox dry-run goal |
 | `documentation/095-inspect-tpm.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 095 |
+| `README.md` | Documentation latest table |
+
+## 096 — Bluetooth radio inspect (2026-09-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_bluetooth` (adapter name/status; no MAC or pairing dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_bluetooth` |
+| `src/arbora/core/planner.py` | Bluetooth inspect journey; wifi status stays inspect_network |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-bluetooth.json` | Bundled inspect-bluetooth pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no MAC/enable-disable; secrets withheld |
+| `tests/test_broker_and_planner.py` | Bluetooth vs diagnose / disable / wifi / TPM |
+| `tests/test_workflow_packs.py` | Pack match for inspect-bluetooth |
+| `docs/NEXT.md` | Marked P27 plate 84 done |
+| `docs/sandbox.md` | Documented bluetooth status as a sandbox dry-run goal |
+| `documentation/096-inspect-bluetooth.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 096 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

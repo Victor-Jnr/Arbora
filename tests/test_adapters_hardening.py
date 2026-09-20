@@ -40,6 +40,7 @@ from arbora.adapters.desktop import (
     format_cpu_report,
     format_secure_boot_report,
     format_tpm_report,
+    format_bluetooth_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -76,6 +77,7 @@ from arbora.adapters.desktop import (
     parse_cpu_snapshot,
     parse_secure_boot_snapshot,
     parse_tpm_snapshot,
+    parse_bluetooth_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1938,6 +1940,54 @@ def test_inspect_tpm_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_tpm", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_bluetooth_dry_run():
+    result = DesktopAdapter().execute("inspect_bluetooth", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "get-netadapter" in result.output.lower()
+    assert "mac" in result.output.lower()
+    assert "disable-netadapter" in result.output.lower()
+    assert "enable-netadapter" in result.output.lower()
+
+
+def test_format_bluetooth_report_empty_and_adapters():
+    empty = parse_bluetooth_snapshot("")
+    report = format_bluetooth_report(empty)
+    assert "no bluetooth" in report.lower()
+    live = format_bluetooth_report(
+        parse_bluetooth_snapshot("ADAPTER=Bluetooth;STATUS=Up\nADAPTER=Bluetooth 2;STATUS=Disconnected\n")
+    )
+    assert "Bluetooth: Up" in live
+    assert "Bluetooth 2: Disconnected" in live
+    assert "no MAC" in live
+    assert "macaddress" not in live.lower()
+
+
+def test_inspect_bluetooth_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_bluetooth", {}, dry_run=False)
+    assert result.ok
+    assert "no bluetooth" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-netadapter" in command
+    assert "bluetooth" in command
+    assert "macaddress" not in command
+    assert "disable-netadapter" not in command
+    assert "enable-netadapter" not in command
+
+
+def test_inspect_bluetooth_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="MacAddress=AA:BB:CC:DD:EE:FF", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_bluetooth", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
