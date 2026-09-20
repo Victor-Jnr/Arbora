@@ -711,6 +711,20 @@ _SECURE_BOOT_PS = (
     "}"
 )
 
+_TPM_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $t = Get-Tpm -ErrorAction Stop; "
+    "  Write-Output ('PRESENT=' + $t.TpmPresent); "
+    "  Write-Output ('READY=' + $t.TpmReady); "
+    "  Write-Output ('ENABLED=' + $t.TpmEnabled); "
+    "  Write-Output ('ACTIVATED=' + $t.TpmActivated); "
+    "} catch { "
+    "  Write-Output 'PRESENT='; Write-Output 'READY='; "
+    "  Write-Output 'ENABLED='; Write-Output 'ACTIVATED='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1903,6 +1917,40 @@ def format_secure_boot_report(snapshot: dict[str, str]) -> str:
     return f"Secure Boot: {_flag_yes_no(raw)}"
 
 
+def parse_tpm_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Get-Tpm present/ready/enabled/activated — never owner auth or recovery."""
+    snapshot = {"present": "", "ready": "", "enabled": "", "activated": ""}
+    mapping = (
+        ("PRESENT=", "present"),
+        ("READY=", "ready"),
+        ("ENABLED=", "enabled"),
+        ("ACTIVATED=", "activated"),
+    )
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:16]
+                break
+    return snapshot
+
+
+def format_tpm_report(snapshot: dict[str, str]) -> str:
+    flags = (
+        ("present", "TPM present"),
+        ("ready", "TPM ready"),
+        ("enabled", "TPM enabled"),
+        ("activated", "TPM activated"),
+    )
+    lines = []
+    for key, label in flags:
+        raw = str(snapshot.get(key) or "").strip()
+        if raw:
+            lines.append(f"{label}: {_flag_yes_no(raw)}")
+    if not lines:
+        return "No TPM status reported."
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2437,6 +2485,8 @@ class DesktopAdapter:
             return self._inspect_cpu(dry_run=dry_run)
         if action == "inspect_secure_boot":
             return self._inspect_secure_boot(dry_run=dry_run)
+        if action == "inspect_tpm":
+            return self._inspect_tpm(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -3935,6 +3985,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_secure_boot_report(snapshot),
+        )
+
+    def _inspect_tpm(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Get-Tpm Present/Ready/Enabled/Activated "
+                    "(no owner auth, no recovery password, no Clear-Tpm)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_TPM_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "TPM inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "ownerauth",
+                "recovery",
+                "clear-tpm",
+                "initialize-tpm",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_tpm_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_tpm_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

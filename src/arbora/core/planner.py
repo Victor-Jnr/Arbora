@@ -177,6 +177,8 @@ class GoalPlanner:
             return self._cpu_plan(text)
         if self._looks_like_secure_boot(lower):
             return self._secure_boot_plan(text)
+        if self._looks_like_tpm(lower):
+            return self._tpm_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1208,6 +1210,27 @@ class GoalPlanner:
                     summary="Read-only: Secure Boot on/off (no firmware writes)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Confirm-SecureBootUEFI",),
+                )
+            ],
+        )
+
+    def _tpm_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "TPM inspect journey — read-only present/ready/enabled/activated flags. "
+                "Does not return owner auth or recovery material, and does not clear the TPM."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_tpm",
+                    args={},
+                    summary="Read-only: TPM present/ready/enabled (no owner auth)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Get-Tpm TpmPresent, TpmReady, TpmEnabled, TpmActivated",),
                 )
             ],
         )
@@ -3740,6 +3763,36 @@ class GoalPlanner:
                 "is secure boot enabled",
             )
         )
+
+    @staticmethod
+    def _looks_like_tpm(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "clear tpm",
+                "clear-tpm",
+                "initialize tpm",
+                "initialize-tpm",
+                "owner auth",
+                "ownerauth",
+                "recovery",
+                "reset tpm",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "tpm status",
+                "inspect tpm",
+                "is tpm on",
+                "is tpm ready",
+                "tpm ready",
+                "trusted platform module",
+            )
+        ) or bool(re.search(r"\btpm\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

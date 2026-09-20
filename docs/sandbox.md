@@ -196,6 +196,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `power plan` | Read-only active power plan name |
 | `cpu load` | Read-only CPU name, cores, and load |
 | `secure boot` | Read-only Secure Boot on/off |
+| `tpm status` | Read-only TPM present/ready/enabled |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---
