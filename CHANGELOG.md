@@ -221,6 +221,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/093-inspect-cpu.md` | Change doc for CPU load inspect |
 | `workflows/inspect-secure-boot.json` | Bundled read-only Secure Boot inspect pack |
 | `documentation/094-inspect-secure-boot.md` | Change doc for Secure Boot inspect |
+| `workflows/inspect-tpm.json` | Bundled read-only TPM status inspect pack |
+| `documentation/095-inspect-tpm.md` | Change doc for TPM inspect |
 
 ---
 
@@ -347,6 +349,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented secure boot as a sandbox dry-run goal |
 | `documentation/094-inspect-secure-boot.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 094 |
+| `README.md` | Documentation latest table |
+
+## 095 — TPM inspect (2026-09-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_tpm` (present/ready/enabled/activated; no owner auth) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_tpm` |
+| `src/arbora/core/planner.py` | TPM inspect journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-tpm.json` | Bundled inspect-tpm pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Clear-Tpm; secrets withheld |
+| `tests/test_broker_and_planner.py` | TPM vs diagnose / clear / Secure Boot / BitLocker |
+| `tests/test_workflow_packs.py` | Pack match for inspect-tpm |
+| `docs/NEXT.md` | Marked P27 plate 83 done |
+| `docs/sandbox.md` | Documented tpm status as a sandbox dry-run goal |
+| `documentation/095-inspect-tpm.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 095 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

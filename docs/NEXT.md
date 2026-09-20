@@ -93,6 +93,7 @@ Already in place:
 - read-only active power plan name (no scheme change).
 - read-only CPU name, logical cores, and load percent (no process dump; no affinity changes).
 - read-only Secure Boot on/off (no firmware writes).
+- read-only TPM present/ready/enabled/activated (never owner auth or recovery).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -290,7 +291,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 82 | **Secure Boot inspect** | ✅ Read-only Confirm-SecureBootUEFI; no firmware writes |
-| 83 | **TPM inspect** | Read-only present/ready/enabled/activated; never owner auth or recovery |
+| 83 | **TPM inspect** | ✅ Read-only present/ready/enabled/activated; never owner auth or recovery |
 | 84 | **Bluetooth radio inspect** | Read-only adapter name and status; no MAC dump; no enable/disable |
 
 ## Non-negotiables (do not drift)
@@ -386,4 +387,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P27 plate **82** (Secure Boot inspect) is done. Next is **P27 #83 — TPM inspect**.
+P27 plates **82–83** are done. Next is **P27 #84 — Bluetooth radio inspect**.

@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 095 | [TPM inspect](documentation/095-inspect-tpm.md) |
 | 094 | [Secure Boot inspect](documentation/094-inspect-secure-boot.md) |
 | 093 | [CPU load inspect](documentation/093-inspect-cpu.md) |
 | 092 | [Power plan inspect](documentation/092-inspect-power-plan.md) |

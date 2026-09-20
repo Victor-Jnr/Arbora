@@ -39,6 +39,7 @@ from arbora.adapters.desktop import (
     format_power_plan_report,
     format_cpu_report,
     format_secure_boot_report,
+    format_tpm_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -74,6 +75,7 @@ from arbora.adapters.desktop import (
     parse_power_plan_snapshot,
     parse_cpu_snapshot,
     parse_secure_boot_snapshot,
+    parse_tpm_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1890,6 +1892,52 @@ def test_inspect_secure_boot_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_secure_boot", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_tpm_dry_run():
+    result = DesktopAdapter().execute("inspect_tpm", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "get-tpm" in result.output.lower()
+    assert "owner auth" in result.output.lower()
+    assert "recovery" in result.output.lower()
+    assert "clear-tpm" in result.output.lower()
+
+
+def test_format_tpm_report_empty_and_flags():
+    empty = parse_tpm_snapshot("")
+    report = format_tpm_report(empty)
+    assert "no tpm" in report.lower()
+    live = format_tpm_report(
+        parse_tpm_snapshot("PRESENT=True\nREADY=True\nENABLED=True\nACTIVATED=False\n")
+    )
+    assert "TPM present: yes" in live
+    assert "TPM ready: yes" in live
+    assert "TPM activated: no" in live
+
+
+def test_inspect_tpm_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_tpm", {}, dry_run=False)
+    assert result.ok
+    assert "no tpm" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-tpm" in command
+    assert "clear-tpm" not in command
+    assert "initialize-tpm" not in command
+    assert "ownerauth" not in command
+
+
+def test_inspect_tpm_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="OwnerAuth=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_tpm", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

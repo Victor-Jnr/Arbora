@@ -101,6 +101,7 @@ Try goals like:
   power plan
   cpu load
   secure boot
+  tpm status
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 095 | [TPM inspect](095-inspect-tpm.md) | 2026-09-20 | Read-only TPM present/ready/enabled; never owner auth |
 | 094 | [Secure Boot inspect](094-inspect-secure-boot.md) | 2026-09-20 | Read-only Secure Boot on/off; no firmware writes |
 | 093 | [CPU load inspect](093-inspect-cpu.md) | 2026-09-20 | Read-only CPU name, cores, and load; no process dump |
 | 092 | [Power plan inspect](092-inspect-power-plan.md) | 2026-09-20 | Read-only active power plan name; no scheme change |

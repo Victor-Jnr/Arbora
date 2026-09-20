@@ -1,0 +1,22 @@
+{
+  "id": "inspect-tpm",
+  "name": "Inspect TPM",
+  "description": "Read-only TPM present/ready/enabled/activated. Never owner auth or recovery material.",
+  "goal_phrases": [
+    "inspect tpm pack",
+    "run inspect tpm pack"
+  ],
+  "rationale": "Workflow pack: read-only TPM flags (no owner auth, no Clear-Tpm).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_tpm",
+      "args": {},
+      "summary": "Read TPM present/ready/enabled flags",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Get-Tpm TpmPresent, TpmReady, TpmEnabled, TpmActivated"
+      ]
+    }
+  ]
+}
