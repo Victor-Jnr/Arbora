@@ -102,6 +102,7 @@ Try goals like:
   cpu load
   secure boot
   tpm status
+  bluetooth status
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

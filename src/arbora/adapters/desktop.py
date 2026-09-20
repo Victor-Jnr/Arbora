@@ -725,6 +725,15 @@ _TPM_PS = (
     "}"
 )
 
+_BLUETOOTH_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Get-NetAdapter | "
+    "Where-Object { $_.InterfaceDescription -match 'Bluetooth' -or $_.Name -match 'Bluetooth' } | "
+    "Select-Object -First 4 | ForEach-Object { "
+    "  Write-Output ('ADAPTER=' + $_.Name + ';STATUS=' + $_.Status) "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1951,6 +1960,34 @@ def format_tpm_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_bluetooth_snapshot(stdout: str) -> list[tuple[str, str]]:
+    """Parse Bluetooth adapter name and status — never MAC or pairing lists."""
+    rows: list[tuple[str, str]] = []
+    for line in (stdout or "").splitlines():
+        if not line.startswith("ADAPTER="):
+            continue
+        name = ""
+        status = ""
+        for part in line.split(";"):
+            if part.startswith("ADAPTER="):
+                name = part.split("=", 1)[1].strip()[:64]
+            elif part.startswith("STATUS="):
+                status = part.split("=", 1)[1].strip()[:32]
+        if name:
+            rows.append((name, status))
+    return rows[:4]
+
+
+def format_bluetooth_report(rows: list[tuple[str, str]]) -> str:
+    if not rows:
+        return "No Bluetooth adapter reported."
+    lines = ["Bluetooth adapters (name and status only; no MAC, no pairing dump):"]
+    for name, status in rows:
+        state = status.strip() or "unknown"
+        lines.append(f"{name}: {state}")
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2487,6 +2524,8 @@ class DesktopAdapter:
             return self._inspect_secure_boot(dry_run=dry_run)
         if action == "inspect_tpm":
             return self._inspect_tpm(dry_run=dry_run)
+        if action == "inspect_bluetooth":
+            return self._inspect_bluetooth(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4033,6 +4072,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_tpm_report(snapshot),
+        )
+
+    def _inspect_bluetooth(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Get-NetAdapter Bluetooth name and Status "
+                    "(no MAC, no pairing dump, no Disable-NetAdapter, no Enable-NetAdapter)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_BLUETOOTH_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Bluetooth inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "macaddress",
+                "disable-netadapter",
+                "enable-netadapter",
+                "pairing",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        rows = parse_bluetooth_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_bluetooth_report(rows),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

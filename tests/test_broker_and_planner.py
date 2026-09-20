@@ -771,6 +771,27 @@ def test_tpm_is_read_only_inspect():
     assert [step.action for step in bitlocker.steps] == ["inspect_bitlocker"]
 
 
+def test_bluetooth_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("bluetooth status")
+    assert [step.action for step in plan.steps] == ["inspect_bluetooth"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is bluetooth on")
+    assert named.steps[0].action == "inspect_bluetooth"
+    radio = runtime.planner.plan("bluetooth radio")
+    assert radio.steps[0].action == "inspect_bluetooth"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_bluetooth" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable bluetooth")
+    assert not any(step.action == "inspect_bluetooth" for step in mutate.steps)
+    wifi = runtime.planner.plan("wifi status")
+    assert [step.action for step in wifi.steps] == ["inspect_network"]
+    tpm = runtime.planner.plan("tpm status")
+    assert [step.action for step in tpm.steps] == ["inspect_tpm"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 
