@@ -1,0 +1,22 @@
+{
+  "id": "inspect-secure-boot",
+  "name": "Inspect Secure Boot",
+  "description": "Read-only Confirm-SecureBootUEFI. Does not change firmware variables.",
+  "goal_phrases": [
+    "inspect secure boot pack",
+    "run inspect secure boot pack"
+  ],
+  "rationale": "Workflow pack: read-only Secure Boot on/off (no firmware writes).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_secure_boot",
+      "args": {},
+      "summary": "Read Secure Boot status",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Confirm-SecureBootUEFI"
+      ]
+    }
+  ]
+}
