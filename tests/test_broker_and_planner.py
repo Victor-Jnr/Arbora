@@ -729,6 +729,27 @@ def test_cpu_is_read_only_inspect():
     assert [step.action for step in ram.steps] == ["inspect_memory"]
 
 
+def test_secure_boot_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("secure boot")
+    assert [step.action for step in plan.steps] == ["inspect_secure_boot"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is secure boot on")
+    assert named.steps[0].action == "inspect_secure_boot"
+    enabled = runtime.planner.plan("is secure boot enabled")
+    assert enabled.steps[0].action == "inspect_secure_boot"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_secure_boot" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable secure boot")
+    assert not any(step.action == "inspect_secure_boot" for step in mutate.steps)
+    cpu = runtime.planner.plan("cpu load")
+    assert [step.action for step in cpu.steps] == ["inspect_cpu"]
+    bitlocker = runtime.planner.plan("bitlocker")
+    assert [step.action for step in bitlocker.steps] == ["inspect_bitlocker"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

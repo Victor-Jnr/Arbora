@@ -175,6 +175,8 @@ class GoalPlanner:
             return self._power_plan_plan(text)
         if self._looks_like_cpu(lower):
             return self._cpu_plan(text)
+        if self._looks_like_secure_boot(lower):
+            return self._secure_boot_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1185,6 +1187,27 @@ class GoalPlanner:
                     side_effects=(
                         "Reads Win32_Processor Name, NumberOfLogicalProcessors, LoadPercentage",
                     ),
+                )
+            ],
+        )
+
+    def _secure_boot_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Secure Boot inspect journey — read-only Confirm-SecureBootUEFI. "
+                "Does not change firmware variables or call Set-SecureBootUEFI."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_secure_boot",
+                    args={},
+                    summary="Read-only: Secure Boot on/off (no firmware writes)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Confirm-SecureBootUEFI",),
                 )
             ],
         )
@@ -3688,6 +3711,33 @@ class GoalPlanner:
                 "how busy is the cpu",
                 "how busy is my cpu",
                 "cpu status",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_secure_boot(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable secure boot",
+                "enable secure boot",
+                "turn off secure boot",
+                "turn on secure boot",
+                "set-securebootuefi",
+                "firmware variable",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "secure boot",
+                "secureboot",
+                "inspect secure boot",
+                "is secure boot on",
+                "is secure boot enabled",
             )
         )
 

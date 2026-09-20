@@ -219,6 +219,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/092-inspect-power-plan.md` | Change doc for power plan inspect |
 | `workflows/inspect-cpu.json` | Bundled read-only CPU load inspect pack |
 | `documentation/093-inspect-cpu.md` | Change doc for CPU load inspect |
+| `workflows/inspect-secure-boot.json` | Bundled read-only Secure Boot inspect pack |
+| `documentation/094-inspect-secure-boot.md` | Change doc for Secure Boot inspect |
 
 ---
 
@@ -327,6 +329,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented cpu load as a sandbox dry-run goal |
 | `documentation/093-inspect-cpu.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 093 |
+| `README.md` | Documentation latest table |
+
+## 094 — Secure Boot inspect (2026-09-20)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_secure_boot` (Confirm-SecureBootUEFI; no firmware writes) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_secure_boot` |
+| `src/arbora/core/planner.py` | Secure Boot inspect journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-secure-boot.json` | Bundled inspect-secure-boot pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Set-SecureBootUEFI; secrets withheld |
+| `tests/test_broker_and_planner.py` | Secure Boot vs diagnose / disable / CPU / BitLocker |
+| `tests/test_workflow_packs.py` | Pack match for inspect-secure-boot |
+| `docs/NEXT.md` | Marked P27 plate 82 done |
+| `docs/sandbox.md` | Documented secure boot as a sandbox dry-run goal |
+| `documentation/094-inspect-secure-boot.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 094 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

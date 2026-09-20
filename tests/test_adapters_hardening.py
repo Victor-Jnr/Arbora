@@ -38,6 +38,7 @@ from arbora.adapters.desktop import (
     format_memory_report,
     format_power_plan_report,
     format_cpu_report,
+    format_secure_boot_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -72,6 +73,7 @@ from arbora.adapters.desktop import (
     parse_memory_snapshot,
     parse_power_plan_snapshot,
     parse_cpu_snapshot,
+    parse_secure_boot_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1845,6 +1847,49 @@ def test_inspect_cpu_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_cpu", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_secure_boot_dry_run():
+    result = DesktopAdapter().execute("inspect_secure_boot", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "confirm-securebootuefi" in result.output.lower()
+    assert "set-securebootuefi" in result.output.lower()
+    assert "firmware" in result.output.lower()
+
+
+def test_format_secure_boot_report_empty_and_flags():
+    empty = parse_secure_boot_snapshot("")
+    report = format_secure_boot_report(empty)
+    assert "no secure boot" in report.lower()
+    on = format_secure_boot_report(parse_secure_boot_snapshot("SECUREBOOT=True\n"))
+    assert "Secure Boot: yes" in on
+    off = format_secure_boot_report(parse_secure_boot_snapshot("SECUREBOOT=False\n"))
+    assert "Secure Boot: no" in off
+    missing = format_secure_boot_report(parse_secure_boot_snapshot("SECUREBOOT=unavailable\n"))
+    assert "unavailable" in missing.lower()
+
+
+def test_inspect_secure_boot_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_secure_boot", {}, dry_run=False)
+    assert result.ok
+    assert "no secure boot" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "confirm-securebootuefi" in command
+    assert "set-securebootuefi" not in command
+
+
+def test_inspect_secure_boot_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="Set-SecureBootUEFI", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_secure_boot", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
