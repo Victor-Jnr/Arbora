@@ -754,6 +754,23 @@ _AIRPLANE_PS = (
     "}"
 )
 
+_ACTIVATION_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $p = Get-CimInstance -ClassName SoftwareLicensingProduct "
+    "    -Filter \"ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f'\" | "
+    "    Where-Object { $_.PartialProductKey } | Select-Object -First 1; "
+    "  if ($p) { "
+    "    Write-Output ('STATUS=' + $p.LicenseStatus); "
+    "    Write-Output ('NAME=' + $p.Name); "
+    "  } else { "
+    "    Write-Output 'STATUS='; Write-Output 'NAME='; "
+    "  } "
+    "} catch { "
+    "  Write-Output 'STATUS='; Write-Output 'NAME='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2053,6 +2070,44 @@ def format_airplane_report(snapshot: dict[str, str]) -> str:
     return f"Airplane mode: {_flag_yes_no(raw)}"
 
 
+_LICENSE_STATUS = {
+    "0": "unlicensed",
+    "1": "licensed",
+    "2": "out-of-box grace",
+    "3": "out-of-tolerance grace",
+    "4": "non-genuine grace",
+    "5": "notification",
+    "6": "extended grace",
+}
+
+
+def parse_activation_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Windows license status — never a product key."""
+    snapshot = {"status": "", "name": ""}
+    mapping = (("STATUS=", "status"), ("NAME=", "name"))
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                limit = 16 if key == "status" else 96
+                snapshot[key] = line.split("=", 1)[1].strip()[:limit]
+                break
+    return snapshot
+
+
+def format_activation_report(snapshot: dict[str, str]) -> str:
+    status_raw = str(snapshot.get("status") or "").strip()
+    name = str(snapshot.get("name") or "").strip()
+    if not status_raw and not name:
+        return "No Windows activation status reported."
+    lines = []
+    if status_raw:
+        label = _LICENSE_STATUS.get(status_raw, status_raw)
+        lines.append(f"Windows activation: {label}")
+    if name:
+        lines.append(f"Product: {name}")
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2595,6 +2650,8 @@ class DesktopAdapter:
             return self._inspect_gpu(dry_run=dry_run)
         if action == "inspect_airplane":
             return self._inspect_airplane(dry_run=dry_run)
+        if action == "inspect_activation":
+            return self._inspect_activation(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4284,6 +4341,56 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_airplane_report(snapshot),
+        )
+
+    def _inspect_activation(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read SoftwareLicensingProduct LicenseStatus and Name "
+                    "(no product key, no slmgr, no /ipk, no /ato)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_ACTIVATION_PS, timeout_seconds=25)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Activation inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "productkey",
+                "oa3",
+                "digitalproductid",
+                "slmgr",
+                "/ipk",
+                "/ato",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_activation_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_activation_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

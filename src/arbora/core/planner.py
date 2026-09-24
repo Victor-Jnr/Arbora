@@ -185,6 +185,8 @@ class GoalPlanner:
             return self._gpu_plan(text)
         if self._looks_like_airplane(lower):
             return self._airplane_plan(text)
+        if self._looks_like_activation(lower):
+            return self._activation_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1300,6 +1302,27 @@ class GoalPlanner:
                     summary="Read-only: airplane mode on/off (no radio toggle)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads RadioManagement SystemRadioState",),
+                )
+            ],
+        )
+
+    def _activation_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Windows activation inspect journey — read-only license status. "
+                "Does not return a product key and does not call slmgr."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_activation",
+                    args={},
+                    summary="Read-only: Windows activation status (no product key)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads SoftwareLicensingProduct LicenseStatus and Name",),
                 )
             ],
         )
@@ -3953,6 +3976,35 @@ class GoalPlanner:
                 "inspect airplane",
                 "is airplane mode on",
                 "is flight mode on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_activation(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "product key",
+                "license key",
+                "change product key",
+                "activate windows",
+                "slmgr",
+                "/ipk",
+                "/ato",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "windows activation",
+                "is windows activated",
+                "activation status",
+                "inspect activation",
+                "windows license",
+                "is windows licensed",
             )
         )
 
