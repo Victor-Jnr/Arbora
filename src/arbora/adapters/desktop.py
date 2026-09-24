@@ -734,6 +734,14 @@ _BLUETOOTH_PS = (
     "}"
 )
 
+_GPU_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "Get-CimInstance -ClassName Win32_VideoController -Property Name,Status | "
+    "Select-Object -First 2 | ForEach-Object { "
+    "  Write-Output ('NAME=' + $_.Name + ';STATUS=' + $_.Status) "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1988,6 +1996,34 @@ def format_bluetooth_report(rows: list[tuple[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def parse_gpu_snapshot(stdout: str) -> list[tuple[str, str]]:
+    """Parse GPU name and status — never PNPDeviceID or display-mode changes."""
+    rows: list[tuple[str, str]] = []
+    for line in (stdout or "").splitlines():
+        if not line.startswith("NAME="):
+            continue
+        name = ""
+        status = ""
+        for part in line.split(";"):
+            if part.startswith("NAME="):
+                name = part.split("=", 1)[1].strip()[:96]
+            elif part.startswith("STATUS="):
+                status = part.split("=", 1)[1].strip()[:32]
+        if name:
+            rows.append((name, status))
+    return rows[:2]
+
+
+def format_gpu_report(rows: list[tuple[str, str]]) -> str:
+    if not rows:
+        return "No GPU reported."
+    lines = ["Graphics adapters (name and status only):"]
+    for name, status in rows:
+        state = status.strip() or "unknown"
+        lines.append(f"{name}: {state}")
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2526,6 +2562,8 @@ class DesktopAdapter:
             return self._inspect_tpm(dry_run=dry_run)
         if action == "inspect_bluetooth":
             return self._inspect_bluetooth(dry_run=dry_run)
+        if action == "inspect_gpu":
+            return self._inspect_gpu(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4120,6 +4158,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_bluetooth_report(rows),
+        )
+
+    def _inspect_gpu(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Win32_VideoController Name and Status "
+                    "(no PNPDeviceID, no SetDisplayConfig, no ChangeDisplaySettings)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_GPU_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "GPU inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "pnpdeviceid",
+                "setdisplayconfig",
+                "changedisplaysettings",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        rows = parse_gpu_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_gpu_report(rows),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

@@ -41,6 +41,7 @@ from arbora.adapters.desktop import (
     format_secure_boot_report,
     format_tpm_report,
     format_bluetooth_report,
+    format_gpu_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -78,6 +79,7 @@ from arbora.adapters.desktop import (
     parse_secure_boot_snapshot,
     parse_tpm_snapshot,
     parse_bluetooth_snapshot,
+    parse_gpu_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -1988,6 +1990,52 @@ def test_inspect_bluetooth_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_bluetooth", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_gpu_dry_run():
+    result = DesktopAdapter().execute("inspect_gpu", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "win32_videocontroller" in result.output.lower()
+    assert "pnpdeviceid" in result.output.lower()
+    assert "setdisplayconfig" in result.output.lower()
+    assert "changedisplaysettings" in result.output.lower()
+
+
+def test_format_gpu_report_empty_and_adapters():
+    empty = parse_gpu_snapshot("")
+    report = format_gpu_report(empty)
+    assert "no gpu" in report.lower()
+    live = format_gpu_report(
+        parse_gpu_snapshot("NAME=Arbora GPU;STATUS=OK\nNAME=Arbora GPU 2;STATUS=Degraded\n")
+    )
+    assert "Arbora GPU: OK" in live
+    assert "Arbora GPU 2: Degraded" in live
+    assert "pnpdeviceid" not in live.lower()
+
+
+def test_inspect_gpu_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_gpu", {}, dry_run=False)
+    assert result.ok
+    assert "no gpu" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "win32_videocontroller" in command
+    assert "pnpdeviceid" not in command
+    assert "setdisplayconfig" not in command
+    assert "changedisplaysettings" not in command
+
+
+def test_inspect_gpu_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="PNPDeviceID=PCI\\VEN_10DE", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_gpu", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

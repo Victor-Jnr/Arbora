@@ -1,0 +1,22 @@
+{
+  "id": "inspect-gpu",
+  "name": "Inspect GPU",
+  "description": "Read-only graphics adapter name and status. No PNPDeviceID dump or display-mode change.",
+  "goal_phrases": [
+    "inspect gpu pack",
+    "run inspect gpu pack"
+  ],
+  "rationale": "Workflow pack: read-only GPU name and status (no PNPDeviceID, no mode change).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_gpu",
+      "args": {},
+      "summary": "Read GPU name and status",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Win32_VideoController Name and Status"
+      ]
+    }
+  ]
+}

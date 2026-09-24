@@ -103,6 +103,7 @@ Try goals like:
   secure boot
   tpm status
   bluetooth status
+  gpu status
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

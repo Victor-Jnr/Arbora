@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 097 | [GPU inspect](documentation/097-inspect-gpu.md) |
 | 096 | [Bluetooth radio inspect](documentation/096-inspect-bluetooth.md) |
 | 095 | [TPM inspect](documentation/095-inspect-tpm.md) |
 | 094 | [Secure Boot inspect](documentation/094-inspect-secure-boot.md) |

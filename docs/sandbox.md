@@ -198,6 +198,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `secure boot` | Read-only Secure Boot on/off |
 | `tpm status` | Read-only TPM present/ready/enabled |
 | `bluetooth status` | Read-only Bluetooth adapter name and status |
+| `gpu status` | Read-only GPU name and status |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---
