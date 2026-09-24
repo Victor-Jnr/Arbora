@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 099 | [Windows activation inspect](099-inspect-activation.md) | 2026-09-24 | Read-only Windows license status; never a product key |
 | 098 | [Airplane mode inspect](098-inspect-airplane.md) | 2026-09-24 | Read-only airplane mode on/off; no radio toggle |
 | 097 | [GPU inspect](097-inspect-gpu.md) | 2026-09-24 | Read-only GPU name and status; no PNPDeviceID dump |
 | 096 | [Bluetooth radio inspect](096-inspect-bluetooth.md) | 2026-09-20 | Read-only Bluetooth adapter name and status; no MAC dump |

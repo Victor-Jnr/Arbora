@@ -836,6 +836,29 @@ def test_airplane_is_read_only_inspect():
     assert [step.action for step in theme.steps] == ["inspect_theme"]
 
 
+def test_activation_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("windows activation")
+    assert [step.action for step in plan.steps] == ["inspect_activation"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is windows activated")
+    assert named.steps[0].action == "inspect_activation"
+    licensed = runtime.planner.plan("is windows licensed")
+    assert licensed.steps[0].action == "inspect_activation"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_activation" for step in diagnose.steps)
+    mutate = runtime.planner.plan("activate windows")
+    assert not any(step.action == "inspect_activation" for step in mutate.steps)
+    key = runtime.planner.plan("product key")
+    assert not any(step.action == "inspect_activation" for step in key.steps)
+    version = runtime.planner.plan("windows version")
+    assert [step.action for step in version.steps] == ["inspect_windows_version"]
+    airplane = runtime.planner.plan("airplane mode")
+    assert [step.action for step in airplane.steps] == ["inspect_airplane"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

@@ -200,6 +200,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `bluetooth status` | Read-only Bluetooth adapter name and status |
 | `gpu status` | Read-only GPU name and status |
 | `airplane mode` | Read-only airplane mode on/off |
+| `windows activation` | Read-only Windows license status (no product key) |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

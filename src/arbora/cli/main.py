@@ -105,6 +105,7 @@ Try goals like:
   bluetooth status
   gpu status
   airplane mode
+  windows activation
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

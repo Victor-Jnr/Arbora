@@ -229,6 +229,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/097-inspect-gpu.md` | Change doc for GPU inspect |
 | `workflows/inspect-airplane.json` | Bundled read-only airplane mode inspect pack |
 | `documentation/098-inspect-airplane.md` | Change doc for airplane mode inspect |
+| `workflows/inspect-activation.json` | Bundled read-only Windows activation inspect pack |
+| `documentation/099-inspect-activation.md` | Change doc for Windows activation inspect |
 
 ---
 
@@ -427,6 +429,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented airplane mode as a sandbox dry-run goal |
 | `documentation/098-inspect-airplane.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 098 |
+| `README.md` | Documentation latest table |
+
+## 099 — Windows activation inspect (2026-09-24)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_activation` (LicenseStatus/Name; never a product key) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_activation` |
+| `src/arbora/core/planner.py` | Activation inspect journey; windows version stays inspect_windows_version |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-activation.json` | Bundled inspect-activation pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no slmgr//ipk; secrets withheld |
+| `tests/test_broker_and_planner.py` | Activation vs diagnose / activate / product key / version / airplane |
+| `tests/test_workflow_packs.py` | Pack match for inspect-activation |
+| `docs/NEXT.md` | Marked P28 plate 87 done |
+| `docs/sandbox.md` | Documented windows activation as a sandbox dry-run goal |
+| `documentation/099-inspect-activation.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 099 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

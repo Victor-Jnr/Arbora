@@ -43,6 +43,7 @@ from arbora.adapters.desktop import (
     format_bluetooth_report,
     format_gpu_report,
     format_airplane_report,
+    format_activation_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -82,6 +83,7 @@ from arbora.adapters.desktop import (
     parse_bluetooth_snapshot,
     parse_gpu_snapshot,
     parse_airplane_snapshot,
+    parse_activation_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2080,6 +2082,57 @@ def test_inspect_airplane_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_airplane", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_activation_dry_run():
+    result = DesktopAdapter().execute("inspect_activation", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "softwarelicensingproduct" in result.output.lower()
+    assert "product key" in result.output.lower()
+    assert "slmgr" in result.output.lower()
+    assert "/ipk" in result.output.lower()
+    assert "/ato" in result.output.lower()
+
+
+def test_format_activation_report_empty_and_status():
+    empty = parse_activation_snapshot("")
+    report = format_activation_report(empty)
+    assert "no windows activation" in report.lower()
+    live = format_activation_report(
+        parse_activation_snapshot("STATUS=1\nNAME=Windows 11 Pro\n")
+    )
+    assert "Windows activation: licensed" in live
+    assert "Product: Windows 11 Pro" in live
+    assert "key" not in live.lower()
+    unlicensed = format_activation_report(parse_activation_snapshot("STATUS=0\n"))
+    assert "unlicensed" in unlicensed.lower()
+
+
+def test_inspect_activation_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_activation", {}, dry_run=False)
+    assert result.ok
+    assert "no windows activation" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "softwarelicensingproduct" in command
+    assert "licensestatus" in command
+    assert "slmgr" not in command
+    assert "/ipk" not in command
+    assert "/ato" not in command
+    assert "write-output ('partial" not in command
+
+
+def test_inspect_activation_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="PartialProductKey=XXXXX", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_activation", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
