@@ -181,6 +181,8 @@ class GoalPlanner:
             return self._tpm_plan(text)
         if self._looks_like_bluetooth(lower):
             return self._bluetooth_plan(text)
+        if self._looks_like_gpu(lower):
+            return self._gpu_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1254,6 +1256,27 @@ class GoalPlanner:
                     summary="Read-only: Bluetooth adapter name and status (no MAC)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Get-NetAdapter name and Status for Bluetooth adapters",),
+                )
+            ],
+        )
+
+    def _gpu_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "GPU inspect journey — read-only graphics adapter name and status. "
+                "Does not dump PNPDeviceID or change display mode."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_gpu",
+                    args={},
+                    summary="Read-only: GPU name and status (no PNPDeviceID)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Win32_VideoController Name and Status",),
                 )
             ],
         )
@@ -3846,6 +3869,36 @@ class GoalPlanner:
                 "bluetooth radio",
             )
         ) or bool(re.search(r"\bbluetooth\b", lower))
+
+    @staticmethod
+    def _looks_like_gpu(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "resolution",
+                "monitor",
+                "display mode",
+                "setdisplayconfig",
+                "change display",
+                "pnpdeviceid",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "gpu status",
+                "inspect gpu",
+                "graphics card",
+                "video card",
+                "graphics adapter",
+                "what gpu",
+                "which gpu",
+                "my gpu",
+            )
+        ) or bool(re.search(r"\bgpu\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

@@ -225,6 +225,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/095-inspect-tpm.md` | Change doc for TPM inspect |
 | `workflows/inspect-bluetooth.json` | Bundled read-only Bluetooth adapter inspect pack |
 | `documentation/096-inspect-bluetooth.md` | Change doc for Bluetooth radio inspect |
+| `workflows/inspect-gpu.json` | Bundled read-only GPU inspect pack |
+| `documentation/097-inspect-gpu.md` | Change doc for GPU inspect |
 
 ---
 
@@ -387,6 +389,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented bluetooth status as a sandbox dry-run goal |
 | `documentation/096-inspect-bluetooth.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 096 |
+| `README.md` | Documentation latest table |
+
+## 097 — GPU inspect (2026-09-24)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_gpu` (adapter name/status; no PNPDeviceID or mode change) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_gpu` |
+| `src/arbora/core/planner.py` | GPU inspect journey; screen resolution stays inspect_display |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-gpu.json` | Bundled inspect-gpu pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no PNPDeviceID/mode change; secrets withheld |
+| `tests/test_broker_and_planner.py` | GPU vs diagnose / display / CPU |
+| `tests/test_workflow_packs.py` | Pack match for inspect-gpu |
+| `docs/NEXT.md` | Marked P28 plate 85 done |
+| `docs/sandbox.md` | Documented gpu status as a sandbox dry-run goal |
+| `documentation/097-inspect-gpu.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 097 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

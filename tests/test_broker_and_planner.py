@@ -792,6 +792,27 @@ def test_bluetooth_is_read_only_inspect():
     assert [step.action for step in tpm.steps] == ["inspect_tpm"]
 
 
+def test_gpu_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("gpu status")
+    assert [step.action for step in plan.steps] == ["inspect_gpu"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("graphics card")
+    assert named.steps[0].action == "inspect_gpu"
+    which = runtime.planner.plan("which gpu")
+    assert which.steps[0].action == "inspect_gpu"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_gpu" for step in diagnose.steps)
+    mutate = runtime.planner.plan("change display mode")
+    assert not any(step.action == "inspect_gpu" for step in mutate.steps)
+    display = runtime.planner.plan("screen resolution")
+    assert [step.action for step in display.steps] == ["inspect_display"]
+    cpu = runtime.planner.plan("cpu load")
+    assert [step.action for step in cpu.steps] == ["inspect_cpu"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 
