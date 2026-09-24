@@ -227,6 +227,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/096-inspect-bluetooth.md` | Change doc for Bluetooth radio inspect |
 | `workflows/inspect-gpu.json` | Bundled read-only GPU inspect pack |
 | `documentation/097-inspect-gpu.md` | Change doc for GPU inspect |
+| `workflows/inspect-airplane.json` | Bundled read-only airplane mode inspect pack |
+| `documentation/098-inspect-airplane.md` | Change doc for airplane mode inspect |
 
 ---
 
@@ -407,6 +409,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented gpu status as a sandbox dry-run goal |
 | `documentation/097-inspect-gpu.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 097 |
+| `README.md` | Documentation latest table |
+
+## 098 — Airplane mode inspect (2026-09-24)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_airplane` (SystemRadioState; no radio toggle) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_airplane` |
+| `src/arbora/core/planner.py` | Airplane mode inspect journey; theme does not steal flight mode; wifi stays inspect_network |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-airplane.json` | Bundled inspect-airplane pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Set-NetAdapter/netsh; secrets withheld |
+| `tests/test_broker_and_planner.py` | Airplane vs diagnose / enable / wifi / GPU |
+| `tests/test_workflow_packs.py` | Pack match for inspect-airplane |
+| `docs/NEXT.md` | Marked P28 plate 86 done |
+| `docs/sandbox.md` | Documented airplane mode as a sandbox dry-run goal |
+| `documentation/098-inspect-airplane.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 098 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

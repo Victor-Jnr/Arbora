@@ -199,6 +199,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `tpm status` | Read-only TPM present/ready/enabled |
 | `bluetooth status` | Read-only Bluetooth adapter name and status |
 | `gpu status` | Read-only GPU name and status |
+| `airplane mode` | Read-only airplane mode on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

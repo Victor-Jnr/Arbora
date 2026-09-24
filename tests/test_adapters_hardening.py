@@ -42,6 +42,7 @@ from arbora.adapters.desktop import (
     format_tpm_report,
     format_bluetooth_report,
     format_gpu_report,
+    format_airplane_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -80,6 +81,7 @@ from arbora.adapters.desktop import (
     parse_tpm_snapshot,
     parse_bluetooth_snapshot,
     parse_gpu_snapshot,
+    parse_airplane_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2036,6 +2038,48 @@ def test_inspect_gpu_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_gpu", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_airplane_dry_run():
+    result = DesktopAdapter().execute("inspect_airplane", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "systemradiostate" in result.output.lower()
+    assert "set-netadapter" in result.output.lower()
+    assert "netsh wlan set" in result.output.lower()
+
+
+def test_format_airplane_report_empty_and_flags():
+    empty = parse_airplane_snapshot("")
+    report = format_airplane_report(empty)
+    assert "no airplane" in report.lower()
+    on = format_airplane_report(parse_airplane_snapshot("AIRPLANE=1\n"))
+    assert "Airplane mode: yes" in on
+    off = format_airplane_report(parse_airplane_snapshot("AIRPLANE=0\n"))
+    assert "Airplane mode: no" in off
+
+
+def test_inspect_airplane_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_airplane", {}, dry_run=False)
+    assert result.ok
+    assert "no airplane" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "systemradiostate" in command
+    assert "set-netadapter" not in command
+    assert "netsh" not in command
+
+
+def test_inspect_airplane_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="netsh wlan set hostednetwork", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_airplane", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

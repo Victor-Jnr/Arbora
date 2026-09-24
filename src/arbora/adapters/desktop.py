@@ -742,6 +742,18 @@ _GPU_PS = (
     "}"
 )
 
+_AIRPLANE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $key = Get-Item -LiteralPath "
+    "    'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\RadioManagement\\SystemRadioState' "
+    "    -ErrorAction Stop; "
+    "  Write-Output ('AIRPLANE=' + $key.GetValue('')); "
+    "} catch { "
+    "  Write-Output 'AIRPLANE='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2024,6 +2036,23 @@ def format_gpu_report(rows: list[tuple[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def parse_airplane_snapshot(stdout: str) -> dict[str, str]:
+    """Parse airplane-mode SystemRadioState — never radio enable/disable."""
+    snapshot = {"airplane": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("AIRPLANE="):
+            snapshot["airplane"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_airplane_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("airplane") or "").strip()
+    if not raw:
+        return "No airplane mode status reported."
+    return f"Airplane mode: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2564,6 +2593,8 @@ class DesktopAdapter:
             return self._inspect_bluetooth(dry_run=dry_run)
         if action == "inspect_gpu":
             return self._inspect_gpu(dry_run=dry_run)
+        if action == "inspect_airplane":
+            return self._inspect_airplane(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4205,6 +4236,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_gpu_report(rows),
+        )
+
+    def _inspect_airplane(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read RadioManagement SystemRadioState "
+                    "(no radio enable/disable, no Set-NetAdapter, no netsh wlan set)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_AIRPLANE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Airplane mode inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-netadapter",
+                "netshwlanset",
+                "enableradio",
+                "disableradio",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_airplane_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_airplane_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
