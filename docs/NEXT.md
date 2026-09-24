@@ -96,6 +96,7 @@ Already in place:
 - read-only TPM present/ready/enabled/activated (never owner auth or recovery).
 - read-only Bluetooth adapter name and status (no MAC dump; no enable/disable).
 - read-only GPU name and status (no PNPDeviceID dump; no display-mode change).
+- read-only airplane mode on/off (no radio enable/disable).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -301,7 +302,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 85 | **GPU inspect** | ✅ Read-only Win32_VideoController name and status; no PNPDeviceID; no mode change |
-| 86 | **Airplane mode inspect** | Read-only SystemRadioState; no radio enable/disable |
+| 86 | **Airplane mode inspect** | ✅ Read-only SystemRadioState; no radio enable/disable |
 | 87 | **Windows activation inspect** | Read-only license status; never a product key |
 
 ## Non-negotiables (do not drift)
@@ -397,4 +398,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P28 plate **85** is done. Next is **P28 #86 — Airplane mode inspect**.
+P28 plates **85–86** are done. Next is **P28 #87 — Windows activation inspect**.

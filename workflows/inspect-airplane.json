@@ -1,0 +1,22 @@
+{
+  "id": "inspect-airplane",
+  "name": "Inspect Airplane Mode",
+  "description": "Read-only airplane mode on/off from SystemRadioState. Does not enable or disable radios.",
+  "goal_phrases": [
+    "inspect airplane pack",
+    "run inspect airplane pack"
+  ],
+  "rationale": "Workflow pack: read-only airplane mode (no radio toggle).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_airplane",
+      "args": {},
+      "summary": "Read airplane mode on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads RadioManagement SystemRadioState"
+      ]
+    }
+  ]
+}

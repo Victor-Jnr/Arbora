@@ -54,6 +54,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-tpm" in ids
     assert "inspect-bluetooth" in ids
     assert "inspect-gpu" in ids
+    assert "inspect-airplane" in ids
     assert "type-in-window" in ids
     assert "type-in-notepad" in ids
 
@@ -632,6 +633,17 @@ def test_inspect_gpu_workflow_pack_matches():
     plan = pack.to_plan("run inspect gpu pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_gpu"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_airplane_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect airplane pack")
+    assert pack is not None
+    assert pack.id == "inspect-airplane"
+    plan = pack.to_plan("run inspect airplane pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_airplane"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

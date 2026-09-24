@@ -813,6 +813,29 @@ def test_gpu_is_read_only_inspect():
     assert [step.action for step in cpu.steps] == ["inspect_cpu"]
 
 
+def test_airplane_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("airplane mode")
+    assert [step.action for step in plan.steps] == ["inspect_airplane"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is airplane mode on")
+    assert named.steps[0].action == "inspect_airplane"
+    flight = runtime.planner.plan("flight mode")
+    assert flight.steps[0].action == "inspect_airplane"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_airplane" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable airplane mode")
+    assert not any(step.action == "inspect_airplane" for step in mutate.steps)
+    wifi = runtime.planner.plan("wifi status")
+    assert [step.action for step in wifi.steps] == ["inspect_network"]
+    gpu = runtime.planner.plan("gpu status")
+    assert [step.action for step in gpu.steps] == ["inspect_gpu"]
+    theme = runtime.planner.plan("light mode")
+    assert [step.action for step in theme.steps] == ["inspect_theme"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

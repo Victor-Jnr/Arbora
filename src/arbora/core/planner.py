@@ -183,6 +183,8 @@ class GoalPlanner:
             return self._bluetooth_plan(text)
         if self._looks_like_gpu(lower):
             return self._gpu_plan(text)
+        if self._looks_like_airplane(lower):
+            return self._airplane_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1277,6 +1279,27 @@ class GoalPlanner:
                     summary="Read-only: GPU name and status (no PNPDeviceID)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Win32_VideoController Name and Status",),
+                )
+            ],
+        )
+
+    def _airplane_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Airplane mode inspect journey — read-only SystemRadioState. "
+                "Does not enable or disable radios."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_airplane",
+                    args={},
+                    summary="Read-only: airplane mode on/off (no radio toggle)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads RadioManagement SystemRadioState",),
                 )
             ],
         )
@@ -2986,6 +3009,9 @@ class GoalPlanner:
                 "turn off dark",
                 "turn off light",
                 "apply theme",
+                "flight mode",
+                "airplane",
+                "aeroplane",
             )
         ):
             return False
@@ -3899,6 +3925,36 @@ class GoalPlanner:
                 "my gpu",
             )
         ) or bool(re.search(r"\bgpu\b", lower))
+
+    @staticmethod
+    def _looks_like_airplane(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable airplane",
+                "enable airplane",
+                "turn off airplane",
+                "turn on airplane",
+                "disable aeroplane",
+                "enable aeroplane",
+                "turn off flight mode",
+                "turn on flight mode",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "airplane mode",
+                "aeroplane mode",
+                "flight mode",
+                "inspect airplane",
+                "is airplane mode on",
+                "is flight mode on",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
