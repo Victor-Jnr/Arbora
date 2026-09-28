@@ -189,6 +189,8 @@ class GoalPlanner:
             return self._activation_plan(text)
         if self._looks_like_camera(lower):
             return self._camera_plan(text)
+        if self._looks_like_microphone(lower):
+            return self._microphone_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1346,6 +1348,27 @@ class GoalPlanner:
                     summary="Read-only: camera access allowed/denied (no app list)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads ConsentStore webcam Value only",),
+                )
+            ],
+        )
+
+    def _microphone_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Microphone access inspect journey — read-only global ConsentStore Value. "
+                "Does not dump LastUsed times or per-app microphone grants, and does not listen."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_microphone",
+                    args={},
+                    summary="Read-only: microphone access allowed/denied (no app list)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads ConsentStore microphone Value only",),
                 )
             ],
         )
@@ -4066,6 +4089,42 @@ class GoalPlanner:
                 "webcam privacy",
             )
         ) or bool(re.search(r"\b(camera|webcam)\b", lower))
+
+    @staticmethod
+    def _looks_like_microphone(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "listen",
+                "voice",
+                "speech",
+                "volume",
+                "mute",
+                "last used",
+                "which app",
+                "enable microphone",
+                "disable microphone",
+                "turn on microphone",
+                "turn off microphone",
+                "enable mic",
+                "disable mic",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "microphone access",
+                "mic access",
+                "inspect microphone",
+                "is my microphone allowed",
+                "is microphone allowed",
+                "microphone privacy",
+                "mic privacy",
+            )
+        ) or bool(re.search(r"\b(microphone|mic)\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

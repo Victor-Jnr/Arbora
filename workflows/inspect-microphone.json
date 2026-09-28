@@ -1,0 +1,22 @@
+{
+  "id": "inspect-microphone",
+  "name": "Inspect Microphone Access",
+  "description": "Read-only global microphone privacy Allow/Deny. No LastUsed dump, per-app grants, or listening.",
+  "goal_phrases": [
+    "inspect microphone pack",
+    "run inspect microphone pack"
+  ],
+  "rationale": "Workflow pack: read-only microphone access (no app list, no listen).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_microphone",
+      "args": {},
+      "summary": "Read microphone access allowed/denied",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads ConsentStore microphone Value only"
+      ]
+    }
+  ]
+}

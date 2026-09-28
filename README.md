@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 101 | [Microphone access inspect](documentation/101-inspect-microphone.md) |
 | 100 | [Camera access inspect](documentation/100-inspect-camera.md) |
 | 099 | [Windows activation inspect](documentation/099-inspect-activation.md) |
 | 098 | [Airplane mode inspect](documentation/098-inspect-airplane.md) |
