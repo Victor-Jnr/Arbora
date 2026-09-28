@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 102 | [Location access inspect](102-inspect-location.md) | 2026-09-28 | Read-only global location Allow/Deny; no GPS or per-app dump |
 | 101 | [Microphone access inspect](101-inspect-microphone.md) | 2026-09-28 | Read-only global microphone Allow/Deny; no listen or per-app dump |
 | 100 | [Camera access inspect](100-inspect-camera.md) | 2026-09-28 | Read-only global camera Allow/Deny; no per-app dump |
 | 099 | [Windows activation inspect](099-inspect-activation.md) | 2026-09-24 | Read-only Windows license status; never a product key |
