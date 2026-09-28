@@ -45,6 +45,7 @@ from arbora.adapters.desktop import (
     format_airplane_report,
     format_activation_report,
     format_camera_report,
+    format_microphone_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -86,6 +87,7 @@ from arbora.adapters.desktop import (
     parse_airplane_snapshot,
     parse_activation_snapshot,
     parse_camera_snapshot,
+    parse_microphone_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2180,6 +2182,52 @@ def test_inspect_camera_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_camera", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_microphone_dry_run():
+    result = DesktopAdapter().execute("inspect_microphone", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "consentstore" in result.output.lower()
+    assert "microphone" in result.output.lower()
+    assert "get-childitem" in result.output.lower()
+    assert "lastused" in result.output.lower().replace(" ", "")
+    assert "listen" in result.output.lower()
+
+
+def test_format_microphone_report_empty_and_values():
+    empty = parse_microphone_snapshot("")
+    report = format_microphone_report(empty)
+    assert "no microphone" in report.lower()
+    allowed = format_microphone_report(parse_microphone_snapshot("MICROPHONE=Allow\n"))
+    assert "Microphone access: allowed" in allowed
+    denied = format_microphone_report(parse_microphone_snapshot("MICROPHONE=Deny\n"))
+    assert "Microphone access: denied" in denied
+    assert "lastused" not in allowed.lower()
+
+
+def test_inspect_microphone_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_microphone", {}, dry_run=False)
+    assert result.ok
+    assert "no microphone" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "consentstore" in command
+    assert "microphone" in command
+    assert "get-childitem" not in command
+    assert "lastused" not in command
+
+
+def test_inspect_microphone_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="LastUsedTimeStart=132000000000000000", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_microphone", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

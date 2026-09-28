@@ -233,6 +233,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/099-inspect-activation.md` | Change doc for Windows activation inspect |
 | `workflows/inspect-camera.json` | Bundled read-only camera access inspect pack |
 | `documentation/100-inspect-camera.md` | Change doc for camera access inspect |
+| `workflows/inspect-microphone.json` | Bundled read-only microphone access inspect pack |
+| `documentation/101-inspect-microphone.md` | Change doc for microphone access inspect |
 
 ---
 
@@ -467,6 +469,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented camera access as a sandbox dry-run goal |
 | `documentation/100-inspect-camera.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 100 |
+| `README.md` | Documentation latest table |
+
+## 101 — Microphone access inspect (2026-09-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_microphone` (ConsentStore microphone Value; no listen/LastUsed) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_microphone` |
+| `src/arbora/core/planner.py` | Microphone access inspect journey; volume and audio device stay unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-microphone.json` | Bundled inspect-microphone pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-ChildItem/LastUsed; secrets withheld |
+| `tests/test_broker_and_planner.py` | Microphone vs diagnose / disable / volume / camera / audio device |
+| `tests/test_workflow_packs.py` | Pack match for inspect-microphone |
+| `docs/NEXT.md` | Marked P29 plate 89 done |
+| `docs/sandbox.md` | Documented microphone access as a sandbox dry-run goal |
+| `documentation/101-inspect-microphone.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 101 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

@@ -882,6 +882,29 @@ def test_camera_is_read_only_inspect():
     assert [step.action for step in activation.steps] == ["inspect_activation"]
 
 
+def test_microphone_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("microphone access")
+    assert [step.action for step in plan.steps] == ["inspect_microphone"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is my microphone allowed")
+    assert named.steps[0].action == "inspect_microphone"
+    privacy = runtime.planner.plan("mic privacy")
+    assert privacy.steps[0].action == "inspect_microphone"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_microphone" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable microphone")
+    assert not any(step.action == "inspect_microphone" for step in mutate.steps)
+    volume = runtime.planner.plan("volume")
+    assert [step.action for step in volume.steps] == ["inspect_volume"]
+    camera = runtime.planner.plan("camera access")
+    assert [step.action for step in camera.steps] == ["inspect_camera"]
+    audio = runtime.planner.plan("audio device")
+    assert [step.action for step in audio.steps] == ["inspect_audio_device"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

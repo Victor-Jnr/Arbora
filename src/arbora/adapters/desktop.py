@@ -783,6 +783,18 @@ _CAMERA_PS = (
     "}"
 )
 
+_MICROPHONE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\microphone' "
+    "    -Name Value -ErrorAction Stop).Value; "
+    "  Write-Output ('MICROPHONE=' + $v); "
+    "} catch { "
+    "  Write-Output 'MICROPHONE='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2148,6 +2160,23 @@ def format_camera_report(snapshot: dict[str, str]) -> str:
     return f"Camera access: {_consent_label(raw)}"
 
 
+def parse_microphone_snapshot(stdout: str) -> dict[str, str]:
+    """Parse global microphone ConsentStore Value — never LastUsed or per-app keys."""
+    snapshot = {"value": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("MICROPHONE="):
+            snapshot["value"] = line.split("=", 1)[1].strip()[:32]
+            break
+    return snapshot
+
+
+def format_microphone_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("value") or "").strip()
+    if not raw:
+        return "No microphone access setting reported."
+    return f"Microphone access: {_consent_label(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2694,6 +2723,8 @@ class DesktopAdapter:
             return self._inspect_activation(dry_run=dry_run)
         if action == "inspect_camera":
             return self._inspect_camera(dry_run=dry_run)
+        if action == "inspect_microphone":
+            return self._inspect_microphone(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4479,6 +4510,52 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_camera_report(snapshot),
+        )
+
+    def _inspect_microphone(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read ConsentStore microphone Value "
+                    "(no Get-ChildItem, no LastUsed dump, no per-app grants, no listen)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_MICROPHONE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Microphone access inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "lastused",
+                "get-childitem",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_microphone_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_microphone_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
