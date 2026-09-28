@@ -1,0 +1,22 @@
+{
+  "id": "inspect-location",
+  "name": "Inspect Location Access",
+  "description": "Read-only global location privacy Allow/Deny. No GPS, LastUsed dump, or per-app grants.",
+  "goal_phrases": [
+    "inspect location pack",
+    "run inspect location pack"
+  ],
+  "rationale": "Workflow pack: read-only location access (no GPS, no app list).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_location",
+      "args": {},
+      "summary": "Read location access allowed/denied",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads ConsentStore location Value only"
+      ]
+    }
+  ]
+}

@@ -235,6 +235,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/100-inspect-camera.md` | Change doc for camera access inspect |
 | `workflows/inspect-microphone.json` | Bundled read-only microphone access inspect pack |
 | `documentation/101-inspect-microphone.md` | Change doc for microphone access inspect |
+| `workflows/inspect-location.json` | Bundled read-only location access inspect pack |
+| `documentation/102-inspect-location.md` | Change doc for location access inspect |
 
 ---
 
@@ -487,6 +489,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented microphone access as a sandbox dry-run goal |
 | `documentation/101-inspect-microphone.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 101 |
+| `README.md` | Documentation latest table |
+
+## 102 — Location access inspect (2026-09-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_location` (ConsentStore location Value; no GPS/LastUsed) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_location` |
+| `src/arbora/core/planner.py` | Location access inspect journey; time zone stays inspect_timezone |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-location.json` | Bundled inspect-location pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no GPS/Get-ChildItem; secrets withheld |
+| `tests/test_broker_and_planner.py` | Location vs diagnose / disable / GPS / timezone / microphone |
+| `tests/test_workflow_packs.py` | Pack match for inspect-location |
+| `docs/NEXT.md` | Marked P29 plate 90 done |
+| `docs/sandbox.md` | Documented location access as a sandbox dry-run goal |
+| `documentation/102-inspect-location.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 102 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

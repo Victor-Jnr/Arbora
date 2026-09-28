@@ -191,6 +191,8 @@ class GoalPlanner:
             return self._camera_plan(text)
         if self._looks_like_microphone(lower):
             return self._microphone_plan(text)
+        if self._looks_like_location(lower):
+            return self._location_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1369,6 +1371,27 @@ class GoalPlanner:
                     summary="Read-only: microphone access allowed/denied (no app list)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads ConsentStore microphone Value only",),
+                )
+            ],
+        )
+
+    def _location_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Location access inspect journey — read-only global ConsentStore Value. "
+                "Does not return GPS coordinates or dump per-app location grants."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_location",
+                    args={},
+                    summary="Read-only: location access allowed/denied (no GPS, no app list)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads ConsentStore location Value only",),
                 )
             ],
         )
@@ -4125,6 +4148,45 @@ class GoalPlanner:
                 "mic privacy",
             )
         ) or bool(re.search(r"\b(microphone|mic)\b", lower))
+
+    @staticmethod
+    def _looks_like_location(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "gps",
+                "coordinates",
+                "latitude",
+                "longitude",
+                "where am i",
+                "where am I",
+                "find my",
+                "maps",
+                "timezone",
+                "time zone",
+                "locale",
+                "last used",
+                "which app",
+                "enable location",
+                "disable location",
+                "turn on location",
+                "turn off location",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "location access",
+                "location services",
+                "inspect location",
+                "is location on",
+                "is location allowed",
+                "location privacy",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

@@ -203,6 +203,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `windows activation` | Read-only Windows license status (no product key) |
 | `camera access` | Read-only camera access allowed/denied |
 | `microphone access` | Read-only microphone access allowed/denied |
+| `location access` | Read-only location access allowed/denied |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

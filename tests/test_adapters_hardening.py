@@ -46,6 +46,7 @@ from arbora.adapters.desktop import (
     format_activation_report,
     format_camera_report,
     format_microphone_report,
+    format_location_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -88,6 +89,7 @@ from arbora.adapters.desktop import (
     parse_activation_snapshot,
     parse_camera_snapshot,
     parse_microphone_snapshot,
+    parse_location_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2228,6 +2230,55 @@ def test_inspect_microphone_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_microphone", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_location_dry_run():
+    result = DesktopAdapter().execute("inspect_location", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "consentstore" in result.output.lower()
+    assert "location" in result.output.lower()
+    assert "gps" in result.output.lower()
+    assert "get-childitem" in result.output.lower()
+    assert "lastused" in result.output.lower().replace(" ", "")
+
+
+def test_format_location_report_empty_and_values():
+    empty = parse_location_snapshot("")
+    report = format_location_report(empty)
+    assert "no location" in report.lower()
+    allowed = format_location_report(parse_location_snapshot("LOCATION=Allow\n"))
+    assert "Location access: allowed" in allowed
+    denied = format_location_report(parse_location_snapshot("LOCATION=Deny\n"))
+    assert "Location access: denied" in denied
+    assert "gps" not in allowed.lower()
+    assert "lat" not in allowed.lower()
+
+
+def test_inspect_location_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_location", {}, dry_run=False)
+    assert result.ok
+    assert "no location" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "consentstore" in command
+    assert "location" in command
+    assert "get-childitem" not in command
+    assert "lastused" not in command
+    assert "latitude" not in command
+    assert "longitude" not in command
+
+
+def test_inspect_location_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="Latitude=37.7 Longitude=-122.4", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_location", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

@@ -905,6 +905,29 @@ def test_microphone_is_read_only_inspect():
     assert [step.action for step in audio.steps] == ["inspect_audio_device"]
 
 
+def test_location_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("location access")
+    assert [step.action for step in plan.steps] == ["inspect_location"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is location on")
+    assert named.steps[0].action == "inspect_location"
+    services = runtime.planner.plan("location services")
+    assert services.steps[0].action == "inspect_location"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_location" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable location")
+    assert not any(step.action == "inspect_location" for step in mutate.steps)
+    gps = runtime.planner.plan("where am i")
+    assert not any(step.action == "inspect_location" for step in gps.steps)
+    tz = runtime.planner.plan("time zone")
+    assert [step.action for step in tz.steps] == ["inspect_timezone"]
+    mic = runtime.planner.plan("microphone access")
+    assert [step.action for step in mic.steps] == ["inspect_microphone"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

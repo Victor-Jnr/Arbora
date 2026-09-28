@@ -48,6 +48,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_activation",
             "inspect_camera",
             "inspect_microphone",
+            "inspect_location",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",

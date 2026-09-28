@@ -58,6 +58,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-activation" in ids
     assert "inspect-camera" in ids
     assert "inspect-microphone" in ids
+    assert "inspect-location" in ids
     assert "type-in-window" in ids
     assert "type-in-notepad" in ids
 
@@ -680,6 +681,17 @@ def test_inspect_microphone_workflow_pack_matches():
     plan = pack.to_plan("run inspect microphone pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_microphone"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_location_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect location pack")
+    assert pack is not None
+    assert pack.id == "inspect-location"
+    plan = pack.to_plan("run inspect location pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_location"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 
