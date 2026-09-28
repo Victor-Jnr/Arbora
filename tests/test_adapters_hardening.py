@@ -44,6 +44,7 @@ from arbora.adapters.desktop import (
     format_gpu_report,
     format_airplane_report,
     format_activation_report,
+    format_camera_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -84,6 +85,7 @@ from arbora.adapters.desktop import (
     parse_gpu_snapshot,
     parse_airplane_snapshot,
     parse_activation_snapshot,
+    parse_camera_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2133,6 +2135,51 @@ def test_inspect_activation_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_activation", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_camera_dry_run():
+    result = DesktopAdapter().execute("inspect_camera", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "consentstore" in result.output.lower()
+    assert "webcam" in result.output.lower()
+    assert "get-childitem" in result.output.lower()
+    assert "lastused" in result.output.lower().replace(" ", "")
+
+
+def test_format_camera_report_empty_and_values():
+    empty = parse_camera_snapshot("")
+    report = format_camera_report(empty)
+    assert "no camera" in report.lower()
+    allowed = format_camera_report(parse_camera_snapshot("CAMERA=Allow\n"))
+    assert "Camera access: allowed" in allowed
+    denied = format_camera_report(parse_camera_snapshot("CAMERA=Deny\n"))
+    assert "Camera access: denied" in denied
+    assert "lastused" not in allowed.lower()
+
+
+def test_inspect_camera_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_camera", {}, dry_run=False)
+    assert result.ok
+    assert "no camera" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "consentstore" in command
+    assert "webcam" in command
+    assert "get-childitem" not in command
+    assert "lastused" not in command
+
+
+def test_inspect_camera_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="LastUsedTimeStart=132000000000000000", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_camera", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

@@ -201,6 +201,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `gpu status` | Read-only GPU name and status |
 | `airplane mode` | Read-only airplane mode on/off |
 | `windows activation` | Read-only Windows license status (no product key) |
+| `camera access` | Read-only camera access allowed/denied |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

@@ -771,6 +771,18 @@ _ACTIVATION_PS = (
     "}"
 )
 
+_CAMERA_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\webcam' "
+    "    -Name Value -ErrorAction Stop).Value; "
+    "  Write-Output ('CAMERA=' + $v); "
+    "} catch { "
+    "  Write-Output 'CAMERA='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1759,6 +1771,17 @@ def _flag_yes_no(raw: str) -> str:
     return raw.strip() or "unknown"
 
 
+def _consent_label(raw: str) -> str:
+    flag = raw.strip().lower()
+    if flag in {"allow", "allowed", "1", "true", "yes"}:
+        return "allowed"
+    if flag in {"deny", "denied", "0", "false", "no"}:
+        return "denied"
+    if flag in {"prompt", "ask"}:
+        return "prompt"
+    return raw.strip() or "unknown"
+
+
 def parse_pending_reboot_snapshot(stdout: str) -> dict[str, str]:
     """Parse reboot-pending registry flags — never a shutdown command."""
     snapshot = {"wu": "", "cbs": "", "pfro": ""}
@@ -2106,6 +2129,23 @@ def format_activation_report(snapshot: dict[str, str]) -> str:
     if name:
         lines.append(f"Product: {name}")
     return "\n".join(lines)
+
+
+def parse_camera_snapshot(stdout: str) -> dict[str, str]:
+    """Parse global camera ConsentStore Value — never LastUsed or per-app keys."""
+    snapshot = {"value": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("CAMERA="):
+            snapshot["value"] = line.split("=", 1)[1].strip()[:32]
+            break
+    return snapshot
+
+
+def format_camera_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("value") or "").strip()
+    if not raw:
+        return "No camera access setting reported."
+    return f"Camera access: {_consent_label(raw)}"
 
 
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
@@ -2652,6 +2692,8 @@ class DesktopAdapter:
             return self._inspect_airplane(dry_run=dry_run)
         if action == "inspect_activation":
             return self._inspect_activation(dry_run=dry_run)
+        if action == "inspect_camera":
+            return self._inspect_camera(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4391,6 +4433,52 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_activation_report(snapshot),
+        )
+
+    def _inspect_camera(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read ConsentStore webcam Value "
+                    "(no Get-ChildItem, no LastUsed dump, no per-app grants)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_CAMERA_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Camera access inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "lastused",
+                "get-childitem",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_camera_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_camera_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
