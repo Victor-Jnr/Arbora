@@ -859,6 +859,29 @@ def test_activation_is_read_only_inspect():
     assert [step.action for step in airplane.steps] == ["inspect_airplane"]
 
 
+def test_camera_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("camera access")
+    assert [step.action for step in plan.steps] == ["inspect_camera"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is my camera allowed")
+    assert named.steps[0].action == "inspect_camera"
+    webcam = runtime.planner.plan("webcam privacy")
+    assert webcam.steps[0].action == "inspect_camera"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_camera" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable camera")
+    assert not any(step.action == "inspect_camera" for step in mutate.steps)
+    shot = runtime.planner.plan("screenshot")
+    assert not any(step.action == "inspect_camera" for step in shot.steps)
+    launch = runtime.planner.plan("open camera")
+    assert not any(step.action == "inspect_camera" for step in launch.steps)
+    activation = runtime.planner.plan("windows activation")
+    assert [step.action for step in activation.steps] == ["inspect_activation"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

@@ -98,11 +98,12 @@ Already in place:
 - read-only GPU name and status (no PNPDeviceID dump; no display-mode change).
 - read-only airplane mode on/off (no radio enable/disable).
 - read-only Windows activation status (never a product key).
+- read-only camera access allowed/denied (global ConsentStore only; no app list).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P28).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P29).
 
 ---
 
@@ -306,6 +307,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 86 | **Airplane mode inspect** | ✅ Read-only SystemRadioState; no radio enable/disable |
 | 87 | **Windows activation inspect** | ✅ Read-only license status; never a product key |
 
+### P29 — Stage 3 camera, microphone, and location privacy
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 88 | **Camera access inspect** | ✅ Read-only global ConsentStore webcam Value; no LastUsed or per-app dump |
+| 89 | **Microphone access inspect** | Read-only global ConsentStore microphone Value; no LastUsed or per-app dump |
+| 90 | **Location access inspect** | Read-only global ConsentStore location Value; no GPS or per-app dump |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -399,4 +408,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P28 plates 85–87 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P29 plate **88** is done. Next is **P29 #89 — Microphone access inspect**.

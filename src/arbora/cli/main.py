@@ -106,6 +106,7 @@ Try goals like:
   gpu status
   airplane mode
   windows activation
+  camera access
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

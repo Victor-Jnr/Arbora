@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 100 | [Camera access inspect](documentation/100-inspect-camera.md) |
 | 099 | [Windows activation inspect](documentation/099-inspect-activation.md) |
 | 098 | [Airplane mode inspect](documentation/098-inspect-airplane.md) |
 | 097 | [GPU inspect](documentation/097-inspect-gpu.md) |

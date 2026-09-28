@@ -187,6 +187,8 @@ class GoalPlanner:
             return self._airplane_plan(text)
         if self._looks_like_activation(lower):
             return self._activation_plan(text)
+        if self._looks_like_camera(lower):
+            return self._camera_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1323,6 +1325,27 @@ class GoalPlanner:
                     summary="Read-only: Windows activation status (no product key)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads SoftwareLicensingProduct LicenseStatus and Name",),
+                )
+            ],
+        )
+
+    def _camera_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Camera access inspect journey — read-only global ConsentStore Value. "
+                "Does not dump LastUsed times or per-app camera grants."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_camera",
+                    args={},
+                    summary="Read-only: camera access allowed/denied (no app list)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads ConsentStore webcam Value only",),
                 )
             ],
         )
@@ -4007,6 +4030,42 @@ class GoalPlanner:
                 "is windows licensed",
             )
         )
+
+    @staticmethod
+    def _looks_like_camera(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "screenshot",
+                "screen shot",
+                "capture",
+                "photo",
+                "record",
+                "last used",
+                "which app",
+                "enable camera",
+                "disable camera",
+                "turn on camera",
+                "turn off camera",
+                "open camera",
+                "launch camera",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "camera access",
+                "webcam access",
+                "inspect camera",
+                "is my camera allowed",
+                "is camera allowed",
+                "camera privacy",
+                "webcam privacy",
+            )
+        ) or bool(re.search(r"\b(camera|webcam)\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

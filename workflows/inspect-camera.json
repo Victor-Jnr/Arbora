@@ -1,0 +1,22 @@
+{
+  "id": "inspect-camera",
+  "name": "Inspect Camera Access",
+  "description": "Read-only global camera privacy Allow/Deny. No LastUsed dump or per-app grants.",
+  "goal_phrases": [
+    "inspect camera pack",
+    "run inspect camera pack"
+  ],
+  "rationale": "Workflow pack: read-only camera access (no app list).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_camera",
+      "args": {},
+      "summary": "Read camera access allowed/denied",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads ConsentStore webcam Value only"
+      ]
+    }
+  ]
+}

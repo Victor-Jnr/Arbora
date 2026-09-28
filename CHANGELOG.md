@@ -231,6 +231,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/098-inspect-airplane.md` | Change doc for airplane mode inspect |
 | `workflows/inspect-activation.json` | Bundled read-only Windows activation inspect pack |
 | `documentation/099-inspect-activation.md` | Change doc for Windows activation inspect |
+| `workflows/inspect-camera.json` | Bundled read-only camera access inspect pack |
+| `documentation/100-inspect-camera.md` | Change doc for camera access inspect |
 
 ---
 
@@ -447,6 +449,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented windows activation as a sandbox dry-run goal |
 | `documentation/099-inspect-activation.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 099 |
+| `README.md` | Documentation latest table |
+
+## 100 — Camera access inspect (2026-09-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_camera` (ConsentStore webcam Value; no LastUsed/app list) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_camera` |
+| `src/arbora/core/planner.py` | Camera access inspect journey; screenshot and open-camera stay unchanged |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-camera.json` | Bundled inspect-camera pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-ChildItem/LastUsed; secrets withheld |
+| `tests/test_broker_and_planner.py` | Camera vs diagnose / disable / screenshot / launch / activation |
+| `tests/test_workflow_packs.py` | Pack match for inspect-camera |
+| `docs/NEXT.md` | Marked P29 plate 88 done |
+| `docs/sandbox.md` | Documented camera access as a sandbox dry-run goal |
+| `documentation/100-inspect-camera.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 100 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

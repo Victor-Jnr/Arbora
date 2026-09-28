@@ -46,6 +46,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_gpu",
             "inspect_airplane",
             "inspect_activation",
+            "inspect_camera",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",
