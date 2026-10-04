@@ -110,6 +110,7 @@ Try goals like:
   microphone access
   location access
   uac
+  smartscreen
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

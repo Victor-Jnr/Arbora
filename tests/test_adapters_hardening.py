@@ -48,6 +48,7 @@ from arbora.adapters.desktop import (
     format_microphone_report,
     format_location_report,
     format_uac_report,
+    format_smartscreen_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -92,6 +93,7 @@ from arbora.adapters.desktop import (
     parse_microphone_snapshot,
     parse_location_snapshot,
     parse_uac_snapshot,
+    parse_smartscreen_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2326,6 +2328,53 @@ def test_inspect_uac_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_uac", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_smartscreen_dry_run():
+    result = DesktopAdapter().execute("inspect_smartscreen", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "smartscreenenabled" in result.output.lower()
+    assert "url" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+    assert "defender" in result.output.lower()
+
+
+def test_format_smartscreen_report_empty_and_values():
+    empty = parse_smartscreen_snapshot("")
+    report = format_smartscreen_report(empty)
+    assert "no smartscreen" in report.lower()
+    warn = format_smartscreen_report(parse_smartscreen_snapshot("SMARTSCREEN=Warn\n"))
+    assert "SmartScreen: on" in warn
+    off = format_smartscreen_report(parse_smartscreen_snapshot("SMARTSCREEN=Off\n"))
+    assert "SmartScreen: off" in off
+    assert "http" not in warn.lower()
+    assert "url" not in warn.lower()
+
+
+def test_inspect_smartscreen_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_smartscreen", {}, dry_run=False)
+    assert result.ok
+    assert "no smartscreen" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "smartscreenenabled" in command
+    assert "explorer" in command
+    assert "get-mppreference" not in command
+    assert "set-itemproperty" not in command
+    assert "filterlist" not in command
+
+
+def test_inspect_smartscreen_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="FilterList=https://evil.example", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_smartscreen", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

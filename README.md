@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 104 | [SmartScreen inspect](documentation/104-inspect-smartscreen.md) |
 | 103 | [UAC inspect](documentation/103-inspect-uac.md) |
 | 102 | [Location access inspect](documentation/102-inspect-location.md) |
 | 101 | [Microphone access inspect](documentation/101-inspect-microphone.md) |

@@ -205,6 +205,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `microphone access` | Read-only microphone access allowed/denied |
 | `location access` | Read-only location access allowed/denied |
 | `uac` | Read-only UAC EnableLUA on/off |
+| `smartscreen` | Read-only Explorer SmartScreen on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---
