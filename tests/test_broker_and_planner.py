@@ -968,6 +968,29 @@ def test_smartscreen_is_read_only_inspect():
     assert [step.action for step in uac.steps] == ["inspect_uac"]
 
 
+def test_notifications_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("are notifications on")
+    assert [step.action for step in plan.steps] == ["inspect_notifications"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("notifications")
+    assert named.steps[0].action == "inspect_notifications"
+    toasts = runtime.planner.plan("notification toasts")
+    assert toasts.steps[0].action == "inspect_notifications"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_notifications" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable notifications")
+    assert not any(step.action == "inspect_notifications" for step in mutate.steps)
+    focus = runtime.planner.plan("focus assist")
+    assert not any(step.action == "inspect_notifications" for step in focus.steps)
+    camera = runtime.planner.plan("camera access")
+    assert [step.action for step in camera.steps] == ["inspect_camera"]
+    smartscreen = runtime.planner.plan("smartscreen")
+    assert [step.action for step in smartscreen.steps] == ["inspect_smartscreen"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

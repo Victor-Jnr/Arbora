@@ -111,6 +111,7 @@ Try goals like:
   location access
   uac
   smartscreen
+  are notifications on
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

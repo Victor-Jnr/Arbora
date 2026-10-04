@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 105 | [Notification toasts inspect](105-inspect-notifications.md) | 2026-10-04 | Read-only ToastEnabled; no history or Focus Assist |
 | 104 | [SmartScreen inspect](104-inspect-smartscreen.md) | 2026-10-04 | Read-only Explorer SmartScreenEnabled; no URL list |
 | 103 | [UAC inspect](103-inspect-uac.md) | 2026-10-04 | Read-only EnableLUA; no ConsentPromptBehaviorAdmin dump |
 | 102 | [Location access inspect](102-inspect-location.md) | 2026-09-28 | Read-only global location Allow/Deny; no GPS or per-app dump |

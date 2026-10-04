@@ -241,6 +241,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/103-inspect-uac.md` | Change doc for UAC inspect |
 | `workflows/inspect-smartscreen.json` | Bundled read-only SmartScreen inspect pack |
 | `documentation/104-inspect-smartscreen.md` | Change doc for SmartScreen inspect |
+| `workflows/inspect-notifications.json` | Bundled read-only notification toasts inspect pack |
+| `documentation/105-inspect-notifications.md` | Change doc for notification toasts inspect |
 
 ---
 
@@ -547,6 +549,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented smartscreen as a sandbox dry-run goal |
 | `documentation/104-inspect-smartscreen.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 104 |
+| `README.md` | Documentation latest table |
+
+## 105 — Notification toasts inspect (2026-10-04)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_notifications` (ToastEnabled only; no history/Focus Assist) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_notifications` |
+| `src/arbora/core/planner.py` | Notification toasts inspect journey; camera stays inspect_camera |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-notifications.json` | Bundled inspect-notifications pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-ChildItem/history; secrets withheld |
+| `tests/test_broker_and_planner.py` | Notifications vs diagnose / disable / Focus Assist / camera / SmartScreen |
+| `tests/test_workflow_packs.py` | Pack match for inspect-notifications |
+| `docs/NEXT.md` | Marked P30 plate 93 done |
+| `docs/sandbox.md` | Documented are notifications on as a sandbox dry-run goal |
+| `documentation/105-inspect-notifications.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 105 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

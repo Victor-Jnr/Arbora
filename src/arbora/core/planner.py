@@ -197,6 +197,8 @@ class GoalPlanner:
             return self._uac_plan(text)
         if self._looks_like_smartscreen(lower):
             return self._smartscreen_plan(text)
+        if self._looks_like_notifications(lower):
+            return self._notifications_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1438,6 +1440,27 @@ class GoalPlanner:
                     summary="Read-only: SmartScreen on/off (no URL list)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Explorer SmartScreenEnabled only",),
+                )
+            ],
+        )
+
+    def _notifications_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Notification toasts inspect journey — read-only ToastEnabled. "
+                "Does not dump notification history or Focus Assist settings."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_notifications",
+                    args={},
+                    summary="Read-only: notification toasts on/off (no history)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads PushNotifications ToastEnabled only",),
                 )
             ],
         )
@@ -4293,6 +4316,41 @@ class GoalPlanner:
                 "is smartscreen enabled",
             )
         )
+
+    @staticmethod
+    def _looks_like_notifications(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable notifications",
+                "enable notifications",
+                "turn off notifications",
+                "turn on notifications",
+                "clear notifications",
+                "focus assist",
+                "do not disturb",
+                "quiet hours",
+                "notification history",
+                "camera",
+                "microphone",
+                "mic ",
+                "location",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "notification toasts",
+                "toast notifications",
+                "inspect notifications",
+                "are notifications on",
+                "are toasts on",
+                "windows notifications",
+            )
+        ) or bool(re.search(r"\bnotifications\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

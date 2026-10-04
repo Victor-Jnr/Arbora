@@ -831,6 +831,18 @@ _SMARTSCREEN_PS = (
     "}"
 )
 
+_NOTIFICATIONS_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PushNotifications' "
+    "    -Name ToastEnabled -ErrorAction Stop).ToastEnabled; "
+    "  Write-Output ('TOASTS=' + $v); "
+    "} catch { "
+    "  Write-Output 'TOASTS='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2284,6 +2296,23 @@ def format_smartscreen_report(snapshot: dict[str, str]) -> str:
     return f"SmartScreen: {_smartscreen_label(raw)}"
 
 
+def parse_notifications_snapshot(stdout: str) -> dict[str, str]:
+    """Parse ToastEnabled only — never notification history or Focus Assist."""
+    snapshot = {"toasts": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("TOASTS="):
+            snapshot["toasts"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_notifications_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("toasts") or "").strip()
+    if not raw:
+        return "No notification toast setting reported."
+    return f"Notification toasts: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2838,6 +2867,8 @@ class DesktopAdapter:
             return self._inspect_uac(dry_run=dry_run)
         if action == "inspect_smartscreen":
             return self._inspect_smartscreen(dry_run=dry_run)
+        if action == "inspect_notifications":
+            return self._inspect_notifications(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4814,6 +4845,55 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_smartscreen_report(snapshot),
+        )
+
+    def _inspect_notifications(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read PushNotifications ToastEnabled "
+                    "(no notification history, no Get-ChildItem, no Focus Assist)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_NOTIFICATIONS_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Notification toasts inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "get-childitem",
+                "notificationhistory",
+                "cloudstore",
+                "<toast",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_notifications_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_notifications_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
