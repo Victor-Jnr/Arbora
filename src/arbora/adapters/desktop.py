@@ -819,6 +819,18 @@ _UAC_PS = (
     "}"
 )
 
+_SMARTSCREEN_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer' "
+    "    -Name SmartScreenEnabled -ErrorAction Stop).SmartScreenEnabled; "
+    "  Write-Output ('SMARTSCREEN=' + $v); "
+    "} catch { "
+    "  Write-Output 'SMARTSCREEN='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -1818,6 +1830,26 @@ def _consent_label(raw: str) -> str:
     return raw.strip() or "unknown"
 
 
+def _smartscreen_label(raw: str) -> str:
+    flag = raw.strip().lower().replace(" ", "")
+    if flag in {"off", "0", "disable", "disabled", "false", "no"}:
+        return "off"
+    if flag in {
+        "warn",
+        "prompt",
+        "requireadmin",
+        "on",
+        "1",
+        "enable",
+        "enabled",
+        "true",
+        "yes",
+        "block",
+    }:
+        return "on"
+    return raw.strip() or "unknown"
+
+
 def parse_pending_reboot_snapshot(stdout: str) -> dict[str, str]:
     """Parse reboot-pending registry flags — never a shutdown command."""
     snapshot = {"wu": "", "cbs": "", "pfro": ""}
@@ -2233,6 +2265,23 @@ def format_uac_report(snapshot: dict[str, str]) -> str:
     if not raw:
         return "No UAC status reported."
     return f"UAC: {_flag_yes_no(raw)}"
+
+
+def parse_smartscreen_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Explorer SmartScreenEnabled — never URL lists or Defender prefs."""
+    snapshot = {"smartscreen": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("SMARTSCREEN="):
+            snapshot["smartscreen"] = line.split("=", 1)[1].strip()[:32]
+            break
+    return snapshot
+
+
+def format_smartscreen_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("smartscreen") or "").strip()
+    if not raw:
+        return "No SmartScreen status reported."
+    return f"SmartScreen: {_smartscreen_label(raw)}"
 
 
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
@@ -2787,6 +2836,8 @@ class DesktopAdapter:
             return self._inspect_location(dry_run=dry_run)
         if action == "inspect_uac":
             return self._inspect_uac(dry_run=dry_run)
+        if action == "inspect_smartscreen":
+            return self._inspect_smartscreen(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4714,6 +4765,55 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_uac_report(snapshot),
+        )
+
+    def _inspect_smartscreen(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Explorer SmartScreenEnabled "
+                    "(no URL list, no Set-ItemProperty, no Defender scan)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_SMARTSCREEN_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "SmartScreen inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "filterlist",
+                "phishing",
+                "get-mppreference",
+                "url=",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_smartscreen_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_smartscreen_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

@@ -102,6 +102,7 @@ Already in place:
 - read-only microphone access allowed/denied (global ConsentStore only; no listen; no app list).
 - read-only location access allowed/denied (global ConsentStore only; no GPS; no app list).
 - read-only UAC on/off (EnableLUA only; no ConsentPromptBehaviorAdmin dump).
+- read-only SmartScreen on/off (Explorer SmartScreenEnabled; no URL list).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -323,7 +324,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 91 | **UAC inspect** | ✅ Read-only EnableLUA; no ConsentPromptBehaviorAdmin dump; no policy change |
-| 92 | **SmartScreen inspect** | Read-only Explorer SmartScreenEnabled; no URL list; no Defender steal |
+| 92 | **SmartScreen inspect** | ✅ Read-only Explorer SmartScreenEnabled; no URL list; Defender stays inspect_defender |
 | 93 | **Notification toasts inspect** | Read-only ToastEnabled; no notification history; no Focus Assist |
 
 ## Non-negotiables (do not drift)

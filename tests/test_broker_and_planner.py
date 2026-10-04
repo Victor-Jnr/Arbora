@@ -947,6 +947,27 @@ def test_uac_is_read_only_inspect():
     assert [step.action for step in location.steps] == ["inspect_location"]
 
 
+def test_smartscreen_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("smartscreen")
+    assert [step.action for step in plan.steps] == ["inspect_smartscreen"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is smartscreen on")
+    assert named.steps[0].action == "inspect_smartscreen"
+    spaced = runtime.planner.plan("smart screen")
+    assert spaced.steps[0].action == "inspect_smartscreen"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_smartscreen" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable smartscreen")
+    assert not any(step.action == "inspect_smartscreen" for step in mutate.steps)
+    defender = runtime.planner.plan("defender status")
+    assert [step.action for step in defender.steps] == ["inspect_defender"]
+    uac = runtime.planner.plan("uac")
+    assert [step.action for step in uac.steps] == ["inspect_uac"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

@@ -239,6 +239,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/102-inspect-location.md` | Change doc for location access inspect |
 | `workflows/inspect-uac.json` | Bundled read-only UAC inspect pack |
 | `documentation/103-inspect-uac.md` | Change doc for UAC inspect |
+| `workflows/inspect-smartscreen.json` | Bundled read-only SmartScreen inspect pack |
+| `documentation/104-inspect-smartscreen.md` | Change doc for SmartScreen inspect |
 
 ---
 
@@ -527,6 +529,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented uac as a sandbox dry-run goal |
 | `documentation/103-inspect-uac.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 103 |
+| `README.md` | Documentation latest table |
+
+## 104 — SmartScreen inspect (2026-10-04)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_smartscreen` (Explorer SmartScreenEnabled; no URL list) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_smartscreen` |
+| `src/arbora/core/planner.py` | SmartScreen inspect journey; Defender stays inspect_defender |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-smartscreen.json` | Bundled inspect-smartscreen pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-MpPreference/FilterList; secrets withheld |
+| `tests/test_broker_and_planner.py` | SmartScreen vs diagnose / disable / Defender / UAC |
+| `tests/test_workflow_packs.py` | Pack match for inspect-smartscreen |
+| `docs/NEXT.md` | Marked P30 plate 92 done |
+| `docs/sandbox.md` | Documented smartscreen as a sandbox dry-run goal |
+| `documentation/104-inspect-smartscreen.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 104 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

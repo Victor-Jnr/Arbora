@@ -195,6 +195,8 @@ class GoalPlanner:
             return self._location_plan(text)
         if self._looks_like_uac(lower):
             return self._uac_plan(text)
+        if self._looks_like_smartscreen(lower):
+            return self._smartscreen_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1415,6 +1417,27 @@ class GoalPlanner:
                     summary="Read-only: UAC on/off (EnableLUA only)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Policies\\System EnableLUA only",),
+                )
+            ],
+        )
+
+    def _smartscreen_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "SmartScreen inspect journey — read-only Explorer SmartScreenEnabled. "
+                "Does not dump URL lists or Defender preferences."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_smartscreen",
+                    args={},
+                    summary="Read-only: SmartScreen on/off (no URL list)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Explorer SmartScreenEnabled only",),
                 )
             ],
         )
@@ -4238,6 +4261,38 @@ class GoalPlanner:
                 "uac status",
             )
         ) or bool(re.search(r"\buac\b", lower))
+
+    @staticmethod
+    def _looks_like_smartscreen(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable smartscreen",
+                "enable smartscreen",
+                "turn off smartscreen",
+                "turn on smartscreen",
+                "disable smart screen",
+                "enable smart screen",
+                "turn off smart screen",
+                "turn on smart screen",
+                "filterlist",
+                "defender",
+                "antivirus",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "smartscreen",
+                "smart screen",
+                "inspect smartscreen",
+                "is smartscreen on",
+                "is smartscreen enabled",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
