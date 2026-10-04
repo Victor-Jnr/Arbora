@@ -49,6 +49,7 @@ from arbora.adapters.desktop import (
     format_location_report,
     format_uac_report,
     format_smartscreen_report,
+    format_notifications_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -94,6 +95,7 @@ from arbora.adapters.desktop import (
     parse_location_snapshot,
     parse_uac_snapshot,
     parse_smartscreen_snapshot,
+    parse_notifications_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2375,6 +2377,53 @@ def test_inspect_smartscreen_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_smartscreen", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_notifications_dry_run():
+    result = DesktopAdapter().execute("inspect_notifications", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "toastenabled" in result.output.lower()
+    assert "history" in result.output.lower()
+    assert "get-childitem" in result.output.lower()
+    assert "focus assist" in result.output.lower()
+
+
+def test_format_notifications_report_empty_and_values():
+    empty = parse_notifications_snapshot("")
+    report = format_notifications_report(empty)
+    assert "no notification toast" in report.lower()
+    on = format_notifications_report(parse_notifications_snapshot("TOASTS=1\n"))
+    assert "Notification toasts: yes" in on
+    off = format_notifications_report(parse_notifications_snapshot("TOASTS=0\n"))
+    assert "Notification toasts: no" in off
+    assert "history" not in on.lower()
+    assert "xml" not in on.lower()
+
+
+def test_inspect_notifications_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_notifications", {}, dry_run=False)
+    assert result.ok
+    assert "no notification toast" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "toastenabled" in command
+    assert "pushnotifications" in command
+    assert "get-childitem" not in command
+    assert "set-itemproperty" not in command
+    assert "cloudstore" not in command
+
+
+def test_inspect_notifications_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="NotificationHistory=<toast>", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_notifications", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
