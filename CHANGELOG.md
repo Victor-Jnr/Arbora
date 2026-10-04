@@ -237,6 +237,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/101-inspect-microphone.md` | Change doc for microphone access inspect |
 | `workflows/inspect-location.json` | Bundled read-only location access inspect pack |
 | `documentation/102-inspect-location.md` | Change doc for location access inspect |
+| `workflows/inspect-uac.json` | Bundled read-only UAC inspect pack |
+| `documentation/103-inspect-uac.md` | Change doc for UAC inspect |
 
 ---
 
@@ -507,6 +509,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented location access as a sandbox dry-run goal |
 | `documentation/102-inspect-location.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 102 |
+| `README.md` | Documentation latest table |
+
+## 103 — UAC inspect (2026-10-04)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_uac` (EnableLUA only; no ConsentPromptBehaviorAdmin) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_uac` |
+| `src/arbora/core/planner.py` | UAC inspect journey; location stays inspect_location |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-uac.json` | Bundled inspect-uac pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no ConsentPrompt/Set-ItemProperty; secrets withheld |
+| `tests/test_broker_and_planner.py` | UAC vs diagnose / disable / location |
+| `tests/test_workflow_packs.py` | Pack match for inspect-uac |
+| `docs/NEXT.md` | Marked P30 plate 91 done |
+| `docs/sandbox.md` | Documented uac as a sandbox dry-run goal |
+| `documentation/103-inspect-uac.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 103 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

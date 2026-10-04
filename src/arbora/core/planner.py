@@ -193,6 +193,8 @@ class GoalPlanner:
             return self._microphone_plan(text)
         if self._looks_like_location(lower):
             return self._location_plan(text)
+        if self._looks_like_uac(lower):
+            return self._uac_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1392,6 +1394,27 @@ class GoalPlanner:
                     summary="Read-only: location access allowed/denied (no GPS, no app list)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads ConsentStore location Value only",),
+                )
+            ],
+        )
+
+    def _uac_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "UAC inspect journey — read-only EnableLUA. "
+                "Does not dump ConsentPromptBehaviorAdmin or change UAC policy."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_uac",
+                    args={},
+                    summary="Read-only: UAC on/off (EnableLUA only)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Policies\\System EnableLUA only",),
                 )
             ],
         )
@@ -4187,6 +4210,34 @@ class GoalPlanner:
                 "location privacy",
             )
         )
+
+    @staticmethod
+    def _looks_like_uac(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable uac",
+                "enable uac",
+                "turn off uac",
+                "turn on uac",
+                "set enablelua",
+                "consentprompt",
+                "consent prompt",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "user account control",
+                "inspect uac",
+                "is uac on",
+                "is uac enabled",
+                "uac status",
+            )
+        ) or bool(re.search(r"\buac\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

@@ -807,6 +807,18 @@ _LOCATION_PS = (
     "}"
 )
 
+_UAC_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' "
+    "    -Name EnableLUA -ErrorAction Stop).EnableLUA; "
+    "  Write-Output ('UAC=' + $v); "
+    "} catch { "
+    "  Write-Output 'UAC='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2206,6 +2218,23 @@ def format_location_report(snapshot: dict[str, str]) -> str:
     return f"Location access: {_consent_label(raw)}"
 
 
+def parse_uac_snapshot(stdout: str) -> dict[str, str]:
+    """Parse EnableLUA only — never ConsentPromptBehaviorAdmin or policy dumps."""
+    snapshot = {"uac": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("UAC="):
+            snapshot["uac"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_uac_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("uac") or "").strip()
+    if not raw:
+        return "No UAC status reported."
+    return f"UAC: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2756,6 +2785,8 @@ class DesktopAdapter:
             return self._inspect_microphone(dry_run=dry_run)
         if action == "inspect_location":
             return self._inspect_location(dry_run=dry_run)
+        if action == "inspect_uac":
+            return self._inspect_uac(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4635,6 +4666,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_location_report(snapshot),
+        )
+
+    def _inspect_uac(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Policies\\System EnableLUA "
+                    "(no ConsentPromptBehaviorAdmin dump, no Set-ItemProperty, no UAC disable)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_UAC_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "UAC inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "consentpromptbehavioradmin",
+                "filteradministratortoken",
+                "disablelua",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_uac_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_uac_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
