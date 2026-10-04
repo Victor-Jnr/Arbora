@@ -47,6 +47,7 @@ from arbora.adapters.desktop import (
     format_camera_report,
     format_microphone_report,
     format_location_report,
+    format_uac_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -90,6 +91,7 @@ from arbora.adapters.desktop import (
     parse_camera_snapshot,
     parse_microphone_snapshot,
     parse_location_snapshot,
+    parse_uac_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2279,6 +2281,51 @@ def test_inspect_location_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_location", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_uac_dry_run():
+    result = DesktopAdapter().execute("inspect_uac", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "enablelua" in result.output.lower()
+    assert "consentpromptbehavioradmin" in result.output.lower().replace(" ", "")
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_uac_report_empty_and_values():
+    empty = parse_uac_snapshot("")
+    report = format_uac_report(empty)
+    assert "no uac" in report.lower()
+    on = format_uac_report(parse_uac_snapshot("UAC=1\n"))
+    assert "UAC: yes" in on
+    off = format_uac_report(parse_uac_snapshot("UAC=0\n"))
+    assert "UAC: no" in off
+    assert "consentprompt" not in on.lower()
+
+
+def test_inspect_uac_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_uac", {}, dry_run=False)
+    assert result.ok
+    assert "no uac" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "enablelua" in command
+    assert "policies" in command and "system" in command
+    assert "consentpromptbehavioradmin" not in command
+    assert "set-itemproperty" not in command
+    assert "filteradministratortoken" not in command
+
+
+def test_inspect_uac_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="ConsentPromptBehaviorAdmin=5", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_uac", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

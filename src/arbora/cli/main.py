@@ -109,6 +109,7 @@ Try goals like:
   camera access
   microphone access
   location access
+  uac
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

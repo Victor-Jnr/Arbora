@@ -101,11 +101,12 @@ Already in place:
 - read-only camera access allowed/denied (global ConsentStore only; no app list).
 - read-only microphone access allowed/denied (global ConsentStore only; no listen; no app list).
 - read-only location access allowed/denied (global ConsentStore only; no GPS; no app list).
+- read-only UAC on/off (EnableLUA only; no ConsentPromptBehaviorAdmin dump).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P29).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P30).
 
 ---
 
@@ -316,6 +317,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 88 | **Camera access inspect** | ✅ Read-only global ConsentStore webcam Value; no LastUsed or per-app dump |
 | 89 | **Microphone access inspect** | ✅ Read-only global ConsentStore microphone Value; no LastUsed or per-app dump |
 | 90 | **Location access inspect** | ✅ Read-only global ConsentStore location Value; no GPS or per-app dump |
+
+### P30 — Stage 3 UAC, SmartScreen, and notification toasts
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 91 | **UAC inspect** | ✅ Read-only EnableLUA; no ConsentPromptBehaviorAdmin dump; no policy change |
+| 92 | **SmartScreen inspect** | Read-only Explorer SmartScreenEnabled; no URL list; no Defender steal |
+| 93 | **Notification toasts inspect** | Read-only ToastEnabled; no notification history; no Focus Assist |
 
 ## Non-negotiables (do not drift)
 
