@@ -855,6 +855,19 @@ _REMOTE_DESKTOP_PS = (
     "}"
 )
 
+_DEVELOPER_MODE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock' "
+    "    -Name AllowDevelopmentWithoutDevLicense -ErrorAction Stop"
+    "    ).AllowDevelopmentWithoutDevLicense; "
+    "  Write-Output ('DEVMODE=' + $v); "
+    "} catch { "
+    "  Write-Output 'DEVMODE='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2347,6 +2360,23 @@ def format_remote_desktop_report(snapshot: dict[str, str]) -> str:
     return f"Remote Desktop: {raw.strip()[:32]}"
 
 
+def parse_developer_mode_snapshot(stdout: str) -> dict[str, str]:
+    """Parse AllowDevelopmentWithoutDevLicense — never sideload package lists."""
+    snapshot = {"devmode": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("DEVMODE="):
+            snapshot["devmode"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_developer_mode_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("devmode") or "").strip()
+    if not raw:
+        return "No Developer Mode status reported."
+    return f"Developer Mode: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2905,6 +2935,8 @@ class DesktopAdapter:
             return self._inspect_notifications(dry_run=dry_run)
         if action == "inspect_remote_desktop":
             return self._inspect_remote_desktop(dry_run=dry_run)
+        if action == "inspect_developer_mode":
+            return self._inspect_developer_mode(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4978,6 +5010,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_remote_desktop_report(snapshot),
+        )
+
+    def _inspect_developer_mode(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read AppModelUnlock AllowDevelopmentWithoutDevLicense "
+                    "(no sideload list, no Set-ItemProperty, no Developer Mode enable)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_DEVELOPER_MODE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Developer Mode inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "sideload",
+                "allowalltrustedapps",
+                "install-package",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_developer_mode_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_developer_mode_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

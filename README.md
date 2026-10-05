@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 107 | [Developer Mode inspect](documentation/107-inspect-developer-mode.md) |
 | 106 | [Remote Desktop inspect](documentation/106-inspect-remote-desktop.md) |
 | 105 | [Notification toasts inspect](documentation/105-inspect-notifications.md) |
 | 104 | [SmartScreen inspect](documentation/104-inspect-smartscreen.md) |

@@ -1,0 +1,22 @@
+{
+  "id": "inspect-developer-mode",
+  "name": "Inspect Developer Mode",
+  "description": "Read-only AllowDevelopmentWithoutDevLicense on/off. No sideload list or Developer Mode enable.",
+  "goal_phrases": [
+    "inspect developer mode pack",
+    "run inspect developer mode pack"
+  ],
+  "rationale": "Workflow pack: read-only Developer Mode (AllowDevelopmentWithoutDevLicense only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_developer_mode",
+      "args": {},
+      "summary": "Read Developer Mode on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads AppModelUnlock AllowDevelopmentWithoutDevLicense only"
+      ]
+    }
+  ]
+}

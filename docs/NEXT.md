@@ -105,6 +105,7 @@ Already in place:
 - read-only SmartScreen on/off (Explorer SmartScreenEnabled; no URL list).
 - read-only notification toasts on/off (ToastEnabled only; no history; no Focus Assist).
 - read-only Remote Desktop on/off (fDenyTSConnections only; no port dump).
+- read-only Developer Mode on/off (AllowDevelopmentWithoutDevLicense only; no sideload).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -334,7 +335,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 94 | **Remote Desktop inspect** | ✅ Read-only fDenyTSConnections; no port dump; no Terminal Services enable |
-| 95 | **Developer Mode inspect** | Read-only AllowDevelopmentWithoutDevLicense; no sideload enable |
+| 95 | **Developer Mode inspect** | ✅ Read-only AllowDevelopmentWithoutDevLicense; no sideload enable |
 | 96 | **PowerShell execution policy inspect** | Read-only Get-ExecutionPolicy scopes; no Set-ExecutionPolicy |
 
 ## Non-negotiables (do not drift)
