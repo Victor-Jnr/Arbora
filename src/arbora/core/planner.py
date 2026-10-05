@@ -203,6 +203,8 @@ class GoalPlanner:
             return self._remote_desktop_plan(text)
         if self._looks_like_developer_mode(lower):
             return self._developer_mode_plan(text)
+        if self._looks_like_execution_policy(lower):
+            return self._execution_policy_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1507,6 +1509,27 @@ class GoalPlanner:
                     summary="Read-only: Developer Mode on/off (no sideload)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads AppModelUnlock AllowDevelopmentWithoutDevLicense only",),
+                )
+            ],
+        )
+
+    def _execution_policy_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "PowerShell execution policy inspect journey — read-only Get-ExecutionPolicy. "
+                "Does not call Set-ExecutionPolicy or change Bypass/Unrestricted."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_execution_policy",
+                    args={},
+                    summary="Read-only: PowerShell execution policy (no Set-ExecutionPolicy)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Get-ExecutionPolicy scopes only",),
                 )
             ],
         )
@@ -4455,6 +4478,32 @@ class GoalPlanner:
                 "is developer mode on",
                 "is developer mode enabled",
                 "dev mode",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_execution_policy(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "set-executionpolicy",
+                "set execution policy",
+                "change execution policy",
+                "unrestricted execution",
+                "bypass execution",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "execution policy",
+                "powershell execution policy",
+                "inspect execution policy",
+                "get-executionpolicy",
+                "get execution policy",
             )
         )
 

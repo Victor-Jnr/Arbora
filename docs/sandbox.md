@@ -209,6 +209,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `are notifications on` | Read-only notification toasts on/off |
 | `remote desktop` | Read-only Remote Desktop on/off |
 | `developer mode` | Read-only Windows Developer Mode on/off |
+| `execution policy` | Read-only PowerShell execution policy |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

@@ -114,6 +114,7 @@ Try goals like:
   are notifications on
   remote desktop
   developer mode
+  execution policy
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

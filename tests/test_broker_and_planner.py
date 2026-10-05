@@ -1033,6 +1033,27 @@ def test_developer_mode_is_read_only_inspect():
     assert [step.action for step in rdp.steps] == ["inspect_remote_desktop"]
 
 
+def test_execution_policy_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("execution policy")
+    assert [step.action for step in plan.steps] == ["inspect_execution_policy"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("powershell execution policy")
+    assert named.steps[0].action == "inspect_execution_policy"
+    cmd = runtime.planner.plan("get-executionpolicy")
+    assert cmd.steps[0].action == "inspect_execution_policy"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_execution_policy" for step in diagnose.steps)
+    mutate = runtime.planner.plan("set execution policy")
+    assert not any(step.action == "inspect_execution_policy" for step in mutate.steps)
+    dev = runtime.planner.plan("developer mode")
+    assert [step.action for step in dev.steps] == ["inspect_developer_mode"]
+    uac = runtime.planner.plan("uac")
+    assert [step.action for step in uac.steps] == ["inspect_uac"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 
