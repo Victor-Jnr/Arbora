@@ -868,6 +868,18 @@ _DEVELOPER_MODE_PS = (
     "}"
 )
 
+_EXECUTION_POLICY_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { Write-Output ('EFFECTIVE=' + [string](Get-ExecutionPolicy)) } "
+    "catch { Write-Output 'EFFECTIVE=' }; "
+    "try { Write-Output ('MACHINE=' + [string](Get-ExecutionPolicy -Scope LocalMachine)) } "
+    "catch { Write-Output 'MACHINE=' }; "
+    "try { Write-Output ('USER=' + [string](Get-ExecutionPolicy -Scope CurrentUser)) } "
+    "catch { Write-Output 'USER=' }; "
+    "try { Write-Output ('PROCESS=' + [string](Get-ExecutionPolicy -Scope Process)) } "
+    "catch { Write-Output 'PROCESS=' }"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2377,6 +2389,47 @@ def format_developer_mode_report(snapshot: dict[str, str]) -> str:
     return f"Developer Mode: {_flag_yes_no(raw)}"
 
 
+def _execution_policy_label(raw: str) -> str:
+    flag = raw.strip()
+    if not flag or flag.lower() == "undefined":
+        return "not set"
+    return flag[:32]
+
+
+def parse_execution_policy_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Get-ExecutionPolicy scopes — never Set-ExecutionPolicy."""
+    snapshot = {"effective": "", "machine": "", "user": "", "process": ""}
+    mapping = (
+        ("EFFECTIVE=", "effective"),
+        ("MACHINE=", "machine"),
+        ("USER=", "user"),
+        ("PROCESS=", "process"),
+    )
+    for line in (stdout or "").splitlines():
+        for prefix, key in mapping:
+            if line.startswith(prefix):
+                snapshot[key] = line.split("=", 1)[1].strip()[:32]
+                break
+    return snapshot
+
+
+def format_execution_policy_report(snapshot: dict[str, str]) -> str:
+    effective = str(snapshot.get("effective") or "").strip()
+    machine = str(snapshot.get("machine") or "").strip()
+    user = str(snapshot.get("user") or "").strip()
+    process = str(snapshot.get("process") or "").strip()
+    if not any((effective, machine, user, process)):
+        return "No PowerShell execution policy reported."
+    return "\n".join(
+        [
+            f"PowerShell execution policy: {_execution_policy_label(effective)}",
+            f"Local machine: {_execution_policy_label(machine)}",
+            f"Current user: {_execution_policy_label(user)}",
+            f"Process: {_execution_policy_label(process)}",
+        ]
+    )
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2937,6 +2990,8 @@ class DesktopAdapter:
             return self._inspect_remote_desktop(dry_run=dry_run)
         if action == "inspect_developer_mode":
             return self._inspect_developer_mode(dry_run=dry_run)
+        if action == "inspect_execution_policy":
+            return self._inspect_execution_policy(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5058,6 +5113,52 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_developer_mode_report(snapshot),
+        )
+
+    def _inspect_execution_policy(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Get-ExecutionPolicy "
+                    "(no Set-ExecutionPolicy, no bypass change)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_EXECUTION_POLICY_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Execution policy inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-executionpolicy",
+                "encodedcommand",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_execution_policy_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_execution_policy_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

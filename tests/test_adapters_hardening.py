@@ -52,6 +52,7 @@ from arbora.adapters.desktop import (
     format_notifications_report,
     format_remote_desktop_report,
     format_developer_mode_report,
+    format_execution_policy_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -100,6 +101,7 @@ from arbora.adapters.desktop import (
     parse_notifications_snapshot,
     parse_remote_desktop_snapshot,
     parse_developer_mode_snapshot,
+    parse_execution_policy_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2519,6 +2521,55 @@ def test_inspect_developer_mode_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_developer_mode", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_execution_policy_dry_run():
+    result = DesktopAdapter().execute("inspect_execution_policy", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "get-executionpolicy" in result.output.lower()
+    assert "set-executionpolicy" in result.output.lower()
+    assert "bypass" in result.output.lower()
+
+
+def test_format_execution_policy_report_empty_and_values():
+    empty = parse_execution_policy_snapshot("")
+    report = format_execution_policy_report(empty)
+    assert "no powershell execution policy" in report.lower()
+    live = format_execution_policy_report(
+        parse_execution_policy_snapshot(
+            "EFFECTIVE=RemoteSigned\nMACHINE=RemoteSigned\nUSER=Undefined\nPROCESS=Undefined\n"
+        )
+    )
+    assert "PowerShell execution policy: RemoteSigned" in live
+    assert "Local machine: RemoteSigned" in live
+    assert "Current user: not set" in live
+    assert "Process: not set" in live
+    assert "set-executionpolicy" not in live.lower()
+
+
+def test_inspect_execution_policy_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_execution_policy", {}, dry_run=False)
+    assert result.ok
+    assert "no powershell execution policy" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "get-executionpolicy" in command
+    assert "localmachine" in command
+    assert "currentuser" in command
+    assert "set-executionpolicy" not in command
+
+
+def test_inspect_execution_policy_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="Set-ExecutionPolicy Bypass", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_execution_policy", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

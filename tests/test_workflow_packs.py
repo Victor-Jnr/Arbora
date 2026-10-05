@@ -64,6 +64,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-notifications" in ids
     assert "inspect-remote-desktop" in ids
     assert "inspect-developer-mode" in ids
+    assert "inspect-execution-policy" in ids
     assert "type-in-window" in ids
     assert "type-in-notepad" in ids
 
@@ -752,6 +753,17 @@ def test_inspect_developer_mode_workflow_pack_matches():
     plan = pack.to_plan("run inspect developer mode pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_developer_mode"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_execution_policy_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect execution policy pack")
+    assert pack is not None
+    assert pack.id == "inspect-execution-policy"
+    plan = pack.to_plan("run inspect execution policy pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_execution_policy"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

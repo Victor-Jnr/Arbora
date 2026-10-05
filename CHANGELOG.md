@@ -247,6 +247,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/106-inspect-remote-desktop.md` | Change doc for Remote Desktop inspect |
 | `workflows/inspect-developer-mode.json` | Bundled read-only Developer Mode inspect pack |
 | `documentation/107-inspect-developer-mode.md` | Change doc for Developer Mode inspect |
+| `workflows/inspect-execution-policy.json` | Bundled read-only PowerShell execution policy inspect pack |
+| `documentation/108-inspect-execution-policy.md` | Change doc for PowerShell execution policy inspect |
 
 ---
 
@@ -607,6 +609,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented developer mode as a sandbox dry-run goal |
 | `documentation/107-inspect-developer-mode.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 107 |
+| `README.md` | Documentation latest table |
+
+## 108 — PowerShell execution policy inspect (2026-10-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_execution_policy` (Get-ExecutionPolicy scopes; no Set-ExecutionPolicy) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_execution_policy` |
+| `src/arbora/core/planner.py` | Execution policy inspect journey; Developer Mode stays inspect_developer_mode |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-execution-policy.json` | Bundled inspect-execution-policy pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Set-ExecutionPolicy; secrets withheld |
+| `tests/test_broker_and_planner.py` | Execution policy vs diagnose / set / Developer Mode / UAC |
+| `tests/test_workflow_packs.py` | Pack match for inspect-execution-policy |
+| `docs/NEXT.md` | Marked P31 plate 96 done |
+| `docs/sandbox.md` | Documented execution policy as a sandbox dry-run goal |
+| `documentation/108-inspect-execution-policy.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 108 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

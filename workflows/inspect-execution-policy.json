@@ -1,0 +1,22 @@
+{
+  "id": "inspect-execution-policy",
+  "name": "Inspect PowerShell Execution Policy",
+  "description": "Read-only Get-ExecutionPolicy scopes. No Set-ExecutionPolicy or Bypass change.",
+  "goal_phrases": [
+    "inspect execution policy pack",
+    "run inspect execution policy pack"
+  ],
+  "rationale": "Workflow pack: read-only PowerShell execution policy (Get-ExecutionPolicy only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_execution_policy",
+      "args": {},
+      "summary": "Read PowerShell execution policy",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Get-ExecutionPolicy scopes only"
+      ]
+    }
+  ]
+}
