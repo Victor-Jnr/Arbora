@@ -50,6 +50,7 @@ from arbora.adapters.desktop import (
     format_uac_report,
     format_smartscreen_report,
     format_notifications_report,
+    format_remote_desktop_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -96,6 +97,7 @@ from arbora.adapters.desktop import (
     parse_uac_snapshot,
     parse_smartscreen_snapshot,
     parse_notifications_snapshot,
+    parse_remote_desktop_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2424,6 +2426,52 @@ def test_inspect_notifications_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_notifications", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_remote_desktop_dry_run():
+    result = DesktopAdapter().execute("inspect_remote_desktop", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "fdenytsconnections" in result.output.lower()
+    assert "port" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_remote_desktop_report_empty_and_values():
+    empty = parse_remote_desktop_snapshot("")
+    report = format_remote_desktop_report(empty)
+    assert "no remote desktop" in report.lower()
+    allowed = format_remote_desktop_report(parse_remote_desktop_snapshot("DENY=0\n"))
+    assert "Remote Desktop: on" in allowed
+    denied = format_remote_desktop_report(parse_remote_desktop_snapshot("DENY=1\n"))
+    assert "Remote Desktop: off" in denied
+    assert "3389" not in allowed
+    assert "port" not in allowed.lower()
+
+
+def test_inspect_remote_desktop_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_remote_desktop", {}, dry_run=False)
+    assert result.ok
+    assert "no remote desktop" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "fdenytsconnections" in command
+    assert "terminal server" in command
+    assert "portnumber" not in command
+    assert "3389" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_remote_desktop_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="PortNumber=3389", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_remote_desktop", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

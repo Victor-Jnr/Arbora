@@ -1,0 +1,22 @@
+{
+  "id": "inspect-remote-desktop",
+  "name": "Inspect Remote Desktop",
+  "description": "Read-only fDenyTSConnections on/off. No RDP port dump or Terminal Services enable.",
+  "goal_phrases": [
+    "inspect remote desktop pack",
+    "run inspect remote desktop pack"
+  ],
+  "rationale": "Workflow pack: read-only Remote Desktop (fDenyTSConnections only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_remote_desktop",
+      "args": {},
+      "summary": "Read Remote Desktop on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Terminal Server fDenyTSConnections only"
+      ]
+    }
+  ]
+}

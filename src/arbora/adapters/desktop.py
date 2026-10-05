@@ -843,6 +843,18 @@ _NOTIFICATIONS_PS = (
     "}"
 )
 
+_REMOTE_DESKTOP_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server' "
+    "    -Name fDenyTSConnections -ErrorAction Stop).fDenyTSConnections; "
+    "  Write-Output ('DENY=' + $v); "
+    "} catch { "
+    "  Write-Output 'DENY='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2313,6 +2325,28 @@ def format_notifications_report(snapshot: dict[str, str]) -> str:
     return f"Notification toasts: {_flag_yes_no(raw)}"
 
 
+def parse_remote_desktop_snapshot(stdout: str) -> dict[str, str]:
+    """Parse fDenyTSConnections only — never RDP ports or listener dumps."""
+    snapshot = {"deny": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("DENY="):
+            snapshot["deny"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_remote_desktop_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("deny") or "").strip()
+    if not raw:
+        return "No Remote Desktop status reported."
+    flag = raw.strip().lower()
+    if flag in {"1", "true", "yes"}:
+        return "Remote Desktop: off"
+    if flag in {"0", "false", "no"}:
+        return "Remote Desktop: on"
+    return f"Remote Desktop: {raw.strip()[:32]}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2869,6 +2903,8 @@ class DesktopAdapter:
             return self._inspect_smartscreen(dry_run=dry_run)
         if action == "inspect_notifications":
             return self._inspect_notifications(dry_run=dry_run)
+        if action == "inspect_remote_desktop":
+            return self._inspect_remote_desktop(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -4894,6 +4930,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_notifications_report(snapshot),
+        )
+
+    def _inspect_remote_desktop(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Terminal Server fDenyTSConnections "
+                    "(no port dump, no Set-ItemProperty, no RDP enable)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_REMOTE_DESKTOP_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Remote Desktop inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "portnumber",
+                "3389",
+                "userauthentication",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_remote_desktop_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_remote_desktop_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
