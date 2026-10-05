@@ -1012,6 +1012,27 @@ def test_remote_desktop_is_read_only_inspect():
     assert [step.action for step in toasts.steps] == ["inspect_notifications"]
 
 
+def test_developer_mode_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("developer mode")
+    assert [step.action for step in plan.steps] == ["inspect_developer_mode"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is developer mode on")
+    assert named.steps[0].action == "inspect_developer_mode"
+    short = runtime.planner.plan("dev mode")
+    assert short.steps[0].action == "inspect_developer_mode"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_developer_mode" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable developer mode")
+    assert not any(step.action == "inspect_developer_mode" for step in mutate.steps)
+    setup = runtime.planner.plan("dev setup")
+    assert not any(step.action == "inspect_developer_mode" for step in setup.steps)
+    rdp = runtime.planner.plan("remote desktop")
+    assert [step.action for step in rdp.steps] == ["inspect_remote_desktop"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

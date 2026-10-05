@@ -113,6 +113,7 @@ Try goals like:
   smartscreen
   are notifications on
   remote desktop
+  developer mode
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

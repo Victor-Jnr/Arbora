@@ -201,6 +201,8 @@ class GoalPlanner:
             return self._notifications_plan(text)
         if self._looks_like_remote_desktop(lower):
             return self._remote_desktop_plan(text)
+        if self._looks_like_developer_mode(lower):
+            return self._developer_mode_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1484,6 +1486,27 @@ class GoalPlanner:
                     summary="Read-only: Remote Desktop on/off (no port dump)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Terminal Server fDenyTSConnections only",),
+                )
+            ],
+        )
+
+    def _developer_mode_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Developer Mode inspect journey — read-only AllowDevelopmentWithoutDevLicense. "
+                "Does not sideload apps or enable Developer Mode."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_developer_mode",
+                    args={},
+                    summary="Read-only: Developer Mode on/off (no sideload)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads AppModelUnlock AllowDevelopmentWithoutDevLicense only",),
                 )
             ],
         )
@@ -4405,6 +4428,35 @@ class GoalPlanner:
                 "rdp status",
             )
         ) or bool(re.search(r"\brdp\b", lower))
+
+    @staticmethod
+    def _looks_like_developer_mode(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable developer mode",
+                "enable developer mode",
+                "turn off developer mode",
+                "turn on developer mode",
+                "sideload",
+                "dev setup",
+                "project setup",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "developer mode",
+                "windows developer mode",
+                "inspect developer mode",
+                "is developer mode on",
+                "is developer mode enabled",
+                "dev mode",
+            )
+        )
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

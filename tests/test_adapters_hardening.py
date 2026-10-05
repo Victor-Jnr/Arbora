@@ -51,6 +51,7 @@ from arbora.adapters.desktop import (
     format_smartscreen_report,
     format_notifications_report,
     format_remote_desktop_report,
+    format_developer_mode_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -98,6 +99,7 @@ from arbora.adapters.desktop import (
     parse_smartscreen_snapshot,
     parse_notifications_snapshot,
     parse_remote_desktop_snapshot,
+    parse_developer_mode_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2472,6 +2474,51 @@ def test_inspect_remote_desktop_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_remote_desktop", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_developer_mode_dry_run():
+    result = DesktopAdapter().execute("inspect_developer_mode", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "allowdevelopmentwithoutdevlicense" in result.output.lower()
+    assert "sideload" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_developer_mode_report_empty_and_values():
+    empty = parse_developer_mode_snapshot("")
+    report = format_developer_mode_report(empty)
+    assert "no developer mode" in report.lower()
+    on = format_developer_mode_report(parse_developer_mode_snapshot("DEVMODE=1\n"))
+    assert "Developer Mode: yes" in on
+    off = format_developer_mode_report(parse_developer_mode_snapshot("DEVMODE=0\n"))
+    assert "Developer Mode: no" in off
+    assert "sideload" not in on.lower()
+
+
+def test_inspect_developer_mode_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_developer_mode", {}, dry_run=False)
+    assert result.ok
+    assert "no developer mode" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "allowdevelopmentwithoutdevlicense" in command
+    assert "appmodelunlock" in command
+    assert "set-itemproperty" not in command
+    assert "sideload" not in command
+    assert "install-package" not in command
+
+
+def test_inspect_developer_mode_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="AllowAllTrustedApps=1 Sideload=on", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_developer_mode", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

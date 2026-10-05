@@ -245,6 +245,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/105-inspect-notifications.md` | Change doc for notification toasts inspect |
 | `workflows/inspect-remote-desktop.json` | Bundled read-only Remote Desktop inspect pack |
 | `documentation/106-inspect-remote-desktop.md` | Change doc for Remote Desktop inspect |
+| `workflows/inspect-developer-mode.json` | Bundled read-only Developer Mode inspect pack |
+| `documentation/107-inspect-developer-mode.md` | Change doc for Developer Mode inspect |
 
 ---
 
@@ -587,6 +589,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented remote desktop as a sandbox dry-run goal |
 | `documentation/106-inspect-remote-desktop.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 106 |
+| `README.md` | Documentation latest table |
+
+## 107 — Developer Mode inspect (2026-10-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_developer_mode` (AllowDevelopmentWithoutDevLicense; no sideload) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_developer_mode` |
+| `src/arbora/core/planner.py` | Developer Mode inspect journey; `dev setup` stays the scaffold journey |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-developer-mode.json` | Bundled inspect-developer-mode pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no sideload/Set-ItemProperty; secrets withheld |
+| `tests/test_broker_and_planner.py` | Developer Mode vs diagnose / enable / dev setup / Remote Desktop |
+| `tests/test_workflow_packs.py` | Pack match for inspect-developer-mode |
+| `docs/NEXT.md` | Marked P31 plate 95 done |
+| `docs/sandbox.md` | Documented developer mode as a sandbox dry-run goal |
+| `documentation/107-inspect-developer-mode.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 107 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
