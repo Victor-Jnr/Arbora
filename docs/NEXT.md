@@ -104,11 +104,12 @@ Already in place:
 - read-only UAC on/off (EnableLUA only; no ConsentPromptBehaviorAdmin dump).
 - read-only SmartScreen on/off (Explorer SmartScreenEnabled; no URL list).
 - read-only notification toasts on/off (ToastEnabled only; no history; no Focus Assist).
+- read-only Remote Desktop on/off (fDenyTSConnections only; no port dump).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P30).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P31).
 
 ---
 
@@ -328,6 +329,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 92 | **SmartScreen inspect** | ✅ Read-only Explorer SmartScreenEnabled; no URL list; Defender stays inspect_defender |
 | 93 | **Notification toasts inspect** | ✅ Read-only ToastEnabled; no notification history; no Focus Assist |
 
+### P31 — Stage 3 Remote Desktop, Developer Mode, and execution policy
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 94 | **Remote Desktop inspect** | ✅ Read-only fDenyTSConnections; no port dump; no Terminal Services enable |
+| 95 | **Developer Mode inspect** | Read-only AllowDevelopmentWithoutDevLicense; no sideload enable |
+| 96 | **PowerShell execution policy inspect** | Read-only Get-ExecutionPolicy scopes; no Set-ExecutionPolicy |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -421,4 +430,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P29 plates 88–90 are done. Continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P31 plates 94–96 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

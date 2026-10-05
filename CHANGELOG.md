@@ -243,6 +243,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/104-inspect-smartscreen.md` | Change doc for SmartScreen inspect |
 | `workflows/inspect-notifications.json` | Bundled read-only notification toasts inspect pack |
 | `documentation/105-inspect-notifications.md` | Change doc for notification toasts inspect |
+| `workflows/inspect-remote-desktop.json` | Bundled read-only Remote Desktop inspect pack |
+| `documentation/106-inspect-remote-desktop.md` | Change doc for Remote Desktop inspect |
 
 ---
 
@@ -567,6 +569,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented are notifications on as a sandbox dry-run goal |
 | `documentation/105-inspect-notifications.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 105 |
+| `README.md` | Documentation latest table |
+
+## 106 — Remote Desktop inspect (2026-10-05)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_remote_desktop` (fDenyTSConnections; no port dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_remote_desktop` |
+| `src/arbora/core/planner.py` | Remote Desktop inspect journey; firewall stays inspect_firewall |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-remote-desktop.json` | Bundled inspect-remote-desktop pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no PortNumber/3389; secrets withheld |
+| `tests/test_broker_and_planner.py` | Remote Desktop vs diagnose / enable / firewall / notifications |
+| `tests/test_workflow_packs.py` | Pack match for inspect-remote-desktop |
+| `docs/NEXT.md` | Marked P31 plate 94 done |
+| `docs/sandbox.md` | Documented remote desktop as a sandbox dry-run goal |
+| `documentation/106-inspect-remote-desktop.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 106 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

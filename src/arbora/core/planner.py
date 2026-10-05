@@ -199,6 +199,8 @@ class GoalPlanner:
             return self._smartscreen_plan(text)
         if self._looks_like_notifications(lower):
             return self._notifications_plan(text)
+        if self._looks_like_remote_desktop(lower):
+            return self._remote_desktop_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1461,6 +1463,27 @@ class GoalPlanner:
                     summary="Read-only: notification toasts on/off (no history)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads PushNotifications ToastEnabled only",),
+                )
+            ],
+        )
+
+    def _remote_desktop_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Remote Desktop inspect journey — read-only fDenyTSConnections. "
+                "Does not dump RDP ports or enable Terminal Services."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_remote_desktop",
+                    args={},
+                    summary="Read-only: Remote Desktop on/off (no port dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Terminal Server fDenyTSConnections only",),
                 )
             ],
         )
@@ -4351,6 +4374,37 @@ class GoalPlanner:
                 "windows notifications",
             )
         ) or bool(re.search(r"\bnotifications\b", lower))
+
+    @staticmethod
+    def _looks_like_remote_desktop(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable remote desktop",
+                "enable remote desktop",
+                "turn off remote desktop",
+                "turn on remote desktop",
+                "allow remote connections",
+                "remote desktop control",
+                "port 3389",
+                "listening port",
+                "mstsc",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "remote desktop",
+                "inspect remote desktop",
+                "is remote desktop on",
+                "is remote desktop enabled",
+                "is rdp on",
+                "rdp status",
+            )
+        ) or bool(re.search(r"\brdp\b", lower))
 
     @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:

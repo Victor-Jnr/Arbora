@@ -207,6 +207,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `uac` | Read-only UAC EnableLUA on/off |
 | `smartscreen` | Read-only Explorer SmartScreen on/off |
 | `are notifications on` | Read-only notification toasts on/off |
+| `remote desktop` | Read-only Remote Desktop on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

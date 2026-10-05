@@ -62,6 +62,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-uac" in ids
     assert "inspect-smartscreen" in ids
     assert "inspect-notifications" in ids
+    assert "inspect-remote-desktop" in ids
     assert "type-in-window" in ids
     assert "type-in-notepad" in ids
 
@@ -728,6 +729,17 @@ def test_inspect_notifications_workflow_pack_matches():
     plan = pack.to_plan("run inspect notifications pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_notifications"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_remote_desktop_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect remote desktop pack")
+    assert pack is not None
+    assert pack.id == "inspect-remote-desktop"
+    plan = pack.to_plan("run inspect remote desktop pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_remote_desktop"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 
