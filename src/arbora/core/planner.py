@@ -209,6 +209,8 @@ class GoalPlanner:
             return self._fast_startup_plan(text)
         if self._looks_like_storage_sense(lower):
             return self._storage_sense_plan(text)
+        if self._looks_like_hidden_files(lower):
+            return self._hidden_files_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1576,6 +1578,27 @@ class GoalPlanner:
                     summary="Read-only: Storage Sense on/off (no cleanup)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads StorageSense StoragePolicy 01 only",),
+                )
+            ],
+        )
+
+    def _hidden_files_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Explorer hidden files inspect journey — read-only Hidden and HideFileExt. "
+                "Does not write SuperHidden or list folder contents."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_hidden_files",
+                    args={},
+                    summary="Read-only: hidden files and extensions (no SuperHidden)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Explorer Advanced Hidden and HideFileExt only",),
                 )
             ],
         )
@@ -4609,6 +4632,37 @@ class GoalPlanner:
                 "inspect storage sense",
                 "is storage sense on",
                 "is storage sense enabled",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_hidden_files(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "show hidden files",
+                "hide hidden files",
+                "turn on hidden files",
+                "turn off hidden files",
+                "show file extensions",
+                "hide file extensions",
+                "superhidden",
+                "find hidden",
+                "search hidden",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "hidden files",
+                "inspect hidden files",
+                "are hidden files shown",
+                "are hidden files hidden",
+                "are file extensions hidden",
+                "are file extensions shown",
             )
         )
 

@@ -57,6 +57,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_execution_policy",
             "inspect_fast_startup",
             "inspect_storage_sense",
+            "inspect_hidden_files",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",

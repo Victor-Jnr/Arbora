@@ -253,6 +253,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/109-inspect-fast-startup.md` | Change doc for fast startup inspect |
 | `workflows/inspect-storage-sense.json` | Bundled read-only Storage Sense inspect pack |
 | `documentation/110-inspect-storage-sense.md` | Change doc for Storage Sense inspect |
+| `workflows/inspect-hidden-files.json` | Bundled read-only Explorer hidden files inspect pack |
+| `documentation/111-inspect-hidden-files.md` | Change doc for Explorer hidden files inspect |
 
 ---
 
@@ -667,6 +669,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented storage sense as a sandbox dry-run goal |
 | `documentation/110-inspect-storage-sense.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 110 |
+| `README.md` | Documentation latest table |
+
+## 111 — Explorer hidden files inspect (2026-10-06)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_hidden_files` (Hidden / HideFileExt; no SuperHidden) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_hidden_files` |
+| `src/arbora/core/planner.py` | Hidden files inspect journey; filename search stays search_by_name |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-hidden-files.json` | Bundled inspect-hidden-files pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no SuperHidden/Get-ChildItem; secrets withheld |
+| `tests/test_broker_and_planner.py` | Hidden files vs diagnose / show / find / Storage Sense |
+| `tests/test_workflow_packs.py` | Pack match for inspect-hidden-files |
+| `docs/NEXT.md` | Marked P32 plate 99 done |
+| `docs/sandbox.md` | Documented hidden files as a sandbox dry-run goal |
+| `documentation/111-inspect-hidden-files.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 111 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
