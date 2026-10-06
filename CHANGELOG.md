@@ -249,6 +249,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/107-inspect-developer-mode.md` | Change doc for Developer Mode inspect |
 | `workflows/inspect-execution-policy.json` | Bundled read-only PowerShell execution policy inspect pack |
 | `documentation/108-inspect-execution-policy.md` | Change doc for PowerShell execution policy inspect |
+| `workflows/inspect-fast-startup.json` | Bundled read-only fast startup inspect pack |
+| `documentation/109-inspect-fast-startup.md` | Change doc for fast startup inspect |
 
 ---
 
@@ -627,6 +629,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented execution policy as a sandbox dry-run goal |
 | `documentation/108-inspect-execution-policy.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 108 |
+| `README.md` | Documentation latest table |
+
+## 109 — Fast startup inspect (2026-10-06)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_fast_startup` (HiberbootEnabled; no powercfg /h) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_fast_startup` |
+| `src/arbora/core/planner.py` | Fast startup inspect journey; startup apps stay inspect_startup |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-fast-startup.json` | Bundled inspect-fast-startup pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no HibernateEnabled/powercfg; secrets withheld |
+| `tests/test_broker_and_planner.py` | Fast startup vs diagnose / disable / startup apps / execution policy |
+| `tests/test_workflow_packs.py` | Pack match for inspect-fast-startup |
+| `docs/NEXT.md` | Marked P32 plate 97 done |
+| `docs/sandbox.md` | Documented fast startup as a sandbox dry-run goal |
+| `documentation/109-inspect-fast-startup.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 109 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

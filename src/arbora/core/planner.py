@@ -205,6 +205,8 @@ class GoalPlanner:
             return self._developer_mode_plan(text)
         if self._looks_like_execution_policy(lower):
             return self._execution_policy_plan(text)
+        if self._looks_like_fast_startup(lower):
+            return self._fast_startup_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1530,6 +1532,27 @@ class GoalPlanner:
                     summary="Read-only: PowerShell execution policy (no Set-ExecutionPolicy)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Get-ExecutionPolicy scopes only",),
+                )
+            ],
+        )
+
+    def _fast_startup_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Fast startup inspect journey — read-only HiberbootEnabled. "
+                "Does not dump HibernateEnabled or run powercfg /h."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_fast_startup",
+                    args={},
+                    summary="Read-only: fast startup on/off (no hibernation file change)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Session Manager Power HiberbootEnabled only",),
                 )
             ],
         )
@@ -4504,6 +4527,38 @@ class GoalPlanner:
                 "inspect execution policy",
                 "get-executionpolicy",
                 "get execution policy",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_fast_startup(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable fast startup",
+                "enable fast startup",
+                "turn off fast startup",
+                "turn on fast startup",
+                "powercfg /h",
+                "powercfg -h",
+                "hibernateenabled",
+                "startup apps",
+                "startup programs",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "fast startup",
+                "fast start-up",
+                "fast boot",
+                "hiberboot",
+                "inspect fast startup",
+                "is fast startup on",
+                "is fast startup enabled",
             )
         )
 
