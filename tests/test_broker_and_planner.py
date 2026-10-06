@@ -1054,6 +1054,27 @@ def test_execution_policy_is_read_only_inspect():
     assert [step.action for step in uac.steps] == ["inspect_uac"]
 
 
+def test_fast_startup_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("fast startup")
+    assert [step.action for step in plan.steps] == ["inspect_fast_startup"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is fast startup on")
+    assert named.steps[0].action == "inspect_fast_startup"
+    hiber = runtime.planner.plan("hiberboot")
+    assert hiber.steps[0].action == "inspect_fast_startup"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_fast_startup" for step in diagnose.steps)
+    mutate = runtime.planner.plan("disable fast startup")
+    assert not any(step.action == "inspect_fast_startup" for step in mutate.steps)
+    apps = runtime.planner.plan("startup apps")
+    assert [step.action for step in apps.steps] == ["inspect_startup"]
+    policy = runtime.planner.plan("execution policy")
+    assert [step.action for step in policy.steps] == ["inspect_execution_policy"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

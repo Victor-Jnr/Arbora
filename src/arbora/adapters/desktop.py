@@ -880,6 +880,18 @@ _EXECUTION_POLICY_PS = (
     "catch { Write-Output 'PROCESS=' }"
 )
 
+_FAST_STARTUP_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power' "
+    "    -Name HiberbootEnabled -ErrorAction Stop).HiberbootEnabled; "
+    "  Write-Output ('FASTSTART=' + $v); "
+    "} catch { "
+    "  Write-Output 'FASTSTART='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2430,6 +2442,23 @@ def format_execution_policy_report(snapshot: dict[str, str]) -> str:
     )
 
 
+def parse_fast_startup_snapshot(stdout: str) -> dict[str, str]:
+    """Parse HiberbootEnabled only — never HibernateEnabled or powercfg /h."""
+    snapshot = {"faststart": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("FASTSTART="):
+            snapshot["faststart"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_fast_startup_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("faststart") or "").strip()
+    if not raw:
+        return "No fast startup status reported."
+    return f"Fast startup: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -2992,6 +3021,8 @@ class DesktopAdapter:
             return self._inspect_developer_mode(dry_run=dry_run)
         if action == "inspect_execution_policy":
             return self._inspect_execution_policy(dry_run=dry_run)
+        if action == "inspect_fast_startup":
+            return self._inspect_fast_startup(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5159,6 +5190,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_execution_policy_report(snapshot),
+        )
+
+    def _inspect_fast_startup(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Session Manager Power HiberbootEnabled "
+                    "(no HibernateEnabled dump, no powercfg /h, no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_FAST_STARTUP_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Fast startup inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "hibernateenabled",
+                "powercfg/h",
+                "powercfg -h",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_fast_startup_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_fast_startup_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

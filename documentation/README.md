@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 109 | [Fast startup inspect](109-inspect-fast-startup.md) | 2026-10-06 | Read-only HiberbootEnabled; no powercfg /h |
 | 108 | [PowerShell execution policy inspect](108-inspect-execution-policy.md) | 2026-10-05 | Read-only Get-ExecutionPolicy; no Set-ExecutionPolicy |
 | 107 | [Developer Mode inspect](107-inspect-developer-mode.md) | 2026-10-05 | Read-only AllowDevelopmentWithoutDevLicense; no sideload |
 | 106 | [Remote Desktop inspect](106-inspect-remote-desktop.md) | 2026-10-05 | Read-only fDenyTSConnections; no RDP port dump |

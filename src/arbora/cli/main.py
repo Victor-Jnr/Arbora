@@ -115,6 +115,7 @@ Try goals like:
   remote desktop
   developer mode
   execution policy
+  fast startup
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

@@ -107,11 +107,12 @@ Already in place:
 - read-only Remote Desktop on/off (fDenyTSConnections only; no port dump).
 - read-only Developer Mode on/off (AllowDevelopmentWithoutDevLicense only; no sideload).
 - read-only PowerShell execution policy (Get-ExecutionPolicy scopes; no Set-ExecutionPolicy).
+- read-only fast startup on/off (HiberbootEnabled only; no powercfg /h).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P31).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P32).
 
 ---
 
@@ -339,6 +340,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 95 | **Developer Mode inspect** | ✅ Read-only AllowDevelopmentWithoutDevLicense; no sideload enable |
 | 96 | **PowerShell execution policy inspect** | ✅ Read-only Get-ExecutionPolicy scopes; no Set-ExecutionPolicy |
 
+### P32 — Stage 3 fast startup, Storage Sense, and Explorer hidden files
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 97 | **Fast startup inspect** | ✅ Read-only HiberbootEnabled; no HibernateEnabled dump; no powercfg /h |
+| 98 | **Storage Sense inspect** | Read-only StoragePolicy 01; no cleanup run |
+| 99 | **Explorer hidden files inspect** | Read-only Hidden / HideFileExt; no SuperHidden write |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -432,4 +441,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P31 plates 94–96 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P32 plates 97–99 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
