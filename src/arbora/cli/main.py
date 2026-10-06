@@ -116,6 +116,7 @@ Try goals like:
   developer mode
   execution policy
   fast startup
+  storage sense
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

@@ -1,0 +1,22 @@
+{
+  "id": "inspect-storage-sense",
+  "name": "Inspect Storage Sense",
+  "description": "Read-only StoragePolicy 01 on/off. No cleanup ages, cleanmgr, or Storage Sense run.",
+  "goal_phrases": [
+    "inspect storage sense pack",
+    "run inspect storage sense pack"
+  ],
+  "rationale": "Workflow pack: read-only Storage Sense (StoragePolicy 01 only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_storage_sense",
+      "args": {},
+      "summary": "Read Storage Sense on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads StorageSense StoragePolicy 01 only"
+      ]
+    }
+  ]
+}
