@@ -1096,6 +1096,27 @@ def test_storage_sense_is_read_only_inspect():
     assert [step.action for step in fast.steps] == ["inspect_fast_startup"]
 
 
+def test_hidden_files_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("hidden files")
+    assert [step.action for step in plan.steps] == ["inspect_hidden_files"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("are hidden files shown")
+    assert named.steps[0].action == "inspect_hidden_files"
+    ext = runtime.planner.plan("are file extensions hidden")
+    assert ext.steps[0].action == "inspect_hidden_files"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_hidden_files" for step in diagnose.steps)
+    mutate = runtime.planner.plan("show hidden files")
+    assert not any(step.action == "inspect_hidden_files" for step in mutate.steps)
+    found = runtime.planner.plan("find invoice.pdf in downloads")
+    assert [step.action for step in found.steps] == ["search_by_name"]
+    sense = runtime.planner.plan("storage sense")
+    assert [step.action for step in sense.steps] == ["inspect_storage_sense"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

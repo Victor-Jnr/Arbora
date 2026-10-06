@@ -212,6 +212,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `execution policy` | Read-only PowerShell execution policy |
 | `fast startup` | Read-only fast startup on/off |
 | `storage sense` | Read-only Storage Sense on/off |
+| `hidden files` | Read-only Explorer hidden files and extensions |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

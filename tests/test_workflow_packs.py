@@ -67,6 +67,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-execution-policy" in ids
     assert "inspect-fast-startup" in ids
     assert "inspect-storage-sense" in ids
+    assert "inspect-hidden-files" in ids
     assert "type-in-window" in ids
     assert "type-in-notepad" in ids
 
@@ -788,6 +789,17 @@ def test_inspect_storage_sense_workflow_pack_matches():
     plan = pack.to_plan("run inspect storage sense pack")
     assert plan is not None
     assert [step.action for step in plan.steps] == ["inspect_storage_sense"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
+def test_inspect_hidden_files_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect hidden files pack")
+    assert pack is not None
+    assert pack.id == "inspect-hidden-files"
+    plan = pack.to_plan("run inspect hidden files pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_hidden_files"]
     assert plan.steps[0].adapter == "desktop"
     assert plan.steps[0].sensitivity.value == "read"
 

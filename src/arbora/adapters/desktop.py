@@ -904,6 +904,19 @@ _STORAGE_SENSE_PS = (
     "}"
 )
 
+_HIDDEN_FILES_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $p = Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' "
+    "    -ErrorAction Stop; "
+    "  Write-Output ('HIDDEN=' + $p.Hidden); "
+    "  Write-Output ('HIDEEXT=' + $p.HideFileExt); "
+    "} catch { "
+    "  Write-Output 'HIDDEN='; Write-Output 'HIDEEXT='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2488,6 +2501,42 @@ def format_storage_sense_report(snapshot: dict[str, str]) -> str:
     return f"Storage Sense: {_flag_yes_no(raw)}"
 
 
+def parse_hidden_files_snapshot(stdout: str) -> dict[str, str]:
+    """Parse Explorer Hidden and HideFileExt — never SuperHidden writes."""
+    snapshot = {"hidden": "", "hideext": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("HIDDEN="):
+            snapshot["hidden"] = line.split("=", 1)[1].strip()[:16]
+        elif line.startswith("HIDEEXT="):
+            snapshot["hideext"] = line.split("=", 1)[1].strip()[:16]
+    return snapshot
+
+
+def format_hidden_files_report(snapshot: dict[str, str]) -> str:
+    hidden = str(snapshot.get("hidden") or "").strip()
+    hideext = str(snapshot.get("hideext") or "").strip()
+    if not hidden and not hideext:
+        return "No Explorer hidden-files setting reported."
+    lines: list[str] = []
+    if hidden:
+        flag = hidden.lower()
+        if flag in {"1"}:
+            lines.append("Hidden files: shown")
+        elif flag in {"2", "0"}:
+            lines.append("Hidden files: hidden")
+        else:
+            lines.append(f"Hidden files: {hidden[:16]}")
+    if hideext:
+        flag = hideext.lower()
+        if flag in {"0", "false", "no"}:
+            lines.append("File extensions: shown")
+        elif flag in {"1", "true", "yes"}:
+            lines.append("File extensions: hidden")
+        else:
+            lines.append(f"File extensions: {hideext[:16]}")
+    return "\n".join(lines)
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3054,6 +3103,8 @@ class DesktopAdapter:
             return self._inspect_fast_startup(dry_run=dry_run)
         if action == "inspect_storage_sense":
             return self._inspect_storage_sense(dry_run=dry_run)
+        if action == "inspect_hidden_files":
+            return self._inspect_hidden_files(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5316,6 +5367,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_storage_sense_report(snapshot),
+        )
+
+    def _inspect_hidden_files(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Explorer Advanced Hidden and HideFileExt "
+                    "(no SuperHidden, no Set-ItemProperty, no Get-ChildItem)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_HIDDEN_FILES_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Hidden files inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "superhidden",
+                "get-childitem",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_hidden_files_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_hidden_files_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

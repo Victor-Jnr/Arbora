@@ -55,6 +55,7 @@ from arbora.adapters.desktop import (
     format_execution_policy_report,
     format_fast_startup_report,
     format_storage_sense_report,
+    format_hidden_files_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -106,6 +107,7 @@ from arbora.adapters.desktop import (
     parse_execution_policy_snapshot,
     parse_fast_startup_snapshot,
     parse_storage_sense_snapshot,
+    parse_hidden_files_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2665,6 +2667,58 @@ def test_inspect_storage_sense_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_storage_sense", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_hidden_files_dry_run():
+    result = DesktopAdapter().execute("inspect_hidden_files", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "hidefileext" in result.output.lower()
+    assert "superhidden" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+    assert "get-childitem" in result.output.lower()
+
+
+def test_format_hidden_files_report_empty_and_values():
+    empty = parse_hidden_files_snapshot("")
+    report = format_hidden_files_report(empty)
+    assert "no explorer hidden" in report.lower()
+    shown = format_hidden_files_report(
+        parse_hidden_files_snapshot("HIDDEN=1\nHIDEEXT=0\n")
+    )
+    assert "Hidden files: shown" in shown
+    assert "File extensions: shown" in shown
+    hidden = format_hidden_files_report(
+        parse_hidden_files_snapshot("HIDDEN=2\nHIDEEXT=1\n")
+    )
+    assert "Hidden files: hidden" in hidden
+    assert "File extensions: hidden" in hidden
+    assert "superhidden" not in shown.lower()
+
+
+def test_inspect_hidden_files_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_hidden_files", {}, dry_run=False)
+    assert result.ok
+    assert "no explorer hidden" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "explorer" in command and "advanced" in command
+    assert "hidefileext" in command
+    assert "superhidden" not in command
+    assert "set-itemproperty" not in command
+    assert "get-childitem" not in command
+
+
+def test_inspect_hidden_files_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="SuperHidden=0 Get-ChildItem C:\\", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_hidden_files", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
