@@ -54,6 +54,7 @@ from arbora.adapters.desktop import (
     format_developer_mode_report,
     format_execution_policy_report,
     format_fast_startup_report,
+    format_storage_sense_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -104,6 +105,7 @@ from arbora.adapters.desktop import (
     parse_developer_mode_snapshot,
     parse_execution_policy_snapshot,
     parse_fast_startup_snapshot,
+    parse_storage_sense_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2617,6 +2619,52 @@ def test_inspect_fast_startup_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_fast_startup", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_storage_sense_dry_run():
+    result = DesktopAdapter().execute("inspect_storage_sense", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "storagepolicy" in result.output.lower()
+    assert "cleanmgr" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_storage_sense_report_empty_and_values():
+    empty = parse_storage_sense_snapshot("")
+    report = format_storage_sense_report(empty)
+    assert "no storage sense" in report.lower()
+    on = format_storage_sense_report(parse_storage_sense_snapshot("STORAGESENSE=1\n"))
+    assert "Storage Sense: yes" in on
+    off = format_storage_sense_report(parse_storage_sense_snapshot("STORAGESENSE=0\n"))
+    assert "Storage Sense: no" in off
+    assert "cleanmgr" not in on.lower()
+    assert "days" not in on.lower()
+
+
+def test_inspect_storage_sense_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_storage_sense", {}, dry_run=False)
+    assert result.ok
+    assert "no storage sense" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "storagesense" in command
+    assert "storagepolicy" in command
+    assert "cleanmgr" not in command
+    assert "set-itemproperty" not in command
+    assert "get-childitem" not in command
+
+
+def test_inspect_storage_sense_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="cleanmgr /d C Get-ChildItem Downloads", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_storage_sense", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

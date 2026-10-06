@@ -1075,6 +1075,27 @@ def test_fast_startup_is_read_only_inspect():
     assert [step.action for step in policy.steps] == ["inspect_execution_policy"]
 
 
+def test_storage_sense_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("storage sense")
+    assert [step.action for step in plan.steps] == ["inspect_storage_sense"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is storage sense on")
+    assert named.steps[0].action == "inspect_storage_sense"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_storage_sense" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable storage sense")
+    assert not any(step.action == "inspect_storage_sense" for step in mutate.steps)
+    disk = runtime.planner.plan("free disk space")
+    assert [step.action for step in disk.steps] == ["inspect_disk_space"]
+    temp = runtime.planner.plan("what's in temp")
+    assert [step.action for step in temp.steps] == ["inspect_user_temp"]
+    fast = runtime.planner.plan("fast startup")
+    assert [step.action for step in fast.steps] == ["inspect_fast_startup"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

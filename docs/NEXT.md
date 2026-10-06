@@ -108,6 +108,7 @@ Already in place:
 - read-only Developer Mode on/off (AllowDevelopmentWithoutDevLicense only; no sideload).
 - read-only PowerShell execution policy (Get-ExecutionPolicy scopes; no Set-ExecutionPolicy).
 - read-only fast startup on/off (HiberbootEnabled only; no powercfg /h).
+- read-only Storage Sense on/off (StoragePolicy 01 only; no cleanup run).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -345,7 +346,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 97 | **Fast startup inspect** | ✅ Read-only HiberbootEnabled; no HibernateEnabled dump; no powercfg /h |
-| 98 | **Storage Sense inspect** | Read-only StoragePolicy 01; no cleanup run |
+| 98 | **Storage Sense inspect** | ✅ Read-only StoragePolicy 01; no cleanup run |
 | 99 | **Explorer hidden files inspect** | Read-only Hidden / HideFileExt; no SuperHidden write |
 
 ## Non-negotiables (do not drift)

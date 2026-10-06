@@ -211,6 +211,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `developer mode` | Read-only Windows Developer Mode on/off |
 | `execution policy` | Read-only PowerShell execution policy |
 | `fast startup` | Read-only fast startup on/off |
+| `storage sense` | Read-only Storage Sense on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

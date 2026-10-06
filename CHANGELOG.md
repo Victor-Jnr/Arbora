@@ -251,6 +251,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/108-inspect-execution-policy.md` | Change doc for PowerShell execution policy inspect |
 | `workflows/inspect-fast-startup.json` | Bundled read-only fast startup inspect pack |
 | `documentation/109-inspect-fast-startup.md` | Change doc for fast startup inspect |
+| `workflows/inspect-storage-sense.json` | Bundled read-only Storage Sense inspect pack |
+| `documentation/110-inspect-storage-sense.md` | Change doc for Storage Sense inspect |
 
 ---
 
@@ -647,6 +649,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented fast startup as a sandbox dry-run goal |
 | `documentation/109-inspect-fast-startup.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 109 |
+| `README.md` | Documentation latest table |
+
+## 110 — Storage Sense inspect (2026-10-06)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_storage_sense` (StoragePolicy 01; no cleanup ages/cleanmgr) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_storage_sense` |
+| `src/arbora/core/planner.py` | Storage Sense inspect journey; disk space and temp stay their inspects |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-storage-sense.json` | Bundled inspect-storage-sense pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no cleanmgr/Get-ChildItem; secrets withheld |
+| `tests/test_broker_and_planner.py` | Storage Sense vs diagnose / enable / disk space / temp / fast startup |
+| `tests/test_workflow_packs.py` | Pack match for inspect-storage-sense |
+| `docs/NEXT.md` | Marked P32 plate 98 done |
+| `docs/sandbox.md` | Documented storage sense as a sandbox dry-run goal |
+| `documentation/110-inspect-storage-sense.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 110 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

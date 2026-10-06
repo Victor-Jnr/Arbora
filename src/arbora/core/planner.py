@@ -207,6 +207,8 @@ class GoalPlanner:
             return self._execution_policy_plan(text)
         if self._looks_like_fast_startup(lower):
             return self._fast_startup_plan(text)
+        if self._looks_like_storage_sense(lower):
+            return self._storage_sense_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1553,6 +1555,27 @@ class GoalPlanner:
                     summary="Read-only: fast startup on/off (no hibernation file change)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Session Manager Power HiberbootEnabled only",),
+                )
+            ],
+        )
+
+    def _storage_sense_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Storage Sense inspect journey — read-only StoragePolicy 01. "
+                "Does not dump cleanup ages or run Storage Sense."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_storage_sense",
+                    args={},
+                    summary="Read-only: Storage Sense on/off (no cleanup)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads StorageSense StoragePolicy 01 only",),
                 )
             ],
         )
@@ -4559,6 +4582,33 @@ class GoalPlanner:
                 "inspect fast startup",
                 "is fast startup on",
                 "is fast startup enabled",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_storage_sense(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable storage sense",
+                "enable storage sense",
+                "turn off storage sense",
+                "turn on storage sense",
+                "run storage sense",
+                "cleanmgr",
+                "empty temp",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "storage sense",
+                "inspect storage sense",
+                "is storage sense on",
+                "is storage sense enabled",
             )
         )
 

@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 110 | [Storage Sense inspect](documentation/110-inspect-storage-sense.md) |
 | 109 | [Fast startup inspect](documentation/109-inspect-fast-startup.md) |
 | 108 | [PowerShell execution policy inspect](documentation/108-inspect-execution-policy.md) |
 | 107 | [Developer Mode inspect](documentation/107-inspect-developer-mode.md) |
