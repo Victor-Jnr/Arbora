@@ -1136,6 +1136,27 @@ def test_clipboard_history_is_read_only_inspect():
     assert [step.action for step in hidden.steps] == ["inspect_hidden_files"]
 
 
+def test_nearby_sharing_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("nearby sharing")
+    assert [step.action for step in plan.steps] == ["inspect_nearby_sharing"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is nearby sharing on")
+    assert named.steps[0].action == "inspect_nearby_sharing"
+    short = runtime.planner.plan("near share")
+    assert short.steps[0].action == "inspect_nearby_sharing"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_nearby_sharing" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable nearby sharing")
+    assert not any(step.action == "inspect_nearby_sharing" for step in mutate.steps)
+    bt = runtime.planner.plan("bluetooth status")
+    assert [step.action for step in bt.steps] == ["inspect_bluetooth"]
+    hist = runtime.planner.plan("clipboard history")
+    assert [step.action for step in hist.steps] == ["inspect_clipboard_history"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

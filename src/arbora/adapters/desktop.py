@@ -929,6 +929,18 @@ _CLIPBOARD_HISTORY_PS = (
     "}"
 )
 
+_NEARBY_SHARING_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\CDP' "
+    "    -Name NearShareChannelUserAuthzPolicy -ErrorAction Stop).NearShareChannelUserAuthzPolicy; "
+    "  Write-Output ('NEARSHARE=' + $v); "
+    "} catch { "
+    "  Write-Output 'NEARSHARE='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2566,6 +2578,34 @@ def format_clipboard_history_report(snapshot: dict[str, str]) -> str:
     return f"Clipboard history: {_flag_yes_no(raw)}"
 
 
+def parse_nearby_sharing_snapshot(stdout: str) -> dict[str, str]:
+    """Parse NearShareChannelUserAuthzPolicy only — never a nearby device list."""
+    snapshot = {"policy": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("NEARSHARE="):
+            snapshot["policy"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def _nearby_sharing_label(raw: str) -> str:
+    flag = raw.strip().lower()
+    if flag in {"0", "false", "no", "off"}:
+        return "off"
+    if flag in {"1"}:
+        return "my devices"
+    if flag in {"2"}:
+        return "everyone nearby"
+    return raw.strip()[:16] or "unknown"
+
+
+def format_nearby_sharing_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("policy") or "").strip()
+    if not raw:
+        return "No Nearby sharing status reported."
+    return f"Nearby sharing: {_nearby_sharing_label(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3136,6 +3176,8 @@ class DesktopAdapter:
             return self._inspect_hidden_files(dry_run=dry_run)
         if action == "inspect_clipboard_history":
             return self._inspect_clipboard_history(dry_run=dry_run)
+        if action == "inspect_nearby_sharing":
+            return self._inspect_nearby_sharing(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5492,6 +5534,54 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_clipboard_history_report(snapshot),
+        )
+
+    def _inspect_nearby_sharing(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read CDP NearShareChannelUserAuthzPolicy "
+                    "(no nearby device list, no Set-ItemProperty, no Get-ChildItem)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_NEARBY_SHARING_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Nearby sharing inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "get-childitem",
+                "bluetoothaddress",
+                "macaddress",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_nearby_sharing_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_nearby_sharing_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
