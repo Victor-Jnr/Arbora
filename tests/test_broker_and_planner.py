@@ -1157,6 +1157,25 @@ def test_nearby_sharing_is_read_only_inspect():
     assert [step.action for step in hist.steps] == ["inspect_clipboard_history"]
 
 
+def test_game_mode_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("game mode")
+    assert [step.action for step in plan.steps] == ["inspect_game_mode"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is game mode on")
+    assert named.steps[0].action == "inspect_game_mode"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_game_mode" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable game mode")
+    assert not any(step.action == "inspect_game_mode" for step in mutate.steps)
+    gpu = runtime.planner.plan("gpu status")
+    assert [step.action for step in gpu.steps] == ["inspect_gpu"]
+    nearby = runtime.planner.plan("nearby sharing")
+    assert [step.action for step in nearby.steps] == ["inspect_nearby_sharing"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

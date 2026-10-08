@@ -215,6 +215,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `hidden files` | Read-only Explorer hidden files and extensions |
 | `clipboard history` | Read-only clipboard history on/off |
 | `nearby sharing` | Read-only Nearby sharing off/my devices/everyone |
+| `game mode` | Read-only Game Mode on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

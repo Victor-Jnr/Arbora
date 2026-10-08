@@ -259,6 +259,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/112-inspect-clipboard-history.md` | Change doc for clipboard history inspect |
 | `workflows/inspect-nearby-sharing.json` | Bundled read-only Nearby sharing inspect pack |
 | `documentation/113-inspect-nearby-sharing.md` | Change doc for Nearby sharing inspect |
+| `workflows/inspect-game-mode.json` | Bundled read-only Game Mode inspect pack |
+| `documentation/114-inspect-game-mode.md` | Change doc for Game Mode inspect |
 
 ---
 
@@ -727,6 +729,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented nearby sharing as a sandbox dry-run goal |
 | `documentation/113-inspect-nearby-sharing.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 113 |
+| `README.md` | Documentation latest table |
+
+## 114 — Game Mode inspect (2026-10-08)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_game_mode` (AutoGameModeEnabled; no Game DVR) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_game_mode` |
+| `src/arbora/core/planner.py` | Game Mode inspect journey; GPU stays inspect_gpu |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-game-mode.json` | Bundled inspect-game-mode pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Game DVR/AppCapture; secrets withheld |
+| `tests/test_broker_and_planner.py` | Game Mode vs diagnose / enable / GPU / Nearby sharing |
+| `tests/test_workflow_packs.py` | Pack match for inspect-game-mode |
+| `docs/NEXT.md` | Marked P33 plate 102 done |
+| `docs/sandbox.md` | Documented game mode as a sandbox dry-run goal |
+| `documentation/114-inspect-game-mode.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 114 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

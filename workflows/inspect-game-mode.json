@@ -1,0 +1,22 @@
+{
+  "id": "inspect-game-mode",
+  "name": "Inspect Game Mode",
+  "description": "Read-only GameBar AutoGameModeEnabled on/off. No Game DVR or capture dump.",
+  "goal_phrases": [
+    "inspect game mode pack",
+    "run inspect game mode pack"
+  ],
+  "rationale": "Workflow pack: read-only Game Mode (AutoGameModeEnabled only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_game_mode",
+      "args": {},
+      "summary": "Read Game Mode on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads GameBar AutoGameModeEnabled only"
+      ]
+    }
+  ]
+}

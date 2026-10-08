@@ -826,6 +826,17 @@ def test_inspect_nearby_sharing_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_game_mode_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect game mode pack")
+    assert pack is not None
+    assert pack.id == "inspect-game-mode"
+    plan = pack.to_plan("run inspect game mode pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_game_mode"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_type_in_window_workflow_pack_matches():
     pack = match_workflow_pack("run type in window pack")
     assert pack is not None

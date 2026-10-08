@@ -215,6 +215,8 @@ class GoalPlanner:
             return self._clipboard_history_plan(text)
         if self._looks_like_nearby_sharing(lower):
             return self._nearby_sharing_plan(text)
+        if self._looks_like_game_mode(lower):
+            return self._game_mode_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1645,6 +1647,27 @@ class GoalPlanner:
                     summary="Read-only: Nearby sharing off/my devices/everyone (no device list)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads CDP NearShareChannelUserAuthzPolicy only",),
+                )
+            ],
+        )
+
+    def _game_mode_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Game Mode inspect journey — read-only AutoGameModeEnabled. "
+                "Does not dump Game DVR captures or enable Game Mode."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_game_mode",
+                    args={},
+                    summary="Read-only: Game Mode on/off (no Game DVR)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads GameBar AutoGameModeEnabled only",),
                 )
             ],
         )
@@ -4763,6 +4786,34 @@ class GoalPlanner:
                 "inspect nearby sharing",
                 "is nearby sharing on",
                 "is nearby sharing enabled",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_game_mode(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable game mode",
+                "enable game mode",
+                "turn off game mode",
+                "turn on game mode",
+                "game bar",
+                "gamebar",
+                "game dvr",
+                "xbox",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "game mode",
+                "inspect game mode",
+                "is game mode on",
+                "is game mode enabled",
             )
         )
 

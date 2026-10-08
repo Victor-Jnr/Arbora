@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 114 | [Game Mode inspect](documentation/114-inspect-game-mode.md) |
 | 113 | [Nearby sharing inspect](documentation/113-inspect-nearby-sharing.md) |
 | 112 | [Clipboard history inspect](documentation/112-inspect-clipboard-history.md) |
 | 111 | [Explorer hidden files inspect](documentation/111-inspect-hidden-files.md) |
