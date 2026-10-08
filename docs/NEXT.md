@@ -110,11 +110,12 @@ Already in place:
 - read-only fast startup on/off (HiberbootEnabled only; no powercfg /h).
 - read-only Storage Sense on/off (StoragePolicy 01 only; no cleanup run).
 - read-only Explorer hidden files and extensions (Hidden / HideFileExt; no SuperHidden write).
+- read-only clipboard history on/off (EnableClipboardHistory only; no Win+V item dump).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P32).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P33).
 
 ---
 
@@ -350,6 +351,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 98 | **Storage Sense inspect** | ✅ Read-only StoragePolicy 01; no cleanup run |
 | 99 | **Explorer hidden files inspect** | ✅ Read-only Hidden / HideFileExt; no SuperHidden write |
 
+### P33 — Stage 3 clipboard history, Nearby sharing, and Game Mode
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 100 | **Clipboard history inspect** | ✅ Read-only EnableClipboardHistory; no history item dump |
+| 101 | **Nearby sharing inspect** | Read-only NearShareChannelUserAuthzPolicy; no nearby device list |
+| 102 | **Game Mode inspect** | Read-only AutoGameModeEnabled; no Game DVR / capture dump |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -443,4 +452,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P32 plates 97–99 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P33 plates 100–102 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

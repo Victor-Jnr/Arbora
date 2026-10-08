@@ -917,6 +917,18 @@ _HIDDEN_FILES_PS = (
     "}"
 )
 
+_CLIPBOARD_HISTORY_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\Clipboard' "
+    "    -Name EnableClipboardHistory -ErrorAction Stop).EnableClipboardHistory; "
+    "  Write-Output ('CLIPHIST=' + $v); "
+    "} catch { "
+    "  Write-Output 'CLIPHIST='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2537,6 +2549,23 @@ def format_hidden_files_report(snapshot: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
+def parse_clipboard_history_snapshot(stdout: str) -> dict[str, str]:
+    """Parse EnableClipboardHistory only — never clipboard contents or history items."""
+    snapshot = {"enabled": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("CLIPHIST="):
+            snapshot["enabled"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_clipboard_history_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("enabled") or "").strip()
+    if not raw:
+        return "No clipboard history status reported."
+    return f"Clipboard history: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3105,6 +3134,8 @@ class DesktopAdapter:
             return self._inspect_storage_sense(dry_run=dry_run)
         if action == "inspect_hidden_files":
             return self._inspect_hidden_files(dry_run=dry_run)
+        if action == "inspect_clipboard_history":
+            return self._inspect_clipboard_history(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5414,6 +5445,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_hidden_files_report(snapshot),
+        )
+
+    def _inspect_clipboard_history(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Clipboard EnableClipboardHistory "
+                    "(no Get-Clipboard, no history items, no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_CLIPBOARD_HISTORY_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Clipboard history inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "get-clipboard",
+                "historyitem",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_clipboard_history_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_clipboard_history_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

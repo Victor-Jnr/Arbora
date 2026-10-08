@@ -211,6 +211,8 @@ class GoalPlanner:
             return self._storage_sense_plan(text)
         if self._looks_like_hidden_files(lower):
             return self._hidden_files_plan(text)
+        if self._looks_like_clipboard_history(lower):
+            return self._clipboard_history_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1599,6 +1601,27 @@ class GoalPlanner:
                     summary="Read-only: hidden files and extensions (no SuperHidden)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Explorer Advanced Hidden and HideFileExt only",),
+                )
+            ],
+        )
+
+    def _clipboard_history_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Clipboard history inspect journey — read-only EnableClipboardHistory. "
+                "Does not dump clipboard contents or Win+V history items."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_clipboard_history",
+                    args={},
+                    summary="Read-only: clipboard history on/off (no history items)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Clipboard EnableClipboardHistory only",),
                 )
             ],
         )
@@ -4667,6 +4690,33 @@ class GoalPlanner:
         )
 
     @staticmethod
+    def _looks_like_clipboard_history(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable clipboard history",
+                "enable clipboard history",
+                "turn off clipboard history",
+                "turn on clipboard history",
+                "clear clipboard history",
+                "save clipboard",
+                "get-clipboard",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "clipboard history",
+                "inspect clipboard history",
+                "is clipboard history on",
+                "is clipboard history enabled",
+            )
+        )
+
+    @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
         return any(
             phrase in lower
@@ -4981,6 +5031,8 @@ class GoalPlanner:
 
     @staticmethod
     def _looks_like_clipboard(lower: str) -> bool:
+        if "clipboard history" in lower:
+            return False
         return "clipboard" in lower
 
     @staticmethod

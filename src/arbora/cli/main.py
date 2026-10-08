@@ -118,6 +118,7 @@ Try goals like:
   fast startup
   storage sense
   hidden files
+  clipboard history
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

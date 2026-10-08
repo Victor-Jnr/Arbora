@@ -1117,6 +1117,25 @@ def test_hidden_files_is_read_only_inspect():
     assert [step.action for step in sense.steps] == ["inspect_storage_sense"]
 
 
+def test_clipboard_history_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("clipboard history")
+    assert [step.action for step in plan.steps] == ["inspect_clipboard_history"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is clipboard history on")
+    assert named.steps[0].action == "inspect_clipboard_history"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_clipboard_history" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable clipboard history")
+    assert not any(step.action == "inspect_clipboard_history" for step in mutate.steps)
+    clip = runtime.planner.plan("inspect clipboard")
+    assert [step.action for step in clip.steps] == ["inspect_clipboard"]
+    hidden = runtime.planner.plan("hidden files")
+    assert [step.action for step in hidden.steps] == ["inspect_hidden_files"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

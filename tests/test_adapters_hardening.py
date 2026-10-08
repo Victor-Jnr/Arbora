@@ -56,6 +56,7 @@ from arbora.adapters.desktop import (
     format_fast_startup_report,
     format_storage_sense_report,
     format_hidden_files_report,
+    format_clipboard_history_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -108,6 +109,7 @@ from arbora.adapters.desktop import (
     parse_fast_startup_snapshot,
     parse_storage_sense_snapshot,
     parse_hidden_files_snapshot,
+    parse_clipboard_history_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2719,6 +2721,51 @@ def test_inspect_hidden_files_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_hidden_files", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_clipboard_history_dry_run():
+    result = DesktopAdapter().execute("inspect_clipboard_history", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "enableclipboardhistory" in result.output.lower()
+    assert "get-clipboard" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_clipboard_history_report_empty_and_values():
+    empty = parse_clipboard_history_snapshot("")
+    report = format_clipboard_history_report(empty)
+    assert "no clipboard history" in report.lower()
+    on = format_clipboard_history_report(parse_clipboard_history_snapshot("CLIPHIST=1\n"))
+    assert "Clipboard history: yes" in on
+    off = format_clipboard_history_report(parse_clipboard_history_snapshot("CLIPHIST=0\n"))
+    assert "Clipboard history: no" in off
+    assert "get-clipboard" not in on.lower()
+    assert "item" not in on.lower()
+
+
+def test_inspect_clipboard_history_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_clipboard_history", {}, dry_run=False)
+    assert result.ok
+    assert "no clipboard history" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "enableclipboardhistory" in command
+    assert "get-clipboard" not in command
+    assert "set-itemproperty" not in command
+    assert "get-childitem" not in command
+
+
+def test_inspect_clipboard_history_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="Get-Clipboard -History password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_clipboard_history", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
