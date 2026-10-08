@@ -57,6 +57,7 @@ from arbora.adapters.desktop import (
     format_storage_sense_report,
     format_hidden_files_report,
     format_clipboard_history_report,
+    format_nearby_sharing_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -110,6 +111,7 @@ from arbora.adapters.desktop import (
     parse_storage_sense_snapshot,
     parse_hidden_files_snapshot,
     parse_clipboard_history_snapshot,
+    parse_nearby_sharing_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2766,6 +2768,54 @@ def test_inspect_clipboard_history_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_clipboard_history", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_nearby_sharing_dry_run():
+    result = DesktopAdapter().execute("inspect_nearby_sharing", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "nearsharechanneluserauthzpolicy" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+    assert "get-childitem" in result.output.lower()
+
+
+def test_format_nearby_sharing_report_empty_and_values():
+    empty = parse_nearby_sharing_snapshot("")
+    report = format_nearby_sharing_report(empty)
+    assert "no nearby sharing" in report.lower()
+    off = format_nearby_sharing_report(parse_nearby_sharing_snapshot("NEARSHARE=0\n"))
+    assert "Nearby sharing: off" in off
+    mine = format_nearby_sharing_report(parse_nearby_sharing_snapshot("NEARSHARE=1\n"))
+    assert "Nearby sharing: my devices" in mine
+    everyone = format_nearby_sharing_report(parse_nearby_sharing_snapshot("NEARSHARE=2\n"))
+    assert "Nearby sharing: everyone nearby" in everyone
+    assert "mac" not in mine.lower()
+    assert "device id" not in everyone.lower()
+
+
+def test_inspect_nearby_sharing_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_nearby_sharing", {}, dry_run=False)
+    assert result.ok
+    assert "no nearby sharing" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "nearsharechanneluserauthzpolicy" in command
+    assert "currentversion\\cdp" in command or "currentversion\\\\cdp" in command
+    assert "set-itemproperty" not in command
+    assert "get-childitem" not in command
+    assert "get-pnpdevice" not in command
+
+
+def test_inspect_nearby_sharing_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="BluetoothAddress=AA:BB MACAddress=00:11", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_nearby_sharing", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

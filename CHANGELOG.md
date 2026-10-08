@@ -257,6 +257,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/111-inspect-hidden-files.md` | Change doc for Explorer hidden files inspect |
 | `workflows/inspect-clipboard-history.json` | Bundled read-only clipboard history inspect pack |
 | `documentation/112-inspect-clipboard-history.md` | Change doc for clipboard history inspect |
+| `workflows/inspect-nearby-sharing.json` | Bundled read-only Nearby sharing inspect pack |
+| `documentation/113-inspect-nearby-sharing.md` | Change doc for Nearby sharing inspect |
 
 ---
 
@@ -707,6 +709,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented clipboard history as a sandbox dry-run goal |
 | `documentation/112-inspect-clipboard-history.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 112 |
+| `README.md` | Documentation latest table |
+
+## 113 — Nearby sharing inspect (2026-10-08)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_nearby_sharing` (NearShareChannelUserAuthzPolicy; no device list) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_nearby_sharing` |
+| `src/arbora/core/planner.py` | Nearby sharing inspect journey; Bluetooth stays inspect_bluetooth |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-nearby-sharing.json` | Bundled inspect-nearby-sharing pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format off/my devices/everyone; no MAC dump; secrets withheld |
+| `tests/test_broker_and_planner.py` | Nearby sharing vs diagnose / enable / bluetooth / clipboard history |
+| `tests/test_workflow_packs.py` | Pack match for inspect-nearby-sharing |
+| `docs/NEXT.md` | Marked P33 plate 101 done |
+| `docs/sandbox.md` | Documented nearby sharing as a sandbox dry-run goal |
+| `documentation/113-inspect-nearby-sharing.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 113 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

@@ -213,6 +213,8 @@ class GoalPlanner:
             return self._hidden_files_plan(text)
         if self._looks_like_clipboard_history(lower):
             return self._clipboard_history_plan(text)
+        if self._looks_like_nearby_sharing(lower):
+            return self._nearby_sharing_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1622,6 +1624,27 @@ class GoalPlanner:
                     summary="Read-only: clipboard history on/off (no history items)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Clipboard EnableClipboardHistory only",),
+                )
+            ],
+        )
+
+    def _nearby_sharing_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Nearby sharing inspect journey — read-only NearShareChannelUserAuthzPolicy. "
+                "Does not list nearby devices or enable Nearby sharing."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_nearby_sharing",
+                    args={},
+                    summary="Read-only: Nearby sharing off/my devices/everyone (no device list)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads CDP NearShareChannelUserAuthzPolicy only",),
                 )
             ],
         )
@@ -4713,6 +4736,33 @@ class GoalPlanner:
                 "inspect clipboard history",
                 "is clipboard history on",
                 "is clipboard history enabled",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_nearby_sharing(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable nearby sharing",
+                "enable nearby sharing",
+                "turn off nearby sharing",
+                "turn on nearby sharing",
+                "bluetooth",
+                "airplane",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "nearby sharing",
+                "near share",
+                "inspect nearby sharing",
+                "is nearby sharing on",
+                "is nearby sharing enabled",
             )
         )
 

@@ -111,6 +111,7 @@ Already in place:
 - read-only Storage Sense on/off (StoragePolicy 01 only; no cleanup run).
 - read-only Explorer hidden files and extensions (Hidden / HideFileExt; no SuperHidden write).
 - read-only clipboard history on/off (EnableClipboardHistory only; no Win+V item dump).
+- read-only Nearby sharing (NearShareChannelUserAuthzPolicy only; no nearby device list).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -356,7 +357,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 100 | **Clipboard history inspect** | ✅ Read-only EnableClipboardHistory; no history item dump |
-| 101 | **Nearby sharing inspect** | Read-only NearShareChannelUserAuthzPolicy; no nearby device list |
+| 101 | **Nearby sharing inspect** | ✅ Read-only NearShareChannelUserAuthzPolicy; no nearby device list |
 | 102 | **Game Mode inspect** | Read-only AutoGameModeEnabled; no Game DVR / capture dump |
 
 ## Non-negotiables (do not drift)
