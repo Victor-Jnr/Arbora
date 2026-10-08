@@ -255,6 +255,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/110-inspect-storage-sense.md` | Change doc for Storage Sense inspect |
 | `workflows/inspect-hidden-files.json` | Bundled read-only Explorer hidden files inspect pack |
 | `documentation/111-inspect-hidden-files.md` | Change doc for Explorer hidden files inspect |
+| `workflows/inspect-clipboard-history.json` | Bundled read-only clipboard history inspect pack |
+| `documentation/112-inspect-clipboard-history.md` | Change doc for clipboard history inspect |
 
 ---
 
@@ -687,6 +689,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented hidden files as a sandbox dry-run goal |
 | `documentation/111-inspect-hidden-files.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 111 |
+| `README.md` | Documentation latest table |
+
+## 112 — Clipboard history inspect (2026-10-08)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_clipboard_history` (EnableClipboardHistory; no Get-Clipboard) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_clipboard_history` |
+| `src/arbora/core/planner.py` | Clipboard history inspect journey; clipboard contents stay inspect_clipboard |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-clipboard-history.json` | Bundled inspect-clipboard-history pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no Get-Clipboard; secrets withheld |
+| `tests/test_broker_and_planner.py` | Clipboard history vs diagnose / enable / inspect_clipboard / hidden files |
+| `tests/test_workflow_packs.py` | Pack match for inspect-clipboard-history |
+| `docs/NEXT.md` | Marked P33 plate 100 done |
+| `docs/sandbox.md` | Documented clipboard history as a sandbox dry-run goal |
+| `documentation/112-inspect-clipboard-history.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 112 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

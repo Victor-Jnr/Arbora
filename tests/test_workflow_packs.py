@@ -804,6 +804,17 @@ def test_inspect_hidden_files_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_clipboard_history_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect clipboard history pack")
+    assert pack is not None
+    assert pack.id == "inspect-clipboard-history"
+    plan = pack.to_plan("run inspect clipboard history pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_clipboard_history"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_type_in_window_workflow_pack_matches():
     pack = match_workflow_pack("run type in window pack")
     assert pack is not None
