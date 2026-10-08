@@ -941,6 +941,20 @@ _NEARBY_SHARING_PS = (
     "}"
 )
 
+_GAME_MODE_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $p = Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\GameBar' "
+    "    -ErrorAction Stop; "
+    "  $v = $p.AutoGameModeEnabled; "
+    "  if ($null -eq $v -or [string]$v -eq '') { $v = $p.AllowAutoGameMode }; "
+    "  Write-Output ('GAMEMODE=' + $v); "
+    "} catch { "
+    "  Write-Output 'GAMEMODE='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2606,6 +2620,23 @@ def format_nearby_sharing_report(snapshot: dict[str, str]) -> str:
     return f"Nearby sharing: {_nearby_sharing_label(raw)}"
 
 
+def parse_game_mode_snapshot(stdout: str) -> dict[str, str]:
+    """Parse AutoGameModeEnabled / AllowAutoGameMode — never Game DVR captures."""
+    snapshot = {"enabled": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("GAMEMODE="):
+            snapshot["enabled"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_game_mode_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("enabled") or "").strip()
+    if not raw:
+        return "No Game Mode status reported."
+    return f"Game Mode: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3178,6 +3209,8 @@ class DesktopAdapter:
             return self._inspect_clipboard_history(dry_run=dry_run)
         if action == "inspect_nearby_sharing":
             return self._inspect_nearby_sharing(dry_run=dry_run)
+        if action == "inspect_game_mode":
+            return self._inspect_game_mode(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5582,6 +5615,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_nearby_sharing_report(snapshot),
+        )
+
+    def _inspect_game_mode(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read GameBar AutoGameModeEnabled "
+                    "(no Game DVR dump, no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_GAME_MODE_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Game Mode inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "gamedvr",
+                "appcapture",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_game_mode_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_game_mode_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

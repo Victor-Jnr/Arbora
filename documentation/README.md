@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 114 | [Game Mode inspect](114-inspect-game-mode.md) | 2026-10-08 | Read-only AutoGameModeEnabled; no Game DVR dump |
 | 113 | [Nearby sharing inspect](113-inspect-nearby-sharing.md) | 2026-10-08 | Read-only NearShareChannelUserAuthzPolicy; no device list |
 | 112 | [Clipboard history inspect](112-inspect-clipboard-history.md) | 2026-10-08 | Read-only EnableClipboardHistory; no Win+V item dump |
 | 111 | [Explorer hidden files inspect](111-inspect-hidden-files.md) | 2026-10-06 | Read-only Hidden / HideFileExt; no SuperHidden write |

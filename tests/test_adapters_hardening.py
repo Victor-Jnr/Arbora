@@ -58,6 +58,7 @@ from arbora.adapters.desktop import (
     format_hidden_files_report,
     format_clipboard_history_report,
     format_nearby_sharing_report,
+    format_game_mode_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -112,6 +113,7 @@ from arbora.adapters.desktop import (
     parse_hidden_files_snapshot,
     parse_clipboard_history_snapshot,
     parse_nearby_sharing_snapshot,
+    parse_game_mode_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2816,6 +2818,52 @@ def test_inspect_nearby_sharing_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_nearby_sharing", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_game_mode_dry_run():
+    result = DesktopAdapter().execute("inspect_game_mode", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "autogamemodeenabled" in result.output.lower()
+    assert "game dvr" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_game_mode_report_empty_and_values():
+    empty = parse_game_mode_snapshot("")
+    report = format_game_mode_report(empty)
+    assert "no game mode" in report.lower()
+    on = format_game_mode_report(parse_game_mode_snapshot("GAMEMODE=1\n"))
+    assert "Game Mode: yes" in on
+    off = format_game_mode_report(parse_game_mode_snapshot("GAMEMODE=0\n"))
+    assert "Game Mode: no" in off
+    assert "game dvr" not in on.lower()
+    assert "capture" not in on.lower()
+
+
+def test_inspect_game_mode_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_game_mode", {}, dry_run=False)
+    assert result.ok
+    assert "no game mode" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "autogamemodeenabled" in command
+    assert "allowautogamemode" in command
+    assert "gamedvr" not in command
+    assert "appcapture" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_game_mode_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="GameDVR AppCaptureEnabled=1 password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_game_mode", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 
