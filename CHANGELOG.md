@@ -265,6 +265,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/115-inspect-taskbar-alignment.md` | Change doc for taskbar alignment inspect |
 | `workflows/inspect-snap-windows.json` | Bundled read-only Snap windows inspect pack |
 | `documentation/116-inspect-snap-windows.md` | Change doc for Snap windows inspect |
+| `workflows/inspect-compact-view.json` | Bundled read-only Explorer compact view inspect pack |
+| `documentation/117-inspect-compact-view.md` | Change doc for Explorer compact view inspect |
 
 ---
 
@@ -787,6 +789,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented snap windows as a sandbox dry-run goal |
 | `documentation/116-inspect-snap-windows.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 116 |
+| `README.md` | Documentation latest table |
+
+## 117 — Explorer compact view inspect (2026-10-11)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_compact_view` (UseCompactMode; no SuperHidden) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_compact_view` |
+| `src/arbora/core/planner.py` | Compact view inspect journey; hidden files stay inspect_hidden_files |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-compact-view.json` | Bundled inspect-compact-view pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no SuperHidden/HideFileExt; secrets withheld |
+| `tests/test_broker_and_planner.py` | Compact view vs diagnose / enable / hidden files / Snap windows |
+| `tests/test_workflow_packs.py` | Pack match for inspect-compact-view |
+| `docs/NEXT.md` | Marked P34 plate 105 done |
+| `docs/sandbox.md` | Documented compact view as a sandbox dry-run goal |
+| `documentation/117-inspect-compact-view.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 117 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

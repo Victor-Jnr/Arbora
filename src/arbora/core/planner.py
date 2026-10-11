@@ -221,6 +221,8 @@ class GoalPlanner:
             return self._taskbar_alignment_plan(text)
         if self._looks_like_snap_windows(lower):
             return self._snap_windows_plan(text)
+        if self._looks_like_compact_view(lower):
+            return self._compact_view_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1714,6 +1716,27 @@ class GoalPlanner:
                     summary="Read-only: Snap windows on/off (no snap layout write)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Desktop WindowArrangementActive only",),
+                )
+            ],
+        )
+
+    def _compact_view_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Explorer compact view inspect journey — read-only UseCompactMode. "
+                "Does not write SuperHidden or change hidden-files settings."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_compact_view",
+                    args={},
+                    summary="Read-only: Explorer compact view on/off (no SuperHidden)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Explorer Advanced UseCompactMode only",),
                 )
             ],
         )
@@ -4923,6 +4946,35 @@ class GoalPlanner:
                 "is snap assist on",
                 "is snap windows on",
                 "is snap on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_compact_view(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable compact",
+                "enable compact",
+                "turn off compact",
+                "turn on compact",
+                "hidden files",
+                "superhidden",
+                "show hidden",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "compact view",
+                "explorer compact",
+                "inspect compact view",
+                "is compact mode on",
+                "is compact view on",
+                "compact mode",
             )
         )
 

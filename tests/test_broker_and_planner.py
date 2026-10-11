@@ -1214,6 +1214,25 @@ def test_snap_windows_is_read_only_inspect():
     assert [step.action for step in taskbar.steps] == ["inspect_taskbar_alignment"]
 
 
+def test_compact_view_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("compact view")
+    assert [step.action for step in plan.steps] == ["inspect_compact_view"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is compact mode on")
+    assert named.steps[0].action == "inspect_compact_view"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_compact_view" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable compact view")
+    assert not any(step.action == "inspect_compact_view" for step in mutate.steps)
+    hidden = runtime.planner.plan("hidden files")
+    assert [step.action for step in hidden.steps] == ["inspect_hidden_files"]
+    snap = runtime.planner.plan("snap windows")
+    assert [step.action for step in snap.steps] == ["inspect_snap_windows"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

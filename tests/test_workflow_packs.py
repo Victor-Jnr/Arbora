@@ -859,6 +859,17 @@ def test_inspect_snap_windows_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_compact_view_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect compact view pack")
+    assert pack is not None
+    assert pack.id == "inspect-compact-view"
+    plan = pack.to_plan("run inspect compact view pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_compact_view"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_type_in_window_workflow_pack_matches():
     pack = match_workflow_pack("run type in window pack")
     assert pack is not None
