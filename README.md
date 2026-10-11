@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 117 | [Explorer compact view inspect](documentation/117-inspect-compact-view.md) |
 | 116 | [Snap windows inspect](documentation/116-inspect-snap-windows.md) |
 | 115 | [Taskbar alignment inspect](documentation/115-inspect-taskbar-alignment.md) |
 | 114 | [Game Mode inspect](documentation/114-inspect-game-mode.md) |
