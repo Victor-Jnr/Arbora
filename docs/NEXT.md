@@ -114,6 +114,7 @@ Already in place:
 - read-only Nearby sharing (NearShareChannelUserAuthzPolicy only; no nearby device list).
 - read-only Game Mode on/off (AutoGameModeEnabled only; no Game DVR dump).
 - read-only taskbar alignment (TaskbarAl only; no TaskbarSize dump).
+- read-only Snap windows on/off (WindowArrangementActive only; no snap layout write).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -367,7 +368,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 103 | **Taskbar alignment inspect** | ✅ Read-only TaskbarAl; no TaskbarSize dump; no alignment write |
-| 104 | **Snap windows inspect** | Read-only WindowArrangementActive; no snap layout write |
+| 104 | **Snap windows inspect** | ✅ Read-only WindowArrangementActive; no snap layout write |
 | 105 | **Explorer compact view inspect** | Read-only UseCompactMode; no SuperHidden write |
 
 ## Non-negotiables (do not drift)

@@ -60,6 +60,7 @@ from arbora.adapters.desktop import (
     format_nearby_sharing_report,
     format_game_mode_report,
     format_taskbar_alignment_report,
+    format_snap_windows_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -116,6 +117,7 @@ from arbora.adapters.desktop import (
     parse_nearby_sharing_snapshot,
     parse_game_mode_snapshot,
     parse_taskbar_alignment_snapshot,
+    parse_snap_windows_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2912,6 +2914,52 @@ def test_inspect_taskbar_alignment_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_taskbar_alignment", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_snap_windows_dry_run():
+    result = DesktopAdapter().execute("inspect_snap_windows", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "windowarrangementactive" in result.output.lower()
+    assert "setdisplayconfig" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_snap_windows_report_empty_and_values():
+    empty = parse_snap_windows_snapshot("")
+    report = format_snap_windows_report(empty)
+    assert "no snap windows" in report.lower()
+    on = format_snap_windows_report(parse_snap_windows_snapshot("SNAP=1\n"))
+    assert "Snap windows: yes" in on
+    off = format_snap_windows_report(parse_snap_windows_snapshot("SNAP=0\n"))
+    assert "Snap windows: no" in off
+    assert "setdisplayconfig" not in on.lower()
+    assert "layout" not in on.lower()
+
+
+def test_inspect_snap_windows_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_snap_windows", {}, dry_run=False)
+    assert result.ok
+    assert "no snap windows" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "windowarrangementactive" in command
+    assert "control panel" in command and "desktop" in command
+    assert "setdisplayconfig" not in command
+    assert "set-itemproperty" not in command
+    assert "get-childitem" not in command
+
+
+def test_inspect_snap_windows_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="SetDisplayConfig layout password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_snap_windows", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

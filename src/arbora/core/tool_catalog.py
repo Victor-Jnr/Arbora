@@ -62,6 +62,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_nearby_sharing",
             "inspect_game_mode",
             "inspect_taskbar_alignment",
+            "inspect_snap_windows",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",

@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 116 | [Snap windows inspect](116-inspect-snap-windows.md) | 2026-10-11 | Read-only WindowArrangementActive; no snap layout write |
 | 115 | [Taskbar alignment inspect](115-inspect-taskbar-alignment.md) | 2026-10-11 | Read-only TaskbarAl; no TaskbarSize dump |
 | 114 | [Game Mode inspect](114-inspect-game-mode.md) | 2026-10-08 | Read-only AutoGameModeEnabled; no Game DVR dump |
 | 113 | [Nearby sharing inspect](113-inspect-nearby-sharing.md) | 2026-10-08 | Read-only NearShareChannelUserAuthzPolicy; no device list |

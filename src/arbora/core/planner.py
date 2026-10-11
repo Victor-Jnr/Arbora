@@ -219,6 +219,8 @@ class GoalPlanner:
             return self._game_mode_plan(text)
         if self._looks_like_taskbar_alignment(lower):
             return self._taskbar_alignment_plan(text)
+        if self._looks_like_snap_windows(lower):
+            return self._snap_windows_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1691,6 +1693,27 @@ class GoalPlanner:
                     summary="Read-only: taskbar left/center (no alignment write)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Explorer Advanced TaskbarAl only",),
+                )
+            ],
+        )
+
+    def _snap_windows_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Snap windows inspect journey — read-only WindowArrangementActive. "
+                "Does not write snap layouts or change display mode."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_snap_windows",
+                    args={},
+                    summary="Read-only: Snap windows on/off (no snap layout write)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Desktop WindowArrangementActive only",),
                 )
             ],
         )
@@ -4868,6 +4891,38 @@ class GoalPlanner:
                 "taskbar centered",
                 "taskbar left",
                 "where is the taskbar",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_snap_windows(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable snap",
+                "enable snap",
+                "turn off snap",
+                "turn on snap",
+                "setdisplayconfig",
+                "change display",
+                "snapshot",
+                "screenshot",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "snap windows",
+                "window snapping",
+                "snap assist",
+                "inspect snap windows",
+                "are snap windows on",
+                "is snap assist on",
+                "is snap windows on",
+                "is snap on",
             )
         )
 

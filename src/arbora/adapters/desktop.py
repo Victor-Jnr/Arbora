@@ -967,6 +967,18 @@ _TASKBAR_ALIGNMENT_PS = (
     "}"
 )
 
+_SNAP_WINDOWS_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Control Panel\\Desktop' "
+    "    -Name WindowArrangementActive -ErrorAction Stop).WindowArrangementActive; "
+    "  Write-Output ('SNAP=' + $v); "
+    "} catch { "
+    "  Write-Output 'SNAP='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2675,6 +2687,23 @@ def format_taskbar_alignment_report(snapshot: dict[str, str]) -> str:
     return f"Taskbar alignment: {_taskbar_alignment_label(raw)}"
 
 
+def parse_snap_windows_snapshot(stdout: str) -> dict[str, str]:
+    """Parse WindowArrangementActive only — never snap layout writes."""
+    snapshot = {"enabled": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("SNAP="):
+            snapshot["enabled"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_snap_windows_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("enabled") or "").strip()
+    if not raw:
+        return "No Snap windows status reported."
+    return f"Snap windows: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3251,6 +3280,8 @@ class DesktopAdapter:
             return self._inspect_game_mode(dry_run=dry_run)
         if action == "inspect_taskbar_alignment":
             return self._inspect_taskbar_alignment(dry_run=dry_run)
+        if action == "inspect_snap_windows":
+            return self._inspect_snap_windows(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5749,6 +5780,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_taskbar_alignment_report(snapshot),
+        )
+
+    def _inspect_snap_windows(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Desktop WindowArrangementActive "
+                    "(no SetDisplayConfig, no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_SNAP_WINDOWS_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Snap windows inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "setdisplayconfig",
+                "get-childitem",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_snap_windows_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_snap_windows_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
