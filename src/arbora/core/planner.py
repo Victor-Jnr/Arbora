@@ -217,6 +217,8 @@ class GoalPlanner:
             return self._nearby_sharing_plan(text)
         if self._looks_like_game_mode(lower):
             return self._game_mode_plan(text)
+        if self._looks_like_taskbar_alignment(lower):
+            return self._taskbar_alignment_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1668,6 +1670,27 @@ class GoalPlanner:
                     summary="Read-only: Game Mode on/off (no Game DVR)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads GameBar AutoGameModeEnabled only",),
+                )
+            ],
+        )
+
+    def _taskbar_alignment_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Taskbar alignment inspect journey — read-only TaskbarAl. "
+                "Does not dump TaskbarSize or move the taskbar."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_taskbar_alignment",
+                    args={},
+                    summary="Read-only: taskbar left/center (no alignment write)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Explorer Advanced TaskbarAl only",),
                 )
             ],
         )
@@ -4814,6 +4837,37 @@ class GoalPlanner:
                 "inspect game mode",
                 "is game mode on",
                 "is game mode enabled",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_taskbar_alignment(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "center the taskbar",
+                "left-align the taskbar",
+                "move the taskbar",
+                "hide the taskbar",
+                "show the taskbar",
+                "set taskbar",
+                "change taskbar",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "taskbar alignment",
+                "inspect taskbar",
+                "is the taskbar centered",
+                "is taskbar centered",
+                "is the taskbar left",
+                "taskbar centered",
+                "taskbar left",
+                "where is the taskbar",
             )
         )
 

@@ -216,6 +216,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `clipboard history` | Read-only clipboard history on/off |
 | `nearby sharing` | Read-only Nearby sharing off/my devices/everyone |
 | `game mode` | Read-only Game Mode on/off |
+| `taskbar alignment` | Read-only taskbar left/center |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---
