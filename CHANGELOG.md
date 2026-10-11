@@ -263,6 +263,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/114-inspect-game-mode.md` | Change doc for Game Mode inspect |
 | `workflows/inspect-taskbar-alignment.json` | Bundled read-only taskbar alignment inspect pack |
 | `documentation/115-inspect-taskbar-alignment.md` | Change doc for taskbar alignment inspect |
+| `workflows/inspect-snap-windows.json` | Bundled read-only Snap windows inspect pack |
+| `documentation/116-inspect-snap-windows.md` | Change doc for Snap windows inspect |
 
 ---
 
@@ -767,6 +769,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented taskbar alignment as a sandbox dry-run goal |
 | `documentation/115-inspect-taskbar-alignment.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 115 |
+| `README.md` | Documentation latest table |
+
+## 116 — Snap windows inspect (2026-10-11)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_snap_windows` (WindowArrangementActive; no SetDisplayConfig) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_snap_windows` |
+| `src/arbora/core/planner.py` | Snap windows inspect journey; displays stay inspect_display |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-snap-windows.json` | Bundled inspect-snap-windows pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no SetDisplayConfig; secrets withheld |
+| `tests/test_broker_and_planner.py` | Snap windows vs diagnose / enable / display / taskbar alignment |
+| `tests/test_workflow_packs.py` | Pack match for inspect-snap-windows |
+| `docs/NEXT.md` | Marked P34 plate 104 done |
+| `docs/sandbox.md` | Documented snap windows as a sandbox dry-run goal |
+| `documentation/116-inspect-snap-windows.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 116 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

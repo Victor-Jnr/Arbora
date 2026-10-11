@@ -1195,6 +1195,25 @@ def test_taskbar_alignment_is_read_only_inspect():
     assert [step.action for step in game.steps] == ["inspect_game_mode"]
 
 
+def test_snap_windows_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("snap windows")
+    assert [step.action for step in plan.steps] == ["inspect_snap_windows"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is snap assist on")
+    assert named.steps[0].action == "inspect_snap_windows"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_snap_windows" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable snap windows")
+    assert not any(step.action == "inspect_snap_windows" for step in mutate.steps)
+    display = runtime.planner.plan("display status")
+    assert [step.action for step in display.steps] == ["inspect_display"]
+    taskbar = runtime.planner.plan("taskbar alignment")
+    assert [step.action for step in taskbar.steps] == ["inspect_taskbar_alignment"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

@@ -122,6 +122,7 @@ Try goals like:
   nearby sharing
   game mode
   taskbar alignment
+  snap windows
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp
