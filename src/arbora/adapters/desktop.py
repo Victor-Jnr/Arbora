@@ -955,6 +955,18 @@ _GAME_MODE_PS = (
     "}"
 )
 
+_TASKBAR_ALIGNMENT_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' "
+    "    -Name TaskbarAl -ErrorAction Stop).TaskbarAl; "
+    "  Write-Output ('TASKBARAL=' + $v); "
+    "} catch { "
+    "  Write-Output 'TASKBARAL='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2637,6 +2649,32 @@ def format_game_mode_report(snapshot: dict[str, str]) -> str:
     return f"Game Mode: {_flag_yes_no(raw)}"
 
 
+def parse_taskbar_alignment_snapshot(stdout: str) -> dict[str, str]:
+    """Parse TaskbarAl only — never TaskbarSize or alignment writes."""
+    snapshot = {"align": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("TASKBARAL="):
+            snapshot["align"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def _taskbar_alignment_label(raw: str) -> str:
+    flag = raw.strip().lower()
+    if flag in {"0"}:
+        return "left"
+    if flag in {"1"}:
+        return "center"
+    return raw.strip()[:16] or "unknown"
+
+
+def format_taskbar_alignment_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("align") or "").strip()
+    if not raw:
+        return "No taskbar alignment reported."
+    return f"Taskbar alignment: {_taskbar_alignment_label(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3211,6 +3249,8 @@ class DesktopAdapter:
             return self._inspect_nearby_sharing(dry_run=dry_run)
         if action == "inspect_game_mode":
             return self._inspect_game_mode(dry_run=dry_run)
+        if action == "inspect_taskbar_alignment":
+            return self._inspect_taskbar_alignment(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5662,6 +5702,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_game_mode_report(snapshot),
+        )
+
+    def _inspect_taskbar_alignment(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Explorer Advanced TaskbarAl "
+                    "(no TaskbarSize dump, no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_TASKBAR_ALIGNMENT_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Taskbar alignment inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "taskbarsize",
+                "superhidden",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_taskbar_alignment_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_taskbar_alignment_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

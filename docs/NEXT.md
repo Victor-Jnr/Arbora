@@ -113,11 +113,12 @@ Already in place:
 - read-only clipboard history on/off (EnableClipboardHistory only; no Win+V item dump).
 - read-only Nearby sharing (NearShareChannelUserAuthzPolicy only; no nearby device list).
 - read-only Game Mode on/off (AutoGameModeEnabled only; no Game DVR dump).
+- read-only taskbar alignment (TaskbarAl only; no TaskbarSize dump).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P33).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P34).
 
 ---
 
@@ -361,6 +362,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 101 | **Nearby sharing inspect** | ✅ Read-only NearShareChannelUserAuthzPolicy; no nearby device list |
 | 102 | **Game Mode inspect** | ✅ Read-only AutoGameModeEnabled; no Game DVR / capture dump |
 
+### P34 — Stage 3 taskbar alignment, Snap windows, and Explorer compact view
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 103 | **Taskbar alignment inspect** | ✅ Read-only TaskbarAl; no TaskbarSize dump; no alignment write |
+| 104 | **Snap windows inspect** | Read-only WindowArrangementActive; no snap layout write |
+| 105 | **Explorer compact view inspect** | Read-only UseCompactMode; no SuperHidden write |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -454,4 +463,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P33 plates 100–102 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P34 plates 103–105 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

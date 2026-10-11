@@ -1176,6 +1176,25 @@ def test_game_mode_is_read_only_inspect():
     assert [step.action for step in nearby.steps] == ["inspect_nearby_sharing"]
 
 
+def test_taskbar_alignment_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("taskbar alignment")
+    assert [step.action for step in plan.steps] == ["inspect_taskbar_alignment"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is the taskbar centered")
+    assert named.steps[0].action == "inspect_taskbar_alignment"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_taskbar_alignment" for step in diagnose.steps)
+    mutate = runtime.planner.plan("center the taskbar")
+    assert not any(step.action == "inspect_taskbar_alignment" for step in mutate.steps)
+    hidden = runtime.planner.plan("hidden files")
+    assert [step.action for step in hidden.steps] == ["inspect_hidden_files"]
+    game = runtime.planner.plan("game mode")
+    assert [step.action for step in game.steps] == ["inspect_game_mode"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

@@ -59,6 +59,7 @@ from arbora.adapters.desktop import (
     format_clipboard_history_report,
     format_nearby_sharing_report,
     format_game_mode_report,
+    format_taskbar_alignment_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -114,6 +115,7 @@ from arbora.adapters.desktop import (
     parse_clipboard_history_snapshot,
     parse_nearby_sharing_snapshot,
     parse_game_mode_snapshot,
+    parse_taskbar_alignment_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -2864,6 +2866,52 @@ def test_inspect_game_mode_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_game_mode", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_taskbar_alignment_dry_run():
+    result = DesktopAdapter().execute("inspect_taskbar_alignment", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "taskbaral" in result.output.lower()
+    assert "taskbarsize" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_taskbar_alignment_report_empty_and_values():
+    empty = parse_taskbar_alignment_snapshot("")
+    report = format_taskbar_alignment_report(empty)
+    assert "no taskbar alignment" in report.lower()
+    left = format_taskbar_alignment_report(parse_taskbar_alignment_snapshot("TASKBARAL=0\n"))
+    assert "Taskbar alignment: left" in left
+    center = format_taskbar_alignment_report(parse_taskbar_alignment_snapshot("TASKBARAL=1\n"))
+    assert "Taskbar alignment: center" in center
+    assert "taskbarsize" not in left.lower()
+    assert "set-itemproperty" not in center.lower()
+
+
+def test_inspect_taskbar_alignment_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_taskbar_alignment", {}, dry_run=False)
+    assert result.ok
+    assert "no taskbar alignment" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "taskbaral" in command
+    assert "explorer" in command and "advanced" in command
+    assert "taskbarsize" not in command
+    assert "set-itemproperty" not in command
+    assert "superhidden" not in command
+
+
+def test_inspect_taskbar_alignment_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="TaskbarSize=1 SuperHidden=0 password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_taskbar_alignment", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

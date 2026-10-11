@@ -261,6 +261,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/113-inspect-nearby-sharing.md` | Change doc for Nearby sharing inspect |
 | `workflows/inspect-game-mode.json` | Bundled read-only Game Mode inspect pack |
 | `documentation/114-inspect-game-mode.md` | Change doc for Game Mode inspect |
+| `workflows/inspect-taskbar-alignment.json` | Bundled read-only taskbar alignment inspect pack |
+| `documentation/115-inspect-taskbar-alignment.md` | Change doc for taskbar alignment inspect |
 
 ---
 
@@ -747,6 +749,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented game mode as a sandbox dry-run goal |
 | `documentation/114-inspect-game-mode.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 114 |
+| `README.md` | Documentation latest table |
+
+## 115 — Taskbar alignment inspect (2026-10-11)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_taskbar_alignment` (TaskbarAl; no TaskbarSize) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_taskbar_alignment` |
+| `src/arbora/core/planner.py` | Taskbar alignment inspect journey; hidden files stay inspect_hidden_files |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-taskbar-alignment.json` | Bundled inspect-taskbar-alignment pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format left/center; no TaskbarSize; secrets withheld |
+| `tests/test_broker_and_planner.py` | Taskbar alignment vs diagnose / center-the-taskbar / hidden files / Game Mode |
+| `tests/test_workflow_packs.py` | Pack match for inspect-taskbar-alignment |
+| `docs/NEXT.md` | Marked P34 plate 103 done |
+| `docs/sandbox.md` | Documented taskbar alignment as a sandbox dry-run goal |
+| `documentation/115-inspect-taskbar-alignment.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 115 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
