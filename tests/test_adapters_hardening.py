@@ -62,6 +62,7 @@ from arbora.adapters.desktop import (
     format_taskbar_alignment_report,
     format_snap_windows_report,
     format_compact_view_report,
+    format_sticky_keys_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -120,6 +121,7 @@ from arbora.adapters.desktop import (
     parse_taskbar_alignment_snapshot,
     parse_snap_windows_snapshot,
     parse_compact_view_snapshot,
+    parse_sticky_keys_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -3009,6 +3011,53 @@ def test_inspect_compact_view_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_compact_view", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_sticky_keys_dry_run():
+    result = DesktopAdapter().execute("inspect_sticky_keys", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "stickykeys" in result.output.lower()
+    assert "filterkeys" in result.output.lower()
+    assert "systemparametersinfo" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_sticky_keys_report_empty_and_values():
+    empty = parse_sticky_keys_snapshot("")
+    report = format_sticky_keys_report(empty)
+    assert "no sticky keys" in report.lower()
+    on = format_sticky_keys_report(parse_sticky_keys_snapshot("STICKY=1\n"))
+    assert "Sticky Keys: yes" in on
+    off = format_sticky_keys_report(parse_sticky_keys_snapshot("STICKY=0\n"))
+    assert "Sticky Keys: no" in off
+    assert "filterkeys" not in on.lower()
+    assert "systemparametersinfo" not in on.lower()
+
+
+def test_inspect_sticky_keys_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_sticky_keys", {}, dry_run=False)
+    assert result.ok
+    assert "no sticky keys" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "stickykeys" in command
+    assert "flags" in command
+    assert "filterkeys" not in command
+    assert "systemparametersinfo" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_sticky_keys_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="FilterKeys Flags=510 SystemParametersInfo password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_sticky_keys", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

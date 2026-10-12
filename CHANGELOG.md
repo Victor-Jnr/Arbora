@@ -267,6 +267,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/116-inspect-snap-windows.md` | Change doc for Snap windows inspect |
 | `workflows/inspect-compact-view.json` | Bundled read-only Explorer compact view inspect pack |
 | `documentation/117-inspect-compact-view.md` | Change doc for Explorer compact view inspect |
+| `workflows/inspect-sticky-keys.json` | Bundled read-only Sticky Keys inspect pack |
+| `documentation/118-inspect-sticky-keys.md` | Change doc for Sticky Keys inspect |
 
 ---
 
@@ -807,6 +809,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented compact view as a sandbox dry-run goal |
 | `documentation/117-inspect-compact-view.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 117 |
+| `README.md` | Documentation latest table |
+
+## 118 — Sticky Keys inspect (2026-10-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_sticky_keys` (Flags bit 0; no FilterKeys / SystemParametersInfo) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_sticky_keys` |
+| `src/arbora/core/planner.py` | Sticky Keys inspect journey; compact view stays inspect_compact_view |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-sticky-keys.json` | Bundled inspect-sticky-keys pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no FilterKeys/SPI; secrets withheld |
+| `tests/test_broker_and_planner.py` | Sticky Keys vs diagnose / enable / compact view |
+| `tests/test_workflow_packs.py` | Pack match for inspect-sticky-keys |
+| `docs/NEXT.md` | Marked P35 plate 106 done |
+| `docs/sandbox.md` | Documented sticky keys as a sandbox dry-run goal |
+| `documentation/118-inspect-sticky-keys.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 118 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

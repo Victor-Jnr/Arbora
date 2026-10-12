@@ -991,6 +991,19 @@ _COMPACT_VIEW_PS = (
     "}"
 )
 
+_STICKY_KEYS_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = [int](Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Control Panel\\Accessibility\\StickyKeys' "
+    "    -Name Flags -ErrorAction Stop).Flags; "
+    "  if (($v -band 1) -ne 0) { Write-Output 'STICKY=1' } "
+    "  else { Write-Output 'STICKY=0' }; "
+    "} catch { "
+    "  Write-Output 'STICKY='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2733,6 +2746,23 @@ def format_compact_view_report(snapshot: dict[str, str]) -> str:
     return f"Explorer compact view: {_flag_yes_no(raw)}"
 
 
+def parse_sticky_keys_snapshot(stdout: str) -> dict[str, str]:
+    """Parse StickyKeys on/off from Flags bit 0 — never FilterKeys or SPI writes."""
+    snapshot = {"enabled": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("STICKY="):
+            snapshot["enabled"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_sticky_keys_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("enabled") or "").strip()
+    if not raw:
+        return "No Sticky Keys status reported."
+    return f"Sticky Keys: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3313,6 +3343,8 @@ class DesktopAdapter:
             return self._inspect_snap_windows(dry_run=dry_run)
         if action == "inspect_compact_view":
             return self._inspect_compact_view(dry_run=dry_run)
+        if action == "inspect_sticky_keys":
+            return self._inspect_sticky_keys(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -5905,6 +5937,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_compact_view_report(snapshot),
+        )
+
+    def _inspect_sticky_keys(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Accessibility StickyKeys Flags "
+                    "(no FilterKeys dump, no SystemParametersInfo, no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_STICKY_KEYS_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Sticky Keys inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "systemparametersinfo",
+                "filterkeys",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_sticky_keys_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_sticky_keys_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

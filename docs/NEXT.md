@@ -116,11 +116,12 @@ Already in place:
 - read-only taskbar alignment (TaskbarAl only; no TaskbarSize dump).
 - read-only Snap windows on/off (WindowArrangementActive only; no snap layout write).
 - read-only Explorer compact view (UseCompactMode only; no SuperHidden write).
+- read-only Sticky Keys on/off (StickyKeys Flags bit 0 only; no FilterKeys dump).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P34).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P35).
 
 ---
 
@@ -372,6 +373,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 104 | **Snap windows inspect** | ✅ Read-only WindowArrangementActive; no snap layout write |
 | 105 | **Explorer compact view inspect** | ✅ Read-only UseCompactMode; no SuperHidden write |
 
+### P35 — Stage 3 Sticky Keys, Filter Keys, and high contrast
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 106 | **Sticky Keys inspect** | ✅ Read-only StickyKeys Flags bit 0; no FilterKeys dump; no SystemParametersInfo |
+| 107 | **Filter Keys inspect** | Read-only Keyboard Response Flags bit 0; no bounce timings dump |
+| 108 | **High contrast inspect** | Read-only HighContrast Flags bit 0; theme stays inspect_theme |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -465,4 +474,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P34 plates 103–105 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P35 plates 106–108 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

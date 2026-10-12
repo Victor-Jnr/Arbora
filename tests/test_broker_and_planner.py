@@ -1233,6 +1233,23 @@ def test_compact_view_is_read_only_inspect():
     assert [step.action for step in snap.steps] == ["inspect_snap_windows"]
 
 
+def test_sticky_keys_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("sticky keys")
+    assert [step.action for step in plan.steps] == ["inspect_sticky_keys"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is sticky keys on")
+    assert named.steps[0].action == "inspect_sticky_keys"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_sticky_keys" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable sticky keys")
+    assert not any(step.action == "inspect_sticky_keys" for step in mutate.steps)
+    compact = runtime.planner.plan("compact view")
+    assert [step.action for step in compact.steps] == ["inspect_compact_view"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

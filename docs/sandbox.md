@@ -219,6 +219,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `taskbar alignment` | Read-only taskbar left/center |
 | `snap windows` | Read-only Snap windows on/off |
 | `compact view` | Read-only Explorer compact view on/off |
+| `sticky keys` | Read-only Sticky Keys on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---
