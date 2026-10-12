@@ -223,6 +223,8 @@ class GoalPlanner:
             return self._snap_windows_plan(text)
         if self._looks_like_compact_view(lower):
             return self._compact_view_plan(text)
+        if self._looks_like_sticky_keys(lower):
+            return self._sticky_keys_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1737,6 +1739,27 @@ class GoalPlanner:
                     summary="Read-only: Explorer compact view on/off (no SuperHidden)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Explorer Advanced UseCompactMode only",),
+                )
+            ],
+        )
+
+    def _sticky_keys_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Sticky Keys inspect journey — read-only StickyKeys Flags bit 0. "
+                "Does not dump FilterKeys or call SystemParametersInfo."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_sticky_keys",
+                    args={},
+                    summary="Read-only: Sticky Keys on/off (no FilterKeys dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Accessibility StickyKeys Flags only",),
                 )
             ],
         )
@@ -4975,6 +4998,33 @@ class GoalPlanner:
                 "is compact mode on",
                 "is compact view on",
                 "compact mode",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_sticky_keys(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable sticky keys",
+                "enable sticky keys",
+                "turn off sticky keys",
+                "turn on sticky keys",
+                "filter keys",
+                "systemparametersinfo",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "sticky keys",
+                "stickykeys",
+                "inspect sticky keys",
+                "is sticky keys on",
+                "are sticky keys on",
             )
         )
 

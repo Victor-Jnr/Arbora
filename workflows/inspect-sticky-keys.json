@@ -1,0 +1,22 @@
+{
+  "id": "inspect-sticky-keys",
+  "name": "Inspect Sticky Keys",
+  "description": "Read-only Accessibility StickyKeys Flags bit 0. No FilterKeys dump or SystemParametersInfo.",
+  "goal_phrases": [
+    "inspect sticky keys pack",
+    "run inspect sticky keys pack"
+  ],
+  "rationale": "Workflow pack: read-only Sticky Keys (Flags bit 0 only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_sticky_keys",
+      "args": {},
+      "summary": "Read Sticky Keys on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Accessibility StickyKeys Flags only"
+      ]
+    }
+  ]
+}
