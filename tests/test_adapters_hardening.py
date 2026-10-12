@@ -63,6 +63,7 @@ from arbora.adapters.desktop import (
     format_snap_windows_report,
     format_compact_view_report,
     format_sticky_keys_report,
+    format_filter_keys_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -122,6 +123,7 @@ from arbora.adapters.desktop import (
     parse_snap_windows_snapshot,
     parse_compact_view_snapshot,
     parse_sticky_keys_snapshot,
+    parse_filter_keys_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -3058,6 +3060,54 @@ def test_inspect_sticky_keys_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_sticky_keys", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_filter_keys_dry_run():
+    result = DesktopAdapter().execute("inspect_filter_keys", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "keyboard response" in result.output.lower()
+    assert "bouncetime" in result.output.lower()
+    assert "systemparametersinfo" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_filter_keys_report_empty_and_values():
+    empty = parse_filter_keys_snapshot("")
+    report = format_filter_keys_report(empty)
+    assert "no filter keys" in report.lower()
+    on = format_filter_keys_report(parse_filter_keys_snapshot("FILTER=1\n"))
+    assert "Filter Keys: yes" in on
+    off = format_filter_keys_report(parse_filter_keys_snapshot("FILTER=0\n"))
+    assert "Filter Keys: no" in off
+    assert "bouncetime" not in on.lower()
+    assert "systemparametersinfo" not in on.lower()
+
+
+def test_inspect_filter_keys_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_filter_keys", {}, dry_run=False)
+    assert result.ok
+    assert "no filter keys" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "keyboard response" in command
+    assert "flags" in command
+    assert "bouncetime" not in command
+    assert "delaybeforeacceptance" not in command
+    assert "systemparametersinfo" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_filter_keys_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="BounceTime=500 SystemParametersInfo password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_filter_keys", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

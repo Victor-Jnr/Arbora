@@ -225,6 +225,8 @@ class GoalPlanner:
             return self._compact_view_plan(text)
         if self._looks_like_sticky_keys(lower):
             return self._sticky_keys_plan(text)
+        if self._looks_like_filter_keys(lower):
+            return self._filter_keys_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1760,6 +1762,27 @@ class GoalPlanner:
                     summary="Read-only: Sticky Keys on/off (no FilterKeys dump)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Accessibility StickyKeys Flags only",),
+                )
+            ],
+        )
+
+    def _filter_keys_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Filter Keys inspect journey — read-only Keyboard Response Flags bit 0. "
+                "Does not dump bounce timings or call SystemParametersInfo."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_filter_keys",
+                    args={},
+                    summary="Read-only: Filter Keys on/off (no bounce timings)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Accessibility Keyboard Response Flags only",),
                 )
             ],
         )
@@ -5025,6 +5048,33 @@ class GoalPlanner:
                 "inspect sticky keys",
                 "is sticky keys on",
                 "are sticky keys on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_filter_keys(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable filter keys",
+                "enable filter keys",
+                "turn off filter keys",
+                "turn on filter keys",
+                "sticky keys",
+                "systemparametersinfo",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "filter keys",
+                "filterkeys",
+                "inspect filter keys",
+                "is filter keys on",
+                "are filter keys on",
             )
         )
 
