@@ -227,6 +227,8 @@ class GoalPlanner:
             return self._sticky_keys_plan(text)
         if self._looks_like_filter_keys(lower):
             return self._filter_keys_plan(text)
+        if self._looks_like_high_contrast(lower):
+            return self._high_contrast_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1783,6 +1785,27 @@ class GoalPlanner:
                     summary="Read-only: Filter Keys on/off (no bounce timings)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Accessibility Keyboard Response Flags only",),
+                )
+            ],
+        )
+
+    def _high_contrast_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "High contrast inspect journey — read-only HighContrast Flags bit 0. "
+                "Does not dump DefaultScheme or change AppsUseLightTheme."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_high_contrast",
+                    args={},
+                    summary="Read-only: high contrast on/off (no theme write)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Accessibility HighContrast Flags only",),
                 )
             ],
         )
@@ -3495,6 +3518,7 @@ class GoalPlanner:
                 "flight mode",
                 "airplane",
                 "aeroplane",
+                "high contrast",
             )
         ):
             return False
@@ -5075,6 +5099,35 @@ class GoalPlanner:
                 "inspect filter keys",
                 "is filter keys on",
                 "are filter keys on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_high_contrast(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable high contrast",
+                "enable high contrast",
+                "turn off high contrast",
+                "turn on high contrast",
+                "dark theme",
+                "light theme",
+                "dark mode",
+                "systemparametersinfo",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "high contrast",
+                "highcontrast",
+                "inspect high contrast",
+                "is high contrast on",
+                "is high contrast enabled",
             )
         )
 

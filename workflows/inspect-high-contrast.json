@@ -1,0 +1,22 @@
+{
+  "id": "inspect-high-contrast",
+  "name": "Inspect High Contrast",
+  "description": "Read-only Accessibility HighContrast Flags bit 0. No DefaultScheme dump or theme write.",
+  "goal_phrases": [
+    "inspect high contrast pack",
+    "run inspect high contrast pack"
+  ],
+  "rationale": "Workflow pack: read-only high contrast (Flags bit 0 only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_high_contrast",
+      "args": {},
+      "summary": "Read high contrast on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Accessibility HighContrast Flags only"
+      ]
+    }
+  ]
+}

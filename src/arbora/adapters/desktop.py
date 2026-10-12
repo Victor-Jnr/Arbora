@@ -1017,6 +1017,19 @@ _FILTER_KEYS_PS = (
     "}"
 )
 
+_HIGH_CONTRAST_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = [int](Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Control Panel\\Accessibility\\HighContrast' "
+    "    -Name Flags -ErrorAction Stop).Flags; "
+    "  if (($v -band 1) -ne 0) { Write-Output 'HIGHCONTRAST=1' } "
+    "  else { Write-Output 'HIGHCONTRAST=0' }; "
+    "} catch { "
+    "  Write-Output 'HIGHCONTRAST='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2793,6 +2806,23 @@ def format_filter_keys_report(snapshot: dict[str, str]) -> str:
     return f"Filter Keys: {_flag_yes_no(raw)}"
 
 
+def parse_high_contrast_snapshot(stdout: str) -> dict[str, str]:
+    """Parse HighContrast on/off from Flags bit 0 — never theme or DefaultScheme dumps."""
+    snapshot = {"enabled": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("HIGHCONTRAST="):
+            snapshot["enabled"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_high_contrast_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("enabled") or "").strip()
+    if not raw:
+        return "No high contrast status reported."
+    return f"High contrast: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3377,6 +3407,8 @@ class DesktopAdapter:
             return self._inspect_sticky_keys(dry_run=dry_run)
         if action == "inspect_filter_keys":
             return self._inspect_filter_keys(dry_run=dry_run)
+        if action == "inspect_high_contrast":
+            return self._inspect_high_contrast(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -6063,6 +6095,55 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_filter_keys_report(snapshot),
+        )
+
+    def _inspect_high_contrast(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read Accessibility HighContrast Flags "
+                    "(no AppsUseLightTheme, no DefaultScheme dump, no SystemParametersInfo, "
+                    "no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_HIGH_CONTRAST_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "High contrast inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "systemparametersinfo",
+                "appsuselighttheme",
+                "defaultscheme",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_high_contrast_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_high_contrast_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:
