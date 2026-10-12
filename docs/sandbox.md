@@ -221,6 +221,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `compact view` | Read-only Explorer compact view on/off |
 | `sticky keys` | Read-only Sticky Keys on/off |
 | `filter keys` | Read-only Filter Keys on/off |
+| `high contrast` | Read-only high contrast on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

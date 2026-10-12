@@ -64,6 +64,7 @@ from arbora.adapters.desktop import (
     format_compact_view_report,
     format_sticky_keys_report,
     format_filter_keys_report,
+    format_high_contrast_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -124,6 +125,7 @@ from arbora.adapters.desktop import (
     parse_compact_view_snapshot,
     parse_sticky_keys_snapshot,
     parse_filter_keys_snapshot,
+    parse_high_contrast_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -3108,6 +3110,55 @@ def test_inspect_filter_keys_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_filter_keys", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_high_contrast_dry_run():
+    result = DesktopAdapter().execute("inspect_high_contrast", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "highcontrast" in result.output.lower()
+    assert "appsuselighttheme" in result.output.lower()
+    assert "defaultscheme" in result.output.lower()
+    assert "systemparametersinfo" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_high_contrast_report_empty_and_values():
+    empty = parse_high_contrast_snapshot("")
+    report = format_high_contrast_report(empty)
+    assert "no high contrast" in report.lower()
+    on = format_high_contrast_report(parse_high_contrast_snapshot("HIGHCONTRAST=1\n"))
+    assert "High contrast: yes" in on
+    off = format_high_contrast_report(parse_high_contrast_snapshot("HIGHCONTRAST=0\n"))
+    assert "High contrast: no" in off
+    assert "appsuselighttheme" not in on.lower()
+    assert "defaultscheme" not in on.lower()
+
+
+def test_inspect_high_contrast_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_high_contrast", {}, dry_run=False)
+    assert result.ok
+    assert "no high contrast" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "highcontrast" in command
+    assert "flags" in command
+    assert "appsuselighttheme" not in command
+    assert "defaultscheme" not in command
+    assert "systemparametersinfo" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_high_contrast_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="AppsUseLightTheme=0 DefaultScheme=High Contrast password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_high_contrast", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

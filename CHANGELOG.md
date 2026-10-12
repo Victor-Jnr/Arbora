@@ -271,6 +271,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/118-inspect-sticky-keys.md` | Change doc for Sticky Keys inspect |
 | `workflows/inspect-filter-keys.json` | Bundled read-only Filter Keys inspect pack |
 | `documentation/119-inspect-filter-keys.md` | Change doc for Filter Keys inspect |
+| `workflows/inspect-high-contrast.json` | Bundled read-only high contrast inspect pack |
+| `documentation/120-inspect-high-contrast.md` | Change doc for high contrast inspect |
 
 ---
 
@@ -847,6 +849,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented filter keys as a sandbox dry-run goal |
 | `documentation/119-inspect-filter-keys.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 119 |
+| `README.md` | Documentation latest table |
+
+## 120 — High contrast inspect (2026-10-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_high_contrast` (HighContrast Flags bit 0; no DefaultScheme) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_high_contrast` |
+| `src/arbora/core/planner.py` | High contrast inspect journey; dark/light stays inspect_theme |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-high-contrast.json` | Bundled inspect-high-contrast pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no AppsUseLightTheme/DefaultScheme; secrets withheld |
+| `tests/test_broker_and_planner.py` | High contrast vs diagnose / enable / dark mode / Filter Keys |
+| `tests/test_workflow_packs.py` | Pack match for inspect-high-contrast |
+| `docs/NEXT.md` | Marked P35 plate 108 done |
+| `docs/sandbox.md` | Documented high contrast as a sandbox dry-run goal |
+| `documentation/120-inspect-high-contrast.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 120 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

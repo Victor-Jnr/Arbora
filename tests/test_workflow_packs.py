@@ -892,6 +892,17 @@ def test_inspect_filter_keys_workflow_pack_matches():
     assert plan.steps[0].sensitivity.value == "read"
 
 
+def test_inspect_high_contrast_workflow_pack_matches():
+    pack = match_workflow_pack("run inspect high contrast pack")
+    assert pack is not None
+    assert pack.id == "inspect-high-contrast"
+    plan = pack.to_plan("run inspect high contrast pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == ["inspect_high_contrast"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity.value == "read"
+
+
 def test_type_in_window_workflow_pack_matches():
     pack = match_workflow_pack("run type in window pack")
     assert pack is not None
