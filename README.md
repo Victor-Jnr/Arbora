@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 119 | [Filter Keys inspect](documentation/119-inspect-filter-keys.md) |
 | 118 | [Sticky Keys inspect](documentation/118-inspect-sticky-keys.md) |
 | 117 | [Explorer compact view inspect](documentation/117-inspect-compact-view.md) |
 | 116 | [Snap windows inspect](documentation/116-inspect-snap-windows.md) |

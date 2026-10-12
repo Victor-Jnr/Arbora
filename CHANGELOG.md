@@ -269,6 +269,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/117-inspect-compact-view.md` | Change doc for Explorer compact view inspect |
 | `workflows/inspect-sticky-keys.json` | Bundled read-only Sticky Keys inspect pack |
 | `documentation/118-inspect-sticky-keys.md` | Change doc for Sticky Keys inspect |
+| `workflows/inspect-filter-keys.json` | Bundled read-only Filter Keys inspect pack |
+| `documentation/119-inspect-filter-keys.md` | Change doc for Filter Keys inspect |
 
 ---
 
@@ -827,6 +829,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented sticky keys as a sandbox dry-run goal |
 | `documentation/118-inspect-sticky-keys.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 118 |
+| `README.md` | Documentation latest table |
+
+## 119 — Filter Keys inspect (2026-10-12)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_filter_keys` (Keyboard Response Flags bit 0; no BounceTime) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_filter_keys` |
+| `src/arbora/core/planner.py` | Filter Keys inspect journey; Sticky Keys stays inspect_sticky_keys |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-filter-keys.json` | Bundled inspect-filter-keys pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no BounceTime/SPI; secrets withheld |
+| `tests/test_broker_and_planner.py` | Filter Keys vs diagnose / enable / Sticky Keys |
+| `tests/test_workflow_packs.py` | Pack match for inspect-filter-keys |
+| `docs/NEXT.md` | Marked P35 plate 107 done |
+| `docs/sandbox.md` | Documented filter keys as a sandbox dry-run goal |
+| `documentation/119-inspect-filter-keys.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 119 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

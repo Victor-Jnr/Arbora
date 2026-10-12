@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 119 | [Filter Keys inspect](119-inspect-filter-keys.md) | 2026-10-12 | Read-only Keyboard Response Flags bit 0; no BounceTime dump |
 | 118 | [Sticky Keys inspect](118-inspect-sticky-keys.md) | 2026-10-12 | Read-only StickyKeys Flags bit 0; no FilterKeys dump |
 | 117 | [Explorer compact view inspect](117-inspect-compact-view.md) | 2026-10-11 | Read-only UseCompactMode; no SuperHidden write |
 | 116 | [Snap windows inspect](116-inspect-snap-windows.md) | 2026-10-11 | Read-only WindowArrangementActive; no snap layout write |

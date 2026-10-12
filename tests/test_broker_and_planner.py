@@ -1250,6 +1250,23 @@ def test_sticky_keys_is_read_only_inspect():
     assert [step.action for step in compact.steps] == ["inspect_compact_view"]
 
 
+def test_filter_keys_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("filter keys")
+    assert [step.action for step in plan.steps] == ["inspect_filter_keys"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is filter keys on")
+    assert named.steps[0].action == "inspect_filter_keys"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_filter_keys" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable filter keys")
+    assert not any(step.action == "inspect_filter_keys" for step in mutate.steps)
+    sticky = runtime.planner.plan("sticky keys")
+    assert [step.action for step in sticky.steps] == ["inspect_sticky_keys"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

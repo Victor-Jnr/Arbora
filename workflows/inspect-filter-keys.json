@@ -1,0 +1,22 @@
+{
+  "id": "inspect-filter-keys",
+  "name": "Inspect Filter Keys",
+  "description": "Read-only Accessibility Keyboard Response Flags bit 0. No BounceTime dump or SystemParametersInfo.",
+  "goal_phrases": [
+    "inspect filter keys pack",
+    "run inspect filter keys pack"
+  ],
+  "rationale": "Workflow pack: read-only Filter Keys (Flags bit 0 only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_filter_keys",
+      "args": {},
+      "summary": "Read Filter Keys on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Accessibility Keyboard Response Flags only"
+      ]
+    }
+  ]
+}
