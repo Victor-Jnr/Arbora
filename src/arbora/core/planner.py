@@ -231,6 +231,8 @@ class GoalPlanner:
             return self._high_contrast_plan(text)
         if self._looks_like_toggle_keys(lower):
             return self._toggle_keys_plan(text)
+        if self._looks_like_mouse_keys(lower):
+            return self._mouse_keys_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1829,6 +1831,27 @@ class GoalPlanner:
                     summary="Read-only: Toggle Keys on/off (no StickyKeys dump)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Accessibility ToggleKeys Flags only",),
+                )
+            ],
+        )
+
+    def _mouse_keys_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Mouse Keys inspect journey — read-only MouseKeys Flags bit 0. "
+                "Does not dump MaximumSpeed or call SystemParametersInfo."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_mouse_keys",
+                    args={},
+                    summary="Read-only: Mouse Keys on/off (no speed dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Accessibility MouseKeys Flags only",),
                 )
             ],
         )
@@ -5179,6 +5202,34 @@ class GoalPlanner:
                 "inspect toggle keys",
                 "is toggle keys on",
                 "are toggle keys on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_mouse_keys(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable mouse keys",
+                "enable mouse keys",
+                "turn off mouse keys",
+                "turn on mouse keys",
+                "toggle keys",
+                "sticky keys",
+                "systemparametersinfo",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "mouse keys",
+                "mousekeys",
+                "inspect mouse keys",
+                "is mouse keys on",
+                "are mouse keys on",
             )
         )
 

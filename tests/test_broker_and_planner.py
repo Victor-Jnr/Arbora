@@ -1303,6 +1303,23 @@ def test_toggle_keys_is_read_only_inspect():
     assert [step.action for step in sticky.steps] == ["inspect_sticky_keys"]
 
 
+def test_mouse_keys_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("mouse keys")
+    assert [step.action for step in plan.steps] == ["inspect_mouse_keys"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is mouse keys on")
+    assert named.steps[0].action == "inspect_mouse_keys"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_mouse_keys" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable mouse keys")
+    assert not any(step.action == "inspect_mouse_keys" for step in mutate.steps)
+    toggle = runtime.planner.plan("toggle keys")
+    assert [step.action for step in toggle.steps] == ["inspect_toggle_keys"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

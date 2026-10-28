@@ -275,6 +275,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/120-inspect-high-contrast.md` | Change doc for high contrast inspect |
 | `workflows/inspect-toggle-keys.json` | Bundled read-only Toggle Keys inspect pack |
 | `documentation/121-inspect-toggle-keys.md` | Change doc for Toggle Keys inspect |
+| `workflows/inspect-mouse-keys.json` | Bundled read-only Mouse Keys inspect pack |
+| `documentation/122-inspect-mouse-keys.md` | Change doc for Mouse Keys inspect |
 
 ---
 
@@ -887,6 +889,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented Toggle Keys as a sandbox dry-run goal |
 | `documentation/121-inspect-toggle-keys.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 121 |
+| `README.md` | Documentation latest table |
+
+## 122 — Mouse Keys inspect (2026-10-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_mouse_keys` (MouseKeys Flags bit 0; no MaximumSpeed dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_mouse_keys` |
+| `src/arbora/core/planner.py` | Mouse Keys inspect journey; Toggle Keys stays inspect_toggle_keys |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-mouse-keys.json` | Bundled inspect-mouse-keys pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no MaximumSpeed/SPI; secrets withheld |
+| `tests/test_broker_and_planner.py` | Mouse Keys vs diagnose / enable / Toggle Keys |
+| `tests/test_workflow_packs.py` | Pack match for inspect-mouse-keys |
+| `docs/NEXT.md` | Marked P36 plate 110 done |
+| `docs/sandbox.md` | Documented Mouse Keys as a sandbox dry-run goal |
+| `documentation/122-inspect-mouse-keys.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 122 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
