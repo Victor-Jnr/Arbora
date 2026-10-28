@@ -1,0 +1,22 @@
+{
+  "id": "inspect-color-filters",
+  "name": "Inspect Color Filters",
+  "description": "Read-only ColorFiltering Active. No FilterType dump or theme write.",
+  "goal_phrases": [
+    "inspect color filters pack",
+    "run inspect color filters pack"
+  ],
+  "rationale": "Workflow pack: read-only color filters (Active only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_color_filters",
+      "args": {},
+      "summary": "Read color filters on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads ColorFiltering Active only"
+      ]
+    }
+  ]
+}

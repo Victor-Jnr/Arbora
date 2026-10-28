@@ -1056,6 +1056,18 @@ _MOUSE_KEYS_PS = (
     "}"
 )
 
+_COLOR_FILTERS_PS = (
+    "$ErrorActionPreference = 'SilentlyContinue'; "
+    "try { "
+    "  $v = (Get-ItemProperty -LiteralPath "
+    "    'HKCU:\\Software\\Microsoft\\ColorFiltering' "
+    "    -Name Active -ErrorAction Stop).Active; "
+    "  Write-Output ('COLORFILTER=' + $v); "
+    "} catch { "
+    "  Write-Output 'COLORFILTER='; "
+    "}"
+)
+
 _FOREGROUND_PS = (
     "$ErrorActionPreference = 'SilentlyContinue'; "
     "Add-Type -TypeDefinition @'\n"
@@ -2883,6 +2895,23 @@ def format_mouse_keys_report(snapshot: dict[str, str]) -> str:
     return f"Mouse Keys: {_flag_yes_no(raw)}"
 
 
+def parse_color_filters_snapshot(stdout: str) -> dict[str, str]:
+    """Parse color filters on/off from Active — never FilterType or theme dumps."""
+    snapshot = {"enabled": ""}
+    for line in (stdout or "").splitlines():
+        if line.startswith("COLORFILTER="):
+            snapshot["enabled"] = line.split("=", 1)[1].strip()[:16]
+            break
+    return snapshot
+
+
+def format_color_filters_report(snapshot: dict[str, str]) -> str:
+    raw = str(snapshot.get("enabled") or "").strip()
+    if not raw:
+        return "No color filter status reported."
+    return f"Color filters: {_flag_yes_no(raw)}"
+
+
 def parse_foreground_snapshot(stdout: str) -> dict[str, str]:
     """Parse foreground window title, process, and pid — no keystrokes."""
     snapshot = {"title": "", "process": "", "pid": "", "hwnd": ""}
@@ -3473,6 +3502,8 @@ class DesktopAdapter:
             return self._inspect_toggle_keys(dry_run=dry_run)
         if action == "inspect_mouse_keys":
             return self._inspect_mouse_keys(dry_run=dry_run)
+        if action == "inspect_color_filters":
+            return self._inspect_color_filters(dry_run=dry_run)
         if action == "inspect_audio_device":
             return self._inspect_audio_device(dry_run=dry_run)
         if action == "inspect_installed_apps":
@@ -6302,6 +6333,53 @@ class DesktopAdapter:
             step_id=new_id("res_"),
             ok=True,
             output=format_mouse_keys_report(snapshot),
+        )
+
+    def _inspect_color_filters(self, *, dry_run: bool) -> StepResult:
+        if dry_run:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=True,
+                output=(
+                    "[dry-run] Would read ColorFiltering Active "
+                    "(no FilterType dump, no AppsUseLightTheme, no Set-ItemProperty)"
+                ),
+                dry_run=True,
+            )
+        platform_error = require_windows()
+        if platform_error:
+            return StepResult(step_id=new_id("res_"), ok=False, output="", error=platform_error)
+        outcome = run_powershell(_COLOR_FILTERS_PS, timeout_seconds=20)
+        if not outcome.ok:
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output=outcome.stdout,
+                error=outcome.error or "Color filters inspect failed",
+            )
+        text = outcome.stdout or ""
+        compact = text.lower().replace(" ", "")
+        if any(
+            marker in compact
+            for marker in (
+                "password",
+                "keycontent",
+                "set-itemproperty",
+                "filtertype",
+                "appsuselighttheme",
+            )
+        ):
+            return StepResult(
+                step_id=new_id("res_"),
+                ok=False,
+                output="",
+                error="Refusing to return output that looks like a secret",
+            )
+        snapshot = parse_color_filters_snapshot(text)
+        return StepResult(
+            step_id=new_id("res_"),
+            ok=True,
+            output=format_color_filters_report(snapshot),
         )
 
     def _inspect_foreground(self, *, dry_run: bool) -> StepResult:

@@ -1320,6 +1320,25 @@ def test_mouse_keys_is_read_only_inspect():
     assert [step.action for step in toggle.steps] == ["inspect_toggle_keys"]
 
 
+def test_color_filters_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("color filters")
+    assert [step.action for step in plan.steps] == ["inspect_color_filters"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is color filter on")
+    assert named.steps[0].action == "inspect_color_filters"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_color_filters" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable color filter")
+    assert not any(step.action == "inspect_color_filters" for step in mutate.steps)
+    contrast = runtime.planner.plan("high contrast")
+    assert [step.action for step in contrast.steps] == ["inspect_high_contrast"]
+    theme = runtime.planner.plan("dark mode")
+    assert [step.action for step in theme.steps] == ["inspect_theme"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 
