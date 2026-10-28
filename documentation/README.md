@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 121 | [Toggle Keys inspect](121-inspect-toggle-keys.md) | 2026-10-28 | Read-only ToggleKeys Flags bit 0; Sticky Keys stays inspect_sticky_keys |
 | 120 | [High contrast inspect](120-inspect-high-contrast.md) | 2026-10-12 | Read-only HighContrast Flags bit 0; theme stays inspect_theme |
 | 119 | [Filter Keys inspect](119-inspect-filter-keys.md) | 2026-10-12 | Read-only Keyboard Response Flags bit 0; no BounceTime dump |
 | 118 | [Sticky Keys inspect](118-inspect-sticky-keys.md) | 2026-10-12 | Read-only StickyKeys Flags bit 0; no FilterKeys dump |
