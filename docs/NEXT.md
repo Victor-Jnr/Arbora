@@ -119,11 +119,12 @@ Already in place:
 - read-only Sticky Keys on/off (StickyKeys Flags bit 0 only; no FilterKeys dump).
 - read-only Filter Keys on/off (Keyboard Response Flags bit 0 only; no bounce timings).
 - read-only high contrast on/off (HighContrast Flags bit 0 only; theme stays inspect_theme).
+- read-only Toggle Keys on/off (ToggleKeys Flags bit 0 only; Sticky Keys stays inspect_sticky_keys).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P35).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P36).
 
 ---
 
@@ -383,6 +384,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 107 | **Filter Keys inspect** | ✅ Read-only Keyboard Response Flags bit 0; no bounce timings dump |
 | 108 | **High contrast inspect** | ✅ Read-only HighContrast Flags bit 0; theme stays inspect_theme |
 
+### P36 — Stage 3 Toggle Keys, Mouse Keys, and color filters
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 109 | **Toggle Keys inspect** | ✅ Read-only ToggleKeys Flags bit 0; Sticky Keys stays inspect_sticky_keys |
+| 110 | **Mouse Keys inspect** | Read-only MouseKeys Flags bit 0; no speed dump; no SystemParametersInfo |
+| 111 | **Color filters inspect** | Read-only ColorFiltering Active; no FilterType dump; high contrast stays inspect_high_contrast |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -476,4 +485,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P35 plates 106–108 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P36 plates 109–111 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).

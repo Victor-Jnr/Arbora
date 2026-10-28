@@ -1286,6 +1286,23 @@ def test_high_contrast_is_read_only_inspect():
     assert [step.action for step in filt.steps] == ["inspect_filter_keys"]
 
 
+def test_toggle_keys_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("toggle keys")
+    assert [step.action for step in plan.steps] == ["inspect_toggle_keys"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is toggle keys on")
+    assert named.steps[0].action == "inspect_toggle_keys"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_toggle_keys" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable toggle keys")
+    assert not any(step.action == "inspect_toggle_keys" for step in mutate.steps)
+    sticky = runtime.planner.plan("sticky keys")
+    assert [step.action for step in sticky.steps] == ["inspect_sticky_keys"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

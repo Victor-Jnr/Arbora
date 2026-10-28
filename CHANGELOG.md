@@ -273,6 +273,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/119-inspect-filter-keys.md` | Change doc for Filter Keys inspect |
 | `workflows/inspect-high-contrast.json` | Bundled read-only high contrast inspect pack |
 | `documentation/120-inspect-high-contrast.md` | Change doc for high contrast inspect |
+| `workflows/inspect-toggle-keys.json` | Bundled read-only Toggle Keys inspect pack |
+| `documentation/121-inspect-toggle-keys.md` | Change doc for Toggle Keys inspect |
 
 ---
 
@@ -867,6 +869,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented high contrast as a sandbox dry-run goal |
 | `documentation/120-inspect-high-contrast.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 120 |
+| `README.md` | Documentation latest table |
+
+## 121 — Toggle Keys inspect (2026-10-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_toggle_keys` (ToggleKeys Flags bit 0; no StickyKeys dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_toggle_keys` |
+| `src/arbora/core/planner.py` | Toggle Keys inspect journey; Sticky Keys stays inspect_sticky_keys |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-toggle-keys.json` | Bundled inspect-toggle-keys pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no StickyKeys/SPI; secrets withheld |
+| `tests/test_broker_and_planner.py` | Toggle Keys vs diagnose / enable / Sticky Keys |
+| `tests/test_workflow_packs.py` | Pack match for inspect-toggle-keys |
+| `docs/NEXT.md` | Marked P36 plate 109 done |
+| `docs/sandbox.md` | Documented Toggle Keys as a sandbox dry-run goal |
+| `documentation/121-inspect-toggle-keys.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 121 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

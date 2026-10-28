@@ -229,6 +229,8 @@ class GoalPlanner:
             return self._filter_keys_plan(text)
         if self._looks_like_high_contrast(lower):
             return self._high_contrast_plan(text)
+        if self._looks_like_toggle_keys(lower):
+            return self._toggle_keys_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1806,6 +1808,27 @@ class GoalPlanner:
                     summary="Read-only: high contrast on/off (no theme write)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Accessibility HighContrast Flags only",),
+                )
+            ],
+        )
+
+    def _toggle_keys_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Toggle Keys inspect journey — read-only ToggleKeys Flags bit 0. "
+                "Does not dump StickyKeys or call SystemParametersInfo."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_toggle_keys",
+                    args={},
+                    summary="Read-only: Toggle Keys on/off (no StickyKeys dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Accessibility ToggleKeys Flags only",),
                 )
             ],
         )
@@ -5128,6 +5151,34 @@ class GoalPlanner:
                 "inspect high contrast",
                 "is high contrast on",
                 "is high contrast enabled",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_toggle_keys(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable toggle keys",
+                "enable toggle keys",
+                "turn off toggle keys",
+                "turn on toggle keys",
+                "sticky keys",
+                "filter keys",
+                "systemparametersinfo",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "toggle keys",
+                "togglekeys",
+                "inspect toggle keys",
+                "is toggle keys on",
+                "are toggle keys on",
             )
         )
 
