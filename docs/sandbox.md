@@ -223,6 +223,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `filter keys` | Read-only Filter Keys on/off |
 | `high contrast` | Read-only high contrast on/off |
 | `toggle keys` | Read-only Toggle Keys on/off |
+| `mouse keys` | Read-only Mouse Keys on/off |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---
