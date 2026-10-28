@@ -626,6 +626,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 123 | [Color filters inspect](documentation/123-inspect-color-filters.md) |
 | 122 | [Mouse Keys inspect](documentation/122-inspect-mouse-keys.md) |
 | 121 | [Toggle Keys inspect](documentation/121-inspect-toggle-keys.md) |
 | 120 | [High contrast inspect](documentation/120-inspect-high-contrast.md) |

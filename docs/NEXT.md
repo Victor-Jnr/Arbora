@@ -121,6 +121,7 @@ Already in place:
 - read-only high contrast on/off (HighContrast Flags bit 0 only; theme stays inspect_theme).
 - read-only Toggle Keys on/off (ToggleKeys Flags bit 0 only; Sticky Keys stays inspect_sticky_keys).
 - read-only Mouse Keys on/off (MouseKeys Flags bit 0 only; no MaximumSpeed dump).
+- read-only color filters on/off (ColorFiltering Active only; high contrast stays inspect_high_contrast).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
@@ -391,7 +392,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 109 | **Toggle Keys inspect** | ✅ Read-only ToggleKeys Flags bit 0; Sticky Keys stays inspect_sticky_keys |
 | 110 | **Mouse Keys inspect** | ✅ Read-only MouseKeys Flags bit 0; no MaximumSpeed dump |
-| 111 | **Color filters inspect** | Read-only ColorFiltering Active; no FilterType dump; high contrast stays inspect_high_contrast |
+| 111 | **Color filters inspect** | ✅ Read-only ColorFiltering Active; high contrast stays inspect_high_contrast |
 
 ## Non-negotiables (do not drift)
 
@@ -486,4 +487,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P36 plates 109–111 continue Stage 3 from the root README (personal depth: organisation, diagnostics, and everyday Windows control).
+P36 plates 109–111 are done. Stage 3 personal depth continues from the root README (organisation, diagnostics, and everyday Windows control).

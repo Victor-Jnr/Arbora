@@ -233,6 +233,8 @@ class GoalPlanner:
             return self._toggle_keys_plan(text)
         if self._looks_like_mouse_keys(lower):
             return self._mouse_keys_plan(text)
+        if self._looks_like_color_filters(lower):
+            return self._color_filters_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1852,6 +1854,27 @@ class GoalPlanner:
                     summary="Read-only: Mouse Keys on/off (no speed dump)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Accessibility MouseKeys Flags only",),
+                )
+            ],
+        )
+
+    def _color_filters_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Color filters inspect journey — read-only ColorFiltering Active. "
+                "Does not dump FilterType or change AppsUseLightTheme."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_color_filters",
+                    args={},
+                    summary="Read-only: color filters on/off (no FilterType dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads ColorFiltering Active only",),
                 )
             ],
         )
@@ -5230,6 +5253,45 @@ class GoalPlanner:
                 "inspect mouse keys",
                 "is mouse keys on",
                 "are mouse keys on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_color_filters(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable color filter",
+                "enable color filter",
+                "disable color filters",
+                "enable color filters",
+                "turn off color filter",
+                "turn on color filter",
+                "turn off color filters",
+                "turn on color filters",
+                "disable colour filter",
+                "enable colour filter",
+                "turn off colour filter",
+                "turn on colour filter",
+                "high contrast",
+                "dark mode",
+                "color mode",
+                "filtertype",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "color filter",
+                "color filters",
+                "colour filter",
+                "colour filters",
+                "inspect color filters",
+                "is color filter on",
+                "are color filters on",
             )
         )
 

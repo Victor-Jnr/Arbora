@@ -67,6 +67,7 @@ from arbora.adapters.desktop import (
     format_high_contrast_report,
     format_toggle_keys_report,
     format_mouse_keys_report,
+    format_color_filters_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -130,6 +131,7 @@ from arbora.adapters.desktop import (
     parse_high_contrast_snapshot,
     parse_toggle_keys_snapshot,
     parse_mouse_keys_snapshot,
+    parse_color_filters_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -3257,6 +3259,53 @@ def test_inspect_mouse_keys_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_mouse_keys", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_color_filters_dry_run():
+    result = DesktopAdapter().execute("inspect_color_filters", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "colorfiltering" in result.output.lower()
+    assert "filtertype" in result.output.lower()
+    assert "appsuselighttheme" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_color_filters_report_empty_and_values():
+    empty = parse_color_filters_snapshot("")
+    report = format_color_filters_report(empty)
+    assert "no color filter" in report.lower()
+    on = format_color_filters_report(parse_color_filters_snapshot("COLORFILTER=1\n"))
+    assert "Color filters: yes" in on
+    off = format_color_filters_report(parse_color_filters_snapshot("COLORFILTER=0\n"))
+    assert "Color filters: no" in off
+    assert "filtertype" not in on.lower()
+    assert "appsuselighttheme" not in on.lower()
+
+
+def test_inspect_color_filters_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_color_filters", {}, dry_run=False)
+    assert result.ok
+    assert "no color filter" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "colorfiltering" in command
+    assert "active" in command
+    assert "filtertype" not in command
+    assert "appsuselighttheme" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_color_filters_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="FilterType=0 AppsUseLightTheme=0 password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_color_filters", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

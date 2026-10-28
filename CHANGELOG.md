@@ -277,6 +277,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/121-inspect-toggle-keys.md` | Change doc for Toggle Keys inspect |
 | `workflows/inspect-mouse-keys.json` | Bundled read-only Mouse Keys inspect pack |
 | `documentation/122-inspect-mouse-keys.md` | Change doc for Mouse Keys inspect |
+| `workflows/inspect-color-filters.json` | Bundled read-only color filters inspect pack |
+| `documentation/123-inspect-color-filters.md` | Change doc for color filters inspect |
 
 ---
 
@@ -907,6 +909,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented Mouse Keys as a sandbox dry-run goal |
 | `documentation/122-inspect-mouse-keys.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 122 |
+| `README.md` | Documentation latest table |
+
+## 123 — Color filters inspect (2026-10-28)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_color_filters` (ColorFiltering Active; no FilterType dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_color_filters` |
+| `src/arbora/core/planner.py` | Color filters inspect journey; high contrast stays inspect_high_contrast |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-color-filters.json` | Bundled inspect-color-filters pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no FilterType/AppsUseLightTheme; secrets withheld |
+| `tests/test_broker_and_planner.py` | Color filters vs diagnose / enable / high contrast / dark mode |
+| `tests/test_workflow_packs.py` | Pack match for inspect-color-filters |
+| `docs/NEXT.md` | Marked P36 plate 111 done |
+| `docs/sandbox.md` | Documented color filters as a sandbox dry-run goal |
+| `documentation/123-inspect-color-filters.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 123 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
