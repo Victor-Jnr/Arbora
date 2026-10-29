@@ -1,0 +1,73 @@
+{
+  "id": "start-workday",
+  "name": "Start workday",
+  "description": "List running apps, write a morning briefing, open the workday folder in Explorer, then launch Notepad. Halt if launch or focus fails. Does not close apps.",
+  "goal_phrases": [
+    "start workday pack",
+    "run start workday pack"
+  ],
+  "rationale": "Workflow pack: workday setup with folder open (no app closes).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "list_running_apps",
+      "args": {},
+      "summary": "Inspect which apps are already running",
+      "sensitivity": "read",
+      "side_effects": ["Observes process list"]
+    },
+    {
+      "adapter": "files",
+      "action": "ensure_directory",
+      "args": { "path": "~/ArboraWorkday" },
+      "summary": "Ensure ArboraWorkday folder exists",
+      "sensitivity": "mutate",
+      "side_effects": ["May create a directory under your home folder"]
+    },
+    {
+      "adapter": "files",
+      "action": "write_text",
+      "args": {
+        "path": "~/ArboraWorkday/morning-briefing.txt",
+        "content": "Morning briefing\n================\n- Review calendar and unread mail (manual).\n"
+      },
+      "summary": "Write morning briefing stub",
+      "sensitivity": "mutate",
+      "side_effects": ["Creates or overwrites a text file"]
+    },
+    {
+      "adapter": "files",
+      "action": "list_directory",
+      "args": { "path": "~/ArboraWorkday" },
+      "summary": "List files in the workday folder",
+      "sensitivity": "read",
+      "side_effects": ["Reads directory listing"]
+    },
+    {
+      "adapter": "files",
+      "action": "open_in_explorer",
+      "args": { "path": "~/ArboraWorkday" },
+      "summary": "Open the workday folder in File Explorer",
+      "sensitivity": "mutate",
+      "side_effects": ["Opens a File Explorer window"]
+    },
+    {
+      "adapter": "desktop",
+      "action": "launch_app",
+      "args": { "name": "notepad" },
+      "summary": "Launch Notepad as a stand-in for your notes app",
+      "sensitivity": "mutate",
+      "side_effects": ["Starts a process"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "desktop",
+      "action": "focus_window",
+      "args": { "title_contains": "Notepad" },
+      "summary": "Focus the Notepad window if it is open",
+      "sensitivity": "mutate",
+      "side_effects": ["Brings an existing window to the foreground"],
+      "halt_on_failure": true
+    }
+  ]
+}

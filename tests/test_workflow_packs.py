@@ -37,6 +37,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-windows-update" in ids
     assert "inspect-timezone" in ids
     assert "open-workday-folder" in ids
+    assert "start-workday" in ids
     assert "inspect-theme" in ids
     assert "inspect-identity" in ids
     assert "inspect-firewall" in ids
@@ -372,6 +373,26 @@ def test_open_workday_folder_workflow_pack_matches():
     assert all(step.adapter == "files" for step in plan.steps)
     assert plan.steps[0].sensitivity.value == "read"
     assert plan.steps[1].sensitivity.value == "mutate"
+
+
+def test_start_workday_workflow_pack_matches():
+    pack = match_workflow_pack("run start workday pack")
+    assert pack is not None
+    assert pack.id == "start-workday"
+    plan = pack.to_plan("run start workday pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == [
+        "list_running_apps",
+        "ensure_directory",
+        "write_text",
+        "list_directory",
+        "open_in_explorer",
+        "launch_app",
+        "focus_window",
+    ]
+    assert plan.steps[-2].halt_on_failure is True
+    assert plan.steps[-1].halt_on_failure is True
+    assert not plan.has_hard_confirmation_steps
 
 
 def test_inspect_theme_workflow_pack_matches():

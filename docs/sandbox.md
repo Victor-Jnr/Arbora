@@ -191,6 +191,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `windows version` | Read-only version / build |
 | `pending reboot` | Read-only reboot-pending flags |
 | `defender status` | Read-only Defender on/off and signature date |
+| `start my workday` | Briefing, open work folder, launch Notepad (halt if focus fails) |
 | `free disk space` | Read-only local disk free/total GB |
 | `how much ram` | Read-only physical RAM free/total |
 | `power plan` | Read-only active power plan name |
