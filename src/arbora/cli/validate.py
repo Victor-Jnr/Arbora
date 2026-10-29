@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from arbora.cli.session import approve_all, build_runtime, persist_routines
+from arbora.cli.session import approve_all, build_runtime, hard_confirm_ids_for, persist_routines
 from arbora.providers import cloud_provider_configured
 
 
@@ -78,6 +78,7 @@ def run_mvp_checks(*, memory_root: Path) -> list[ValidateCheck]:
     for check_id, title, goal in MVP_JOURNEY_GOALS:
         checks.append(_journey_check(runtime, check_id, title, goal))
 
+    checks.append(_disk_cleanup_check(runtime))
     checks.append(_trust_and_audit_check(runtime))
     checks.append(_local_first_check(runtime))
     return checks
@@ -105,6 +106,63 @@ def _journey_check(runtime, check_id: str, title: str, goal: str) -> ValidateChe
             f"Plan {plan.id} with {len(plan.steps)} step(s) dry-ran successfully.",
         )
     except Exception as exc:  # noqa: BLE001 — validation should report, not crash
+        return ValidateCheck(check_id, title, False, str(exc))
+
+
+def _disk_cleanup_check(runtime) -> ValidateCheck:
+    check_id = "disk_cleanup_repair"
+    title = "Safe disk cleanup repair plan"
+    try:
+        plan = runtime.planner.plan("free up disk space")
+        actions = [step.action for step in plan.steps]
+        expected = [
+            "inspect_recycle_bin",
+            "inspect_user_temp",
+            "empty_recycle_bin",
+            "clean_user_temp",
+        ]
+        if actions != expected:
+            return ValidateCheck(
+                check_id,
+                title,
+                False,
+                f"Unexpected cleanup steps: {', '.join(actions) or '(none)'}",
+            )
+        if not plan.has_hard_confirmation_steps:
+            return ValidateCheck(check_id, title, False, "Cleanup plan lacks hard confirmation.")
+        diagnose = runtime.planner.plan("diagnose disk space")
+        if any(step.action in {"empty_recycle_bin", "clean_user_temp"} for step in diagnose.steps):
+            return ValidateCheck(check_id, title, False, "Diagnose plan includes deletes.")
+        inspect = runtime.planner.plan("free disk space")
+        if inspect.steps and inspect.steps[0].action != "inspect_disk_space":
+            return ValidateCheck(
+                check_id,
+                title,
+                False,
+                "free disk space no longer maps to inspect_disk_space.",
+            )
+        decision = approve_all(plan)
+        results = runtime.broker.execute_plan(
+            plan,
+            decision,
+            dry_run=True,
+            hard_confirmed_step_ids=hard_confirm_ids_for(plan, True),
+        )
+        if not all(result.ok and result.dry_run for result in results):
+            failed = [result.step_id for result in results if not (result.ok and result.dry_run)]
+            return ValidateCheck(
+                check_id,
+                title,
+                False,
+                f"Dry-run failed for steps: {', '.join(failed)}",
+            )
+        return ValidateCheck(
+            check_id,
+            title,
+            True,
+            f"Plan {plan.id} inspects then dry-runs Recycle Bin and TEMP cleanup.",
+        )
+    except Exception as exc:  # noqa: BLE001
         return ValidateCheck(check_id, title, False, str(exc))
 
 

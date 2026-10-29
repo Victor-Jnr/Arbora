@@ -38,6 +38,7 @@ def test_load_bundled_workflow_packs():
     assert "inspect-timezone" in ids
     assert "open-workday-folder" in ids
     assert "start-workday" in ids
+    assert "safe-disk-cleanup" in ids
     assert "inspect-theme" in ids
     assert "inspect-identity" in ids
     assert "inspect-firewall" in ids
@@ -373,6 +374,22 @@ def test_open_workday_folder_workflow_pack_matches():
     assert all(step.adapter == "files" for step in plan.steps)
     assert plan.steps[0].sensitivity.value == "read"
     assert plan.steps[1].sensitivity.value == "mutate"
+
+
+def test_safe_disk_cleanup_workflow_pack_matches():
+    pack = match_workflow_pack("run safe disk cleanup pack")
+    assert pack is not None
+    assert pack.id == "safe-disk-cleanup"
+    plan = pack.to_plan("run safe disk cleanup pack")
+    assert plan is not None
+    assert [step.action for step in plan.steps] == [
+        "inspect_recycle_bin",
+        "inspect_user_temp",
+        "empty_recycle_bin",
+        "clean_user_temp",
+    ]
+    assert plan.has_hard_confirmation_steps is True
+    assert all(step.halt_on_failure for step in plan.steps)
 
 
 def test_start_workday_workflow_pack_matches():
