@@ -399,7 +399,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 112 | **Product status honesty** | ✅ README / NEXT / prototype describe private-tester MVP, not vision-only Stage 1 |
-| 113 | **Workday open folder** | Workday start lists and opens ArboraWorkday; focus halt_on_failure; open-folder journey stays separate |
+| 113 | **Workday open folder** | ✅ Workday start lists and opens ArboraWorkday; focus halt_on_failure; open-folder journey stays separate |
 | 114 | **Safe disk cleanup** | Separate hard-confirmed Recycle Bin + TEMP cleanup; diagnose and inspect_disk_space stay read-only |
 
 ## Non-negotiables (do not drift)

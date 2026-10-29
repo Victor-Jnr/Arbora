@@ -624,6 +624,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 125 | [Workday start opens the work folder](documentation/125-workday-open-folder.md) |
 | 124 | [Private-tester MVP status honesty](documentation/124-status-private-tester-mvp.md) |
 | 123 | [Color filters inspect](documentation/123-inspect-color-filters.md) |
 | 122 | [Mouse Keys inspect](documentation/122-inspect-mouse-keys.md) |

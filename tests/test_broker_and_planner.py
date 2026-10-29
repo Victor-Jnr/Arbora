@@ -35,8 +35,17 @@ def test_workday_plan_shape():
     assert plan.steps
     assert any(step.adapter == "desktop" for step in plan.steps)
     assert any(step.action == "write_text" for step in plan.steps)
+    assert any(step.action == "open_in_explorer" for step in plan.steps)
+    launch = next(step for step in plan.steps if step.action == "launch_app")
+    focus = next(step for step in plan.steps if step.action == "focus_window")
+    assert launch.halt_on_failure is True
+    assert focus.halt_on_failure is True
     assert "workday" in plan.rationale.lower()
     assert "read" in plan.rationale.lower()
+    folder_only = runtime.planner.plan("open my workday folder")
+    assert [step.action for step in folder_only.steps] == ["list_directory", "open_in_explorer"]
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "open_in_explorer" for step in diagnose.steps)
 
 
 def test_workday_alt_phrasing():
@@ -1566,7 +1575,9 @@ def test_open_explorer_desktop_folder():
     assert "Downloads" not in work_path
     start = runtime.planner.plan("start my workday")
     assert start.steps[0].action == "list_running_apps"
-    assert not any(step.action == "open_in_explorer" for step in start.steps)
+    assert any(step.action == "open_in_explorer" for step in start.steps)
+    start_open = next(step for step in start.steps if step.action == "open_in_explorer")
+    assert start_open.args["path"] == work_path
 
 
 def test_find_files_journey_is_read_only():

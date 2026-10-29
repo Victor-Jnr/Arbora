@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 125 | [Workday start opens the work folder](125-workday-open-folder.md) | 2026-10-29 | Start workday lists and opens ArboraWorkday; focus halt_on_failure |
 | 124 | [Private-tester MVP status honesty](124-status-private-tester-mvp.md) | 2026-10-29 | README and run notes describe private-tester MVP, not vision-only Stage 1 |
 | 123 | [Color filters inspect](123-inspect-color-filters.md) | 2026-10-28 | Read-only ColorFiltering Active; high contrast stays inspect_high_contrast |
 | 122 | [Mouse Keys inspect](122-inspect-mouse-keys.md) | 2026-10-28 | Read-only MouseKeys Flags bit 0; no MaximumSpeed dump |

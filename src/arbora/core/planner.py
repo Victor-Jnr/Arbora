@@ -435,15 +435,17 @@ class GoalPlanner:
         )
 
     def _workday_start_plan(self, goal: str) -> Plan:
-        work_root = self._workday_root or Path.home() / "ArboraWorkday"
+        work_root = self._workday_dir()
         briefing = work_root / "morning-briefing.txt"
         return Plan(
             id=new_id("plan_"),
             goal=goal,
             rationale=(
-                "Workday setup journey (read → prepare → launch). "
+                "Workday setup journey (read → prepare → open folder → launch). "
                 "1) Observe running apps. 2) Ensure work folder + morning note. "
-                "3) Launch and focus a notes stand-in. No apps are closed."
+                "3) List and open the work folder in Explorer. "
+                "4) Launch and focus a notes stand-in (halt if launch or focus fails). "
+                "No apps are closed. Opening the folder alone stays the open-workday-folder journey."
             ),
             steps=[
                 ToolStep(
@@ -484,12 +486,31 @@ class GoalPlanner:
                 ),
                 ToolStep(
                     id=new_id("step_"),
+                    adapter="files",
+                    action="list_directory",
+                    args={"path": str(work_root)},
+                    summary=f"List files in {work_root}",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads directory listing",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="open_in_explorer",
+                    args={"path": str(work_root)},
+                    summary=f"Open {work_root} in File Explorer",
+                    sensitivity=Sensitivity.MUTATE,
+                    side_effects=("Opens a File Explorer window",),
+                ),
+                ToolStep(
+                    id=new_id("step_"),
                     adapter="desktop",
                     action="launch_app",
                     args={"name": "notepad"},
                     summary="Launch Notepad as a stand-in for your notes app",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("Starts a process",),
+                    halt_on_failure=True,
                 ),
                 ToolStep(
                     id=new_id("step_"),
@@ -499,6 +520,7 @@ class GoalPlanner:
                     summary="Focus the Notepad window if it is open",
                     sensitivity=Sensitivity.MUTATE,
                     side_effects=("Brings an existing window to the foreground",),
+                    halt_on_failure=True,
                 ),
             ],
         )

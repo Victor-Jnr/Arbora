@@ -152,4 +152,5 @@ def test_open_workday_folder_uses_workday_preference(tmp_path: Path):
     assert str(custom) in plan.steps[-1].args["path"]
     start = runtime2.planner.plan("start my workday")
     assert start.steps[0].action == "list_running_apps"
-    assert not any(step.action == "open_in_explorer" for step in start.steps)
+    start_open = next(step for step in start.steps if step.action == "open_in_explorer")
+    assert str(custom) in start_open.args["path"]

@@ -280,6 +280,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `workflows/inspect-color-filters.json` | Bundled read-only color filters inspect pack |
 | `documentation/123-inspect-color-filters.md` | Change doc for color filters inspect |
 | `documentation/124-status-private-tester-mvp.md` | Change doc for private-tester MVP status wording |
+| `workflows/start-workday.json` | Bundled workday start pack (open folder + halt on focus) |
+| `documentation/125-workday-open-folder.md` | Change doc for workday start opening the work folder |
 
 ---
 
@@ -943,6 +945,21 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `CHANGELOG.md` | File-role one-liner for prototype notes |
 | `documentation/124-status-private-tester-mvp.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 124 |
+| `README.md` | Documentation latest table |
+
+## 125 — Workday start opens the work folder (2026-10-29)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Workday start lists and opens ArboraWorkday; launch/focus halt_on_failure |
+| `workflows/start-workday.json` | Bundled start-workday pack |
+| `tests/test_broker_and_planner.py` | Start workday opens folder; open-folder journey stays short |
+| `tests/test_preferences.py` | Start workday uses workday_folder preference for Explorer |
+| `tests/test_workflow_packs.py` | Pack match for start-workday |
+| `docs/NEXT.md` | Marked P37 plate 113 done |
+| `docs/sandbox.md` | Documented start my workday as a sandbox dry-run goal |
+| `documentation/125-workday-open-folder.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 125 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
