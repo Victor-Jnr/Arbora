@@ -27,7 +27,7 @@ from arbora.workflows.packs import load_workflow_packs, workflow_pack_rows
 
 
 BANNER = f"""
-Arbora v{__version__} — Stage 1 prototype
+Arbora v{__version__} — private-tester MVP
 Models propose; the permission broker disposes.
 
 Commands:
