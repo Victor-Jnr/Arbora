@@ -97,6 +97,7 @@ Try goals like:
   foreground window
   defender status
   free disk space
+  free up disk space
   how much ram
   power plan
   cpu load

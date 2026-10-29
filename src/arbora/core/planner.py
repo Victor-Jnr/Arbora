@@ -235,6 +235,8 @@ class GoalPlanner:
             return self._mouse_keys_plan(text)
         if self._looks_like_color_filters(lower):
             return self._color_filters_plan(text)
+        if self._looks_like_disk_cleanup(lower):
+            return self._disk_cleanup_plan(text)
         if self._looks_like_diagnostic(lower):
             return self._diagnostic_plan(text)
         if self._looks_like_dev_setup(lower):
@@ -1908,7 +1910,8 @@ class GoalPlanner:
             rationale=(
                 "PC troubleshooting journey — read-only diagnostics only. "
                 "Reports disk, memory, and basic network reachability. "
-                "No repairs, deletes, or registry changes; approve a separate plan for fixes."
+                "No repairs, deletes, or registry changes; "
+                "ask to free up disk space for a separate hard-confirm cleanup."
             ),
             steps=[
                 ToolStep(
@@ -1989,6 +1992,60 @@ class GoalPlanner:
                     summary="List running applications for context",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Observes process list",),
+                ),
+            ],
+        )
+
+    def _disk_cleanup_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Safe disk cleanup journey — inspect Recycle Bin and user TEMP first, "
+                "then empty them only with a fresh hard confirmation. "
+                "Does not format volumes, run chkdsk, or delete old Downloads "
+                "(that stays the old-downloads journey). Diagnose stays read-only."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="inspect_recycle_bin",
+                    args={},
+                    summary="Read-only: list Recycle Bin item names",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Recycle Bin names via Shell.Application",),
+                    halt_on_failure=True,
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="inspect_user_temp",
+                    args={},
+                    summary="Read-only: list top-level files in the user TEMP folder",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads names and sizes in %TEMP%",),
+                    halt_on_failure=True,
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="empty_recycle_bin",
+                    args={},
+                    summary="Empty the Recycle Bin (permanent)",
+                    sensitivity=Sensitivity.DESTRUCTIVE,
+                    side_effects=("Permanently deletes Recycle Bin contents",),
+                    halt_on_failure=True,
+                ),
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="files",
+                    action="clean_user_temp",
+                    args={},
+                    summary="Delete top-level files in user TEMP (directories kept)",
+                    sensitivity=Sensitivity.DESTRUCTIVE,
+                    side_effects=("Permanently deletes files in %TEMP%",),
+                    halt_on_failure=True,
                 ),
             ],
         )
@@ -4283,6 +4340,10 @@ class GoalPlanner:
                 "wipe",
                 "largest folder",
                 "biggest folder",
+                "free up disk",
+                "clean up disk",
+                "disk cleanup",
+                "safe disk cleanup",
             )
         ):
             return False
@@ -5318,7 +5379,52 @@ class GoalPlanner:
         )
 
     @staticmethod
+    def _looks_like_disk_cleanup(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "empty old download",
+                "recycle bin",
+                "clean temp",
+                "empty temp",
+                "what's in temp",
+                "whats in temp",
+                "chkdsk",
+                "format-volume",
+                "format c",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "free up disk space",
+                "free up disk",
+                "clean up disk space",
+                "clean up disk",
+                "safe disk cleanup",
+                "disk cleanup",
+                "safe repair for disk",
+            )
+        )
+
+    @staticmethod
     def _looks_like_diagnostic(lower: str) -> bool:
+        if any(
+            phrase in lower
+            for phrase in (
+                "free up disk",
+                "clean up disk",
+                "disk cleanup",
+                "safe disk cleanup",
+                "empty recycle",
+                "clean temp",
+                "empty temp",
+            )
+        ):
+            return False
         return any(
             phrase in lower
             for phrase in (

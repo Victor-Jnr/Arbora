@@ -1,0 +1,48 @@
+{
+  "id": "safe-disk-cleanup",
+  "name": "Safe disk cleanup",
+  "description": "Inspect Recycle Bin and user TEMP, then empty them with hard confirmation. Does not format volumes or delete old Downloads.",
+  "goal_phrases": [
+    "safe disk cleanup pack",
+    "run safe disk cleanup pack"
+  ],
+  "rationale": "Workflow pack: inspect then hard-confirm Recycle Bin and TEMP cleanup.",
+  "steps": [
+    {
+      "adapter": "files",
+      "action": "inspect_recycle_bin",
+      "args": {},
+      "summary": "Read Recycle Bin item names",
+      "sensitivity": "read",
+      "side_effects": ["Reads Recycle Bin names via Shell.Application"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "files",
+      "action": "inspect_user_temp",
+      "args": {},
+      "summary": "List top-level files in user TEMP",
+      "sensitivity": "read",
+      "side_effects": ["Reads names and sizes in %TEMP%"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "files",
+      "action": "empty_recycle_bin",
+      "args": {},
+      "summary": "Empty the Recycle Bin (permanent)",
+      "sensitivity": "destructive",
+      "side_effects": ["Permanently deletes Recycle Bin contents"],
+      "halt_on_failure": true
+    },
+    {
+      "adapter": "files",
+      "action": "clean_user_temp",
+      "args": {},
+      "summary": "Delete top-level files in user TEMP (directories kept)",
+      "sensitivity": "destructive",
+      "side_effects": ["Permanently deletes files in %TEMP%"],
+      "halt_on_failure": true
+    }
+  ]
+}

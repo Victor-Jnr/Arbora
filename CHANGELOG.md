@@ -282,6 +282,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/124-status-private-tester-mvp.md` | Change doc for private-tester MVP status wording |
 | `workflows/start-workday.json` | Bundled workday start pack (open folder + halt on focus) |
 | `documentation/125-workday-open-folder.md` | Change doc for workday start opening the work folder |
+| `workflows/safe-disk-cleanup.json` | Bundled inspect-then-hard-confirm Recycle Bin + TEMP cleanup pack |
+| `documentation/126-safe-disk-cleanup.md` | Change doc for safe disk cleanup repair plan |
 
 ---
 
@@ -960,6 +962,23 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented start my workday as a sandbox dry-run goal |
 | `documentation/125-workday-open-folder.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 125 |
+| `README.md` | Documentation latest table |
+
+## 126 — Safe disk cleanup repair plan (2026-10-29)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/core/planner.py` | Safe disk cleanup journey; diagnose and inspect_disk_space stay read-only |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `src/arbora/cli/validate.py` | Dry-run check for the cleanup repair plan |
+| `workflows/safe-disk-cleanup.json` | Bundled safe-disk-cleanup pack |
+| `tests/test_broker_and_planner.py` | Cleanup vs diagnose / inspect disk / empty temp / recycle |
+| `tests/test_workflow_packs.py` | Pack match for safe-disk-cleanup |
+| `tests/test_validate.py` | Sixth MVP check for disk cleanup repair |
+| `docs/NEXT.md` | Marked P37 plate 114 done |
+| `docs/sandbox.md` | Documented free up disk space as a sandbox dry-run goal |
+| `documentation/126-safe-disk-cleanup.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 126 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

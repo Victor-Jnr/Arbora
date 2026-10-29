@@ -193,6 +193,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `defender status` | Read-only Defender on/off and signature date |
 | `start my workday` | Briefing, open work folder, launch Notepad (halt if focus fails) |
 | `free disk space` | Read-only local disk free/total GB |
+| `free up disk space` | Inspect Recycle Bin and TEMP, then hard-confirm cleanup |
 | `how much ram` | Read-only physical RAM free/total |
 | `power plan` | Read-only active power plan name |
 | `cpu load` | Read-only CPU name, cores, and load |

@@ -1611,6 +1611,36 @@ def test_clean_temp_requires_hard_confirm():
     assert plan.has_hard_confirmation_steps is True
 
 
+def test_disk_cleanup_is_hard_confirmed_repair():
+    runtime = _runtime()
+    plan = runtime.planner.plan("free up disk space")
+    assert [step.action for step in plan.steps] == [
+        "inspect_recycle_bin",
+        "inspect_user_temp",
+        "empty_recycle_bin",
+        "clean_user_temp",
+    ]
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert plan.steps[1].sensitivity == Sensitivity.READ
+    assert plan.steps[2].sensitivity == Sensitivity.DESTRUCTIVE
+    assert plan.steps[3].sensitivity == Sensitivity.DESTRUCTIVE
+    assert plan.has_hard_confirmation_steps is True
+    assert all(step.halt_on_failure for step in plan.steps)
+    named = runtime.planner.plan("clean up disk space")
+    assert named.steps[0].action == "inspect_recycle_bin"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(
+        step.action in {"empty_recycle_bin", "clean_user_temp"} for step in diagnose.steps
+    )
+    inspect = runtime.planner.plan("free disk space")
+    assert [step.action for step in inspect.steps] == ["inspect_disk_space"]
+    temp = runtime.planner.plan("empty temp")
+    assert [step.action for step in temp.steps] == ["inspect_user_temp", "clean_user_temp"]
+    recycle = runtime.planner.plan("empty recycle bin")
+    assert recycle.steps[-1].action == "empty_recycle_bin"
+    assert len(recycle.steps) == 2
+
+
 def test_open_chrome_uses_launch_alias():
     runtime = _runtime()
     plan = runtime.planner.plan("open chrome")
