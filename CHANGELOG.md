@@ -30,7 +30,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/012-emergency-stop.md` | Change doc for emergency stop |
 | `documentation/013-journey-hardening.md` | Change doc for priority journey hardening |
 | `documentation/014-richer-browser-actions.md` | Change doc for richer browser actions |
-| `docs/prototype.md` | How to run and extend the Stage 1 prototype |
+| `docs/prototype.md` | How to run the private-tester build |
 | `docs/NEXT.md` | Source of truth for near-term MVP build order |
 | `docs/install.md` | Private-tester Windows install guide |
 | `scripts/first_run.ps1` | One-shot venv + editable install for Windows testers |
@@ -279,6 +279,7 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/122-inspect-mouse-keys.md` | Change doc for Mouse Keys inspect |
 | `workflows/inspect-color-filters.json` | Bundled read-only color filters inspect pack |
 | `documentation/123-inspect-color-filters.md` | Change doc for color filters inspect |
+| `documentation/124-status-private-tester-mvp.md` | Change doc for private-tester MVP status wording |
 
 ---
 
@@ -927,6 +928,21 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented color filters as a sandbox dry-run goal |
 | `documentation/123-inspect-color-filters.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 123 |
+| `README.md` | Documentation latest table |
+
+## 124 — Private-tester MVP status honesty (2026-10-29)
+
+| File | Change |
+| --- | --- |
+| `README.md` | Status badge and tables: private-tester MVP, not vision-only Stage 1 |
+| `src/arbora/__init__.py` | Package docstring matches private-tester MVP |
+| `src/arbora/cli/main.py` | CLI banner matches private-tester MVP |
+| `CONTRIBUTING.md` | Contributor intro matches private-tester MVP |
+| `docs/NEXT.md` | Current position and P37 plate 112 done |
+| `docs/prototype.md` | Run notes title; next spikes point at NEXT.md |
+| `CHANGELOG.md` | File-role one-liner for prototype notes |
+| `documentation/124-status-private-tester-mvp.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 124 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)

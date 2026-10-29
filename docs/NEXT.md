@@ -18,7 +18,7 @@ When this file disagrees with casual chat notes, **this file wins**. Update it w
 
 ## Current position
 
-Arbora is past Stage 1 bootstrap and early into **Stage 2 (MVP)**.
+Arbora is past Stage 1 bootstrap. **Stage 2 MVP capability plates are done.** Stage 3 personal depth continues (everyday Windows inspects through P36; P37 closes tester-facing gaps).
 
 Already in place:
 
@@ -126,7 +126,7 @@ Already in place:
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P36).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P37).
 
 ---
 
@@ -394,6 +394,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 110 | **Mouse Keys inspect** | ✅ Read-only MouseKeys Flags bit 0; no MaximumSpeed dump |
 | 111 | **Color filters inspect** | ✅ Read-only ColorFiltering Active; high contrast stays inspect_high_contrast |
 
+### P37 — Stage 3 tester-facing product gaps
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 112 | **Product status honesty** | ✅ README / NEXT / prototype describe private-tester MVP, not vision-only Stage 1 |
+| 113 | **Workday open folder** | Workday start lists and opens ArboraWorkday; focus halt_on_failure; open-folder journey stays separate |
+| 114 | **Safe disk cleanup** | Separate hard-confirmed Recycle Bin + TEMP cleanup; diagnose and inspect_disk_space stay read-only |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -487,4 +495,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P36 plates 109–111 are done. Stage 3 personal depth continues from the root README (organisation, diagnostics, and everyday Windows control).
+P37 plates 112–114 close tester-facing gaps (status honesty, workday folder, safe disk cleanup) rather than adding more inspects.

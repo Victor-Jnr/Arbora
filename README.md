@@ -2,13 +2,13 @@
 
 **A personalised digital assistant that understands your goals, respects your control, and automates your Windows system safely.**
 
-[![Status](https://img.shields.io/badge/status-vision--stage-orange)](#project-status)
+[![Status](https://img.shields.io/badge/status-private--tester%20MVP-yellow)](#project-status)
 [![CI](https://github.com/Victor-Jnr/Arbora/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Victor-Jnr/Arbora/actions/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/platform-Windows%20first-blue)](#platform-strategy)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green)](#license)
 [![Privacy](https://img.shields.io/badge/privacy-local--first-lightgrey)](#privacy--data-ownership)
 
-> **Vision stage.** Arbora is being designed and specified. There is no installable product yet. This README is the authoritative statement of product intent, safety posture, architecture direction, MVP scope, and collaboration path.
+> **Private-tester MVP.** Arbora is runnable on Windows via `scripts/first_run.ps1` (`arbora` / `arbora-ui`). There is no signed installer yet. This README is the authoritative statement of product intent, safety posture, architecture direction, MVP scope, and collaboration path.
 
 ---
 
@@ -63,15 +63,15 @@ The name *Arbora* (Latin for “tree”) reflects a living system that grows wit
 
 | Dimension | Current state |
 | --- | --- |
-| Product | Vision + Stage 1 prototype |
-| Runnable application | CLI prototype (`arbora`) — not a packaged product |
+| Product | Private-tester Stage 2 MVP; Stage 3 personal depth in progress |
+| Runnable application | CLI (`arbora`) and desktop UI (`arbora-ui`) from a local venv — not a signed installer |
 | Install / setup docs | See [docs/install.md](docs/install.md), [docs/prototype.md](docs/prototype.md), and [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Near-term build order | [docs/NEXT.md](docs/NEXT.md) (source of truth for what we do next) |
 | Public API | Localhost plan-accept HTTP (`arbora serve`); optional sandbox one-shot execute; not a public internet API |
 | License | [GPL-3.0](LICENSE) |
 | Collaboration model | Open source |
 
-This repository holds the product vision plus an early Stage 1 prototype: a permission broker, Windows adapters, a rule-based planner stub, and a CLI plan → approve → execute loop. Packaging and end-user documentation will mature toward MVP.
+This repository holds the product vision plus a runnable private-tester build: a permission broker, Windows adapters, a rule-based planner (Ollama fallback for unmatched goals), CLI and desktop plan → approve → execute, and `arbora validate` for the five MVP exit criteria. Stage 2 capability plates are done. Stage 3 continues. There is still no signed end-user installer.
 
 If you are evaluating Arbora as a user, contributor, or collaborator: treat this document as the source of truth for *what we intend to build* and *what we refuse to build*.
 
@@ -523,7 +523,7 @@ Dates are intentionally omitted. Stages advance when the previous stage’s qual
 - repository bootstrap, licensing, contribution norms;
 - architecture spikes for permission broker and Windows adapters.
 
-### Stage 1 — Prototype (current)
+### Stage 1 — Prototype
 
 - CLI chat shell + planner stub;
 - first Windows tool adapters (apps, files, terminal) behind the broker;
@@ -533,15 +533,15 @@ Dates are intentionally omitted. Stages advance when the previous stage’s qual
 
 See [docs/prototype.md](docs/prototype.md) for how to run what exists today.
 
-### Stage 2 — MVP
+### Stage 2 — MVP (capability plates done)
 
 - harden adapters and error handling;
 - trusted routines + hard confirmation classes;
 - audit log and dry-run/preview paths;
 - provider-agnostic model wiring;
-- packaging for early private testers.
+- packaging for early private testers (`scripts/first_run.ps1` — not a signed installer).
 
-### Stage 3 — Personal depth
+### Stage 3 — Personal depth (in progress)
 
 - stronger preference learning (opt-in);
 - richer research and organisation workflows;
@@ -599,24 +599,22 @@ Arbora is failing when:
 
 ---
 
-## Repository layout (proposed)
-
-As implementation begins, the repository is expected to grow toward a structure similar to:
+## Repository layout
 
 ```text
 arbora/
-  README.md                 # this vision document
+  README.md                 # this vision and status document
   LICENSE                   # GPL-3.0
   CHANGELOG.md              # per-file roles and one-line change summaries
   documentation/            # numbered commit change documents (NNN-*.md)
-  docs/                     # design notes, ADRs, prototype notes
+  docs/                     # design notes, install, prototype run notes
   apps/                     # desktop shell / UI
-  src/arbora/               # Stage 1 Python package (core, adapters, memory, providers, cli)
+  src/arbora/               # Python package (core, adapters, memory, providers, cli)
   tests/                    # unit, integration, safety regression tests
-  scripts/                  # developer and release helpers
+  scripts/                  # developer and private-tester helpers
 ```
 
-Exact language and package boundaries continue to evolve in Stage 1. What must not change casually is the **permission broker boundary**.
+Exact language and package boundaries can still evolve. What must not change casually is the **permission broker boundary**.
 
 ---
 
@@ -626,6 +624,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 124 | [Private-tester MVP status honesty](documentation/124-status-private-tester-mvp.md) |
 | 123 | [Color filters inspect](documentation/123-inspect-color-filters.md) |
 | 122 | [Mouse Keys inspect](documentation/122-inspect-mouse-keys.md) |
 | 121 | [Toggle Keys inspect](documentation/121-inspect-toggle-keys.md) |
@@ -836,7 +835,7 @@ The GitHub repository is **[Victor-Jnr/Arbora](https://github.com/Victor-Jnr/Arb
 | **Adapter** | Integration module for a specific system surface (files, browser, terminal, etc.) |
 | **Local-first** | Personal data and defaults live on-device; network/cloud features are opt-in |
 | **Provider-agnostic** | Core product works with interchangeable local/cloud model backends |
-| **Vision stage** | Design and intent documented; product not yet installable |
+| **Private-tester MVP** | Runnable Windows build via first-run script; no signed installer |
 | **MVP** | Smallest coherent product that proves usefulness under the safety contract |
 
 ---

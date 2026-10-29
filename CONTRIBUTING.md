@@ -1,6 +1,6 @@
 # Contributing to Arbora
 
-Thanks for your interest. Arbora is early (Stage 1 prototype). The [README](README.md) is still the north star for product intent and the safety contract.
+Thanks for your interest. Arbora is a private-tester MVP (no signed installer yet). The [README](README.md) is still the north star for product intent and the safety contract.
 
 ## Git workflow
 

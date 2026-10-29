@@ -1,4 +1,4 @@
-# Stage 1 prototype notes
+# Private-tester run notes
 
 ## What exists
 
@@ -90,14 +90,4 @@ arbora-ui
 
 ## Next spikes
 
-Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Current top plates:
-
-- ~~Packaging + first-run for private testers~~ (done — see `scripts/first_run.ps1`)
-- ~~`arbora doctor`~~ (done)
-- ~~Trust UX (revoke / audit)~~ (done)
-- ~~Emergency stop~~ (done)
-- ~~Journey hardening~~ (done)
-- ~~Richer broker-gated browser actions~~ (done)
-- ~~File undo where feasible~~ (done)
-- Opt-in cloud provider (P2) — set `ARBORA_OPENAI_API_KEY` for `openai`
-- Workflow packs — see `workflows/README.md` and `/workflows`
+Near-term build order lives in **[NEXT.md](NEXT.md)** (source of truth). Stage 2 MVP capability plates are done. Current top plates are P37 (tester-facing gaps).
