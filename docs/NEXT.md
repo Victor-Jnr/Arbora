@@ -18,7 +18,7 @@ When this file disagrees with casual chat notes, **this file wins**. Update it w
 
 ## Current position
 
-Arbora is past Stage 1 bootstrap. **Stage 2 MVP capability plates are done.** Stage 3 personal depth continues (everyday Windows inspects through P38).
+Arbora is past Stage 1 bootstrap. **Stage 2 MVP capability plates are done.** Stage 3 personal depth continues (everyday Windows inspects through P38; P38 transparency and accent color is done).
 
 Already in place:
 
@@ -409,7 +409,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | --- | --- | --- |
 | 115 | **Transparency inspect** | ✅ Read-only EnableTransparency; theme stays inspect_theme |
 | 116 | **Start/taskbar accent inspect** | ✅ Read-only Personalize ColorPrevalence; no AccentColor dump |
-| 117 | **Title-bar accent inspect** | Read-only DWM ColorPrevalence; Start/taskbar stays inspect_start_accent |
+| 117 | **Title-bar accent inspect** | ✅ Read-only DWM ColorPrevalence; Start/taskbar stays inspect_start_accent |
 
 ## Non-negotiables (do not drift)
 
@@ -504,4 +504,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P38 plates 115–117 continue Stage 3 from the root README (organisation, diagnostics, and everyday Windows control).
+P38 plates 115–117 are done. P39 continues Stage 3 from the root README (organisation, diagnostics, and everyday Windows control).

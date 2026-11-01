@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 129 | [Title-bar accent inspect](129-inspect-title-accent.md) | 2026-11-01 | Read-only DWM ColorPrevalence; Start/taskbar stays inspect_start_accent |
 | 128 | [Start/taskbar accent inspect](128-inspect-start-accent.md) | 2026-11-01 | Read-only Personalize ColorPrevalence; no AccentColor dump |
 | 127 | [Transparency inspect](127-inspect-transparency.md) | 2026-11-01 | Read-only EnableTransparency; theme stays inspect_theme |
 | 126 | [Safe disk cleanup](126-safe-disk-cleanup.md) | 2026-10-29 | Hard-confirmed Recycle Bin + TEMP cleanup; diagnose stays read-only |

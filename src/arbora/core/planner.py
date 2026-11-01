@@ -239,6 +239,8 @@ class GoalPlanner:
             return self._transparency_plan(text)
         if self._looks_like_start_accent(lower):
             return self._start_accent_plan(text)
+        if self._looks_like_title_accent(lower):
+            return self._title_accent_plan(text)
         if self._looks_like_disk_cleanup(lower):
             return self._disk_cleanup_plan(text)
         if self._looks_like_diagnostic(lower):
@@ -1945,6 +1947,27 @@ class GoalPlanner:
                     summary="Read-only: accent on Start and taskbar (no AccentColor dump)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Themes Personalize ColorPrevalence only",),
+                )
+            ],
+        )
+
+    def _title_accent_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Title-bar accent inspect journey — read-only DWM ColorPrevalence. "
+                "Does not dump ColorizationColor. Start/taskbar stays inspect_start_accent."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_title_accent",
+                    args={},
+                    summary="Read-only: accent on title bars (no ColorizationColor dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads DWM ColorPrevalence only",),
                 )
             ],
         )
@@ -5487,6 +5510,42 @@ class GoalPlanner:
                 "is accent on start",
                 "is accent on the taskbar",
                 "inspect start accent",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_title_accent(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable accent",
+                "enable accent",
+                "turn off accent",
+                "turn on accent",
+                "accent on start",
+                "accent on the taskbar",
+                "dark mode",
+                "color filter",
+                "transparency",
+                "colorizationcolor",
+                "accentcolor",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "accent on title bars",
+                "accent on title bar",
+                "accent color on title bars",
+                "accent color on title bar",
+                "show accent color on title bars",
+                "show accent color on title bar",
+                "is accent on title bars",
+                "is accent on title bar",
+                "inspect title accent",
             )
         )
 

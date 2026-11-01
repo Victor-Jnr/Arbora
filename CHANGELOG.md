@@ -288,6 +288,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/127-inspect-transparency.md` | Change doc for transparency inspect |
 | `workflows/inspect-start-accent.json` | Bundled read-only Start/taskbar accent inspect pack |
 | `documentation/128-inspect-start-accent.md` | Change doc for Start/taskbar accent inspect |
+| `workflows/inspect-title-accent.json` | Bundled read-only title-bar accent inspect pack |
+| `documentation/129-inspect-title-accent.md` | Change doc for title-bar accent inspect |
 
 ---
 
@@ -1019,6 +1021,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented Start/taskbar accent as a sandbox dry-run goal |
 | `documentation/128-inspect-start-accent.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 128 |
+| `README.md` | Documentation latest table |
+
+## 129 — Title-bar accent inspect (2026-11-01)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_title_accent` (DWM ColorPrevalence; no ColorizationColor dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_title_accent` |
+| `src/arbora/core/planner.py` | Title-bar accent inspect journey; Start/taskbar stays inspect_start_accent |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-title-accent.json` | Bundled inspect-title-accent pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no ColorizationColor/AccentColor; secrets withheld |
+| `tests/test_broker_and_planner.py` | Title accent vs diagnose / enable / theme / Start accent / transparency |
+| `tests/test_workflow_packs.py` | Pack match for inspect-title-accent |
+| `docs/NEXT.md` | Marked P38 plate 117 done; suggested next is P39 |
+| `docs/sandbox.md` | Documented title-bar accent as a sandbox dry-run goal |
+| `documentation/129-inspect-title-accent.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 129 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
