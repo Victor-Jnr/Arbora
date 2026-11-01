@@ -1390,6 +1390,27 @@ def test_start_accent_is_read_only_inspect():
     assert not any(step.action == "inspect_start_accent" for step in title.steps)
 
 
+def test_title_accent_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("accent on title bars")
+    assert [step.action for step in plan.steps] == ["inspect_title_accent"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("show accent color on title bar")
+    assert named.steps[0].action == "inspect_title_accent"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_title_accent" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable accent")
+    assert not any(step.action == "inspect_title_accent" for step in mutate.steps)
+    theme = runtime.planner.plan("dark mode")
+    assert [step.action for step in theme.steps] == ["inspect_theme"]
+    start = runtime.planner.plan("accent on start")
+    assert [step.action for step in start.steps] == ["inspect_start_accent"]
+    transparency = runtime.planner.plan("transparency effects")
+    assert [step.action for step in transparency.steps] == ["inspect_transparency"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

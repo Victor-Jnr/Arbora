@@ -133,6 +133,7 @@ Try goals like:
   color filters
   transparency effects
   accent on start
+  accent on title bars
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

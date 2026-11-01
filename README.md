@@ -624,6 +624,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 129 | [Title-bar accent inspect](documentation/129-inspect-title-accent.md) |
 | 128 | [Start/taskbar accent inspect](documentation/128-inspect-start-accent.md) |
 | 127 | [Transparency inspect](documentation/127-inspect-transparency.md) |
 | 126 | [Safe disk cleanup](documentation/126-safe-disk-cleanup.md) |
