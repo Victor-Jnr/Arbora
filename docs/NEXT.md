@@ -408,7 +408,7 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | # | Plate | Done when |
 | --- | --- | --- |
 | 115 | **Transparency inspect** | ✅ Read-only EnableTransparency; theme stays inspect_theme |
-| 116 | **Start/taskbar accent inspect** | Read-only Personalize ColorPrevalence; no AccentColor dump |
+| 116 | **Start/taskbar accent inspect** | ✅ Read-only Personalize ColorPrevalence; no AccentColor dump |
 | 117 | **Title-bar accent inspect** | Read-only DWM ColorPrevalence; Start/taskbar stays inspect_start_accent |
 
 ## Non-negotiables (do not drift)

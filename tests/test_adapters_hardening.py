@@ -69,6 +69,7 @@ from arbora.adapters.desktop import (
     format_mouse_keys_report,
     format_color_filters_report,
     format_transparency_report,
+    format_start_accent_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -134,6 +135,7 @@ from arbora.adapters.desktop import (
     parse_mouse_keys_snapshot,
     parse_color_filters_snapshot,
     parse_transparency_snapshot,
+    parse_start_accent_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -3354,6 +3356,53 @@ def test_inspect_transparency_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_transparency", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_start_accent_dry_run():
+    result = DesktopAdapter().execute("inspect_start_accent", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "colorprevalence" in result.output.lower()
+    assert "accentcolor" in result.output.lower()
+    assert "colorizationcolor" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_start_accent_report_empty_and_values():
+    empty = parse_start_accent_snapshot("")
+    report = format_start_accent_report(empty)
+    assert "no start and taskbar accent" in report.lower()
+    on = format_start_accent_report(parse_start_accent_snapshot("STARTACCENT=1\n"))
+    assert "Accent on Start and taskbar: yes" in on
+    off = format_start_accent_report(parse_start_accent_snapshot("STARTACCENT=0\n"))
+    assert "Accent on Start and taskbar: no" in off
+    assert "accentcolor" not in on.lower()
+    assert "colorizationcolor" not in on.lower()
+
+
+def test_inspect_start_accent_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_start_accent", {}, dry_run=False)
+    assert result.ok
+    assert "no start and taskbar accent" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "colorprevalence" in command
+    assert "personalize" in command
+    assert "accentcolor" not in command
+    assert "colorizationcolor" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_start_accent_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="AccentColor=0xff ColorizationColor=1 password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_start_accent", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

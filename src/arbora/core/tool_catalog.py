@@ -71,6 +71,7 @@ ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
             "inspect_mouse_keys",
             "inspect_color_filters",
             "inspect_transparency",
+            "inspect_start_accent",
             "inspect_audio_device",
             "inspect_installed_apps",
             "inspect_hosts",

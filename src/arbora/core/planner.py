@@ -237,6 +237,8 @@ class GoalPlanner:
             return self._color_filters_plan(text)
         if self._looks_like_transparency(lower):
             return self._transparency_plan(text)
+        if self._looks_like_start_accent(lower):
+            return self._start_accent_plan(text)
         if self._looks_like_disk_cleanup(lower):
             return self._disk_cleanup_plan(text)
         if self._looks_like_diagnostic(lower):
@@ -1922,6 +1924,27 @@ class GoalPlanner:
                     summary="Read-only: transparency effects on/off (no theme write)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads Themes Personalize EnableTransparency only",),
+                )
+            ],
+        )
+
+    def _start_accent_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Start/taskbar accent inspect journey — read-only Personalize ColorPrevalence. "
+                "Does not dump AccentColor or DWM ColorizationColor."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_start_accent",
+                    args={},
+                    summary="Read-only: accent on Start and taskbar (no AccentColor dump)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Themes Personalize ColorPrevalence only",),
                 )
             ],
         )
@@ -5427,6 +5450,43 @@ class GoalPlanner:
                 "inspect transparency",
                 "is transparency on",
                 "are transparency effects on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_start_accent(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable accent",
+                "enable accent",
+                "turn off accent",
+                "turn on accent",
+                "title bar",
+                "titlebar",
+                "dark mode",
+                "color filter",
+                "transparency",
+                "taskbar alignment",
+                "accentcolor",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "accent on start",
+                "accent on the taskbar",
+                "accent on start and taskbar",
+                "accent color on start",
+                "accent color on taskbar",
+                "show accent color on start",
+                "show accent color on taskbar",
+                "is accent on start",
+                "is accent on the taskbar",
+                "inspect start accent",
             )
         )
 

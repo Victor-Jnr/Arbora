@@ -228,6 +228,7 @@ These have deterministic planner journeys (echo provider is enough):
 | `mouse keys` | Read-only Mouse Keys on/off |
 | `color filters` | Read-only color filters on/off |
 | `transparency effects` | Read-only transparency effects on/off |
+| `accent on start` | Read-only accent on Start and taskbar |
 | `type hello in notepad` | Launch / focus / type (halt if focus fails); dry-run does not type |
 
 ---

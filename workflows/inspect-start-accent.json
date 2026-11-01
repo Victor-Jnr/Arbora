@@ -1,0 +1,22 @@
+{
+  "id": "inspect-start-accent",
+  "name": "Inspect Start Accent",
+  "description": "Read-only Themes Personalize ColorPrevalence. No AccentColor or DWM ColorizationColor dump.",
+  "goal_phrases": [
+    "inspect start accent pack",
+    "run inspect start accent pack"
+  ],
+  "rationale": "Workflow pack: read-only accent on Start and taskbar (Personalize ColorPrevalence only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_start_accent",
+      "args": {},
+      "summary": "Read accent on Start and taskbar on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Themes Personalize ColorPrevalence only"
+      ]
+    }
+  ]
+}
