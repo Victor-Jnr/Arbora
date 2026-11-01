@@ -132,6 +132,7 @@ Try goals like:
   mouse keys
   color filters
   transparency effects
+  accent on start
   type hello in notepad
   type hello in notepad and save as hello.txt
   what's in temp

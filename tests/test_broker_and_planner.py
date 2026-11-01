@@ -1367,6 +1367,29 @@ def test_transparency_is_read_only_inspect():
     assert [step.action for step in filters.steps] == ["inspect_color_filters"]
 
 
+def test_start_accent_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("accent on start")
+    assert [step.action for step in plan.steps] == ["inspect_start_accent"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("show accent color on taskbar")
+    assert named.steps[0].action == "inspect_start_accent"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_start_accent" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable accent")
+    assert not any(step.action == "inspect_start_accent" for step in mutate.steps)
+    theme = runtime.planner.plan("dark mode")
+    assert [step.action for step in theme.steps] == ["inspect_theme"]
+    transparency = runtime.planner.plan("transparency effects")
+    assert [step.action for step in transparency.steps] == ["inspect_transparency"]
+    alignment = runtime.planner.plan("taskbar alignment")
+    assert [step.action for step in alignment.steps] == ["inspect_taskbar_alignment"]
+    title = runtime.planner.plan("accent on title bars")
+    assert not any(step.action == "inspect_start_accent" for step in title.steps)
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

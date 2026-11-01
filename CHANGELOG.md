@@ -286,6 +286,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/126-safe-disk-cleanup.md` | Change doc for safe disk cleanup repair plan |
 | `workflows/inspect-transparency.json` | Bundled read-only transparency effects inspect pack |
 | `documentation/127-inspect-transparency.md` | Change doc for transparency inspect |
+| `workflows/inspect-start-accent.json` | Bundled read-only Start/taskbar accent inspect pack |
+| `documentation/128-inspect-start-accent.md` | Change doc for Start/taskbar accent inspect |
 
 ---
 
@@ -999,6 +1001,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented transparency as a sandbox dry-run goal |
 | `documentation/127-inspect-transparency.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 127 |
+| `README.md` | Documentation latest table |
+
+## 128 — Start/taskbar accent inspect (2026-11-01)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_start_accent` (Personalize ColorPrevalence; no AccentColor dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_start_accent` |
+| `src/arbora/core/planner.py` | Start/taskbar accent inspect journey; title bars stay later |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-start-accent.json` | Bundled inspect-start-accent pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no AccentColor/ColorizationColor; secrets withheld |
+| `tests/test_broker_and_planner.py` | Start accent vs diagnose / enable / theme / transparency / taskbar alignment |
+| `tests/test_workflow_packs.py` | Pack match for inspect-start-accent |
+| `docs/NEXT.md` | Marked P38 plate 116 done |
+| `docs/sandbox.md` | Documented Start/taskbar accent as a sandbox dry-run goal |
+| `documentation/128-inspect-start-accent.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 128 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
