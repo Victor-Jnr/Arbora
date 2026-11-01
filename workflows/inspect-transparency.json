@@ -1,0 +1,22 @@
+{
+  "id": "inspect-transparency",
+  "name": "Inspect Transparency",
+  "description": "Read-only Themes Personalize EnableTransparency. No AppsUseLightTheme or AccentColor dump.",
+  "goal_phrases": [
+    "inspect transparency pack",
+    "run inspect transparency pack"
+  ],
+  "rationale": "Workflow pack: read-only transparency effects (EnableTransparency only).",
+  "steps": [
+    {
+      "adapter": "desktop",
+      "action": "inspect_transparency",
+      "args": {},
+      "summary": "Read transparency effects on/off",
+      "sensitivity": "read",
+      "side_effects": [
+        "Reads Themes Personalize EnableTransparency only"
+      ]
+    }
+  ]
+}

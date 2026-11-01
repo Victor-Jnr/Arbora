@@ -18,7 +18,7 @@ When this file disagrees with casual chat notes, **this file wins**. Update it w
 
 ## Current position
 
-Arbora is past Stage 1 bootstrap. **Stage 2 MVP capability plates are done.** Stage 3 personal depth continues (everyday Windows inspects through P36; P37 closes tester-facing gaps).
+Arbora is past Stage 1 bootstrap. **Stage 2 MVP capability plates are done.** Stage 3 personal depth continues (everyday Windows inspects through P38).
 
 Already in place:
 
@@ -122,11 +122,12 @@ Already in place:
 - read-only Toggle Keys on/off (ToggleKeys Flags bit 0 only; Sticky Keys stays inspect_sticky_keys).
 - read-only Mouse Keys on/off (MouseKeys Flags bit 0 only; no MaximumSpeed dump).
 - read-only color filters on/off (ColorFiltering Active only; high contrast stays inspect_high_contrast).
+- read-only transparency effects on/off (EnableTransparency only; theme stays inspect_theme).
 - preview then copy or move one file (overwrite refused; move can undo).
 - broker-gated screenshot / window PNG under `screenshots_folder` (default notes/screenshots).
 - read-only network adapter and IPv4 inspect (no Wi-Fi keys).
 
-Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P37).
+Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stage 3 work continues (see P4–P38).
 
 ---
 
@@ -402,6 +403,14 @@ Stage 2 MVP capability plates in [docs/NEXT.md](docs/NEXT.md) are complete. Stag
 | 113 | **Workday open folder** | ✅ Workday start lists and opens ArboraWorkday; focus halt_on_failure; open-folder journey stays separate |
 | 114 | **Safe disk cleanup** | ✅ Separate hard-confirmed Recycle Bin + TEMP cleanup; diagnose and inspect_disk_space stay read-only |
 
+### P38 — Stage 3 transparency and accent color
+
+| # | Plate | Done when |
+| --- | --- | --- |
+| 115 | **Transparency inspect** | ✅ Read-only EnableTransparency; theme stays inspect_theme |
+| 116 | **Start/taskbar accent inspect** | Read-only Personalize ColorPrevalence; no AccentColor dump |
+| 117 | **Title-bar accent inspect** | Read-only DWM ColorPrevalence; Start/taskbar stays inspect_start_accent |
+
 ## Non-negotiables (do not drift)
 
 1. Models propose; the **broker** disposes.
@@ -495,4 +504,4 @@ When those five hold without heroic setup, Stage 2 MVP is met. Then revisit Stag
 
 ## Suggested next plate
 
-P37 plates 112–114 are done. Stage 3 personal depth continues from the root README (organisation, diagnostics, and everyday Windows control).
+P38 plates 115–117 continue Stage 3 from the root README (organisation, diagnostics, and everyday Windows control).

@@ -624,6 +624,7 @@ Commit-tied change history lives in [`documentation/`](documentation/README.md).
 
 | Latest | Document |
 | --- | --- |
+| 127 | [Transparency inspect](documentation/127-inspect-transparency.md) |
 | 126 | [Safe disk cleanup](documentation/126-safe-disk-cleanup.md) |
 | 125 | [Workday start opens the work folder](documentation/125-workday-open-folder.md) |
 | 124 | [Private-tester MVP status honesty](documentation/124-status-private-tester-mvp.md) |
