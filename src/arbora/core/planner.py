@@ -235,6 +235,8 @@ class GoalPlanner:
             return self._mouse_keys_plan(text)
         if self._looks_like_color_filters(lower):
             return self._color_filters_plan(text)
+        if self._looks_like_transparency(lower):
+            return self._transparency_plan(text)
         if self._looks_like_disk_cleanup(lower):
             return self._disk_cleanup_plan(text)
         if self._looks_like_diagnostic(lower):
@@ -1899,6 +1901,27 @@ class GoalPlanner:
                     summary="Read-only: color filters on/off (no FilterType dump)",
                     sensitivity=Sensitivity.READ,
                     side_effects=("Reads ColorFiltering Active only",),
+                )
+            ],
+        )
+
+    def _transparency_plan(self, goal: str) -> Plan:
+        return Plan(
+            id=new_id("plan_"),
+            goal=goal,
+            rationale=(
+                "Transparency inspect journey — read-only EnableTransparency. "
+                "Does not dump AppsUseLightTheme or AccentColor."
+            ),
+            steps=[
+                ToolStep(
+                    id=new_id("step_"),
+                    adapter="desktop",
+                    action="inspect_transparency",
+                    args={},
+                    summary="Read-only: transparency effects on/off (no theme write)",
+                    sensitivity=Sensitivity.READ,
+                    side_effects=("Reads Themes Personalize EnableTransparency only",),
                 )
             ],
         )
@@ -3641,7 +3664,7 @@ class GoalPlanner:
             return False
         if any(
             word in lower
-            for word in ("screenshot", "screen shot", "wallpaper", "accent")
+            for word in ("screenshot", "screen shot", "wallpaper", "accent", "transparency")
         ):
             return False
         if any(
@@ -5375,6 +5398,35 @@ class GoalPlanner:
                 "inspect color filters",
                 "is color filter on",
                 "are color filters on",
+            )
+        )
+
+    @staticmethod
+    def _looks_like_transparency(lower: str) -> bool:
+        if any(word in lower for word in ("diagnos", "troubleshoot", "broken", "repair", "fix")):
+            return False
+        if any(
+            phrase in lower
+            for phrase in (
+                "disable transparency",
+                "enable transparency",
+                "turn off transparency",
+                "turn on transparency",
+                "dark mode",
+                "color filter",
+                "accent color",
+                "appsuselighttheme",
+            )
+        ):
+            return False
+        return any(
+            phrase in lower
+            for phrase in (
+                "transparency effects",
+                "transparency",
+                "inspect transparency",
+                "is transparency on",
+                "are transparency effects on",
             )
         )
 

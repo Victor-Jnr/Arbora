@@ -4,6 +4,7 @@ Numbered change documents for Arbora. Each git commit that lands meaningful work
 
 | No. | Document | Date | Summary |
 | --- | --- | --- | --- |
+| 127 | [Transparency inspect](127-inspect-transparency.md) | 2026-11-01 | Read-only EnableTransparency; theme stays inspect_theme |
 | 126 | [Safe disk cleanup](126-safe-disk-cleanup.md) | 2026-10-29 | Hard-confirmed Recycle Bin + TEMP cleanup; diagnose stays read-only |
 | 125 | [Workday start opens the work folder](125-workday-open-folder.md) | 2026-10-29 | Start workday lists and opens ArboraWorkday; focus halt_on_failure |
 | 124 | [Private-tester MVP status honesty](124-status-private-tester-mvp.md) | 2026-10-29 | README and run notes describe private-tester MVP, not vision-only Stage 1 |

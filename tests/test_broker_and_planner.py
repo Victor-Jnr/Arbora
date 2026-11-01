@@ -1348,6 +1348,25 @@ def test_color_filters_is_read_only_inspect():
     assert [step.action for step in theme.steps] == ["inspect_theme"]
 
 
+def test_transparency_is_read_only_inspect():
+    runtime = _runtime()
+    plan = runtime.planner.plan("transparency effects")
+    assert [step.action for step in plan.steps] == ["inspect_transparency"]
+    assert plan.steps[0].adapter == "desktop"
+    assert plan.steps[0].sensitivity == Sensitivity.READ
+    assert not plan.has_hard_confirmation_steps
+    named = runtime.planner.plan("is transparency on")
+    assert named.steps[0].action == "inspect_transparency"
+    diagnose = runtime.planner.plan("diagnose disk space")
+    assert not any(step.action == "inspect_transparency" for step in diagnose.steps)
+    mutate = runtime.planner.plan("enable transparency")
+    assert not any(step.action == "inspect_transparency" for step in mutate.steps)
+    theme = runtime.planner.plan("dark mode")
+    assert [step.action for step in theme.steps] == ["inspect_theme"]
+    filters = runtime.planner.plan("color filters")
+    assert [step.action for step in filters.steps] == ["inspect_color_filters"]
+
+
 def test_halt_on_failure_skips_remaining_steps(tmp_path: Path):
     runtime = _runtime(tmp_path)
 

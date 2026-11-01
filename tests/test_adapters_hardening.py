@@ -68,6 +68,7 @@ from arbora.adapters.desktop import (
     format_toggle_keys_report,
     format_mouse_keys_report,
     format_color_filters_report,
+    format_transparency_report,
     format_foreground_report,
     format_audio_device_report,
     format_installed_apps_report,
@@ -132,6 +133,7 @@ from arbora.adapters.desktop import (
     parse_toggle_keys_snapshot,
     parse_mouse_keys_snapshot,
     parse_color_filters_snapshot,
+    parse_transparency_snapshot,
     parse_foreground_snapshot,
     parse_audio_device_snapshot,
     parse_installed_apps_snapshot,
@@ -3306,6 +3308,52 @@ def test_inspect_color_filters_withholds_secret_like_output():
         "arbora.adapters.desktop.run_powershell", return_value=fake
     ):
         result = DesktopAdapter().execute("inspect_color_filters", {}, dry_run=False)
+    assert result.ok is False
+    assert "secret" in (result.error or "").lower()
+
+
+def test_inspect_transparency_dry_run():
+    result = DesktopAdapter().execute("inspect_transparency", {}, dry_run=True)
+    assert result.ok and result.dry_run
+    assert "enabletransparency" in result.output.lower()
+    assert "appsuselighttheme" in result.output.lower()
+    assert "accentcolor" in result.output.lower()
+    assert "set-itemproperty" in result.output.lower()
+
+
+def test_format_transparency_report_empty_and_values():
+    empty = parse_transparency_snapshot("")
+    report = format_transparency_report(empty)
+    assert "no transparency" in report.lower()
+    on = format_transparency_report(parse_transparency_snapshot("TRANSPARENCY=1\n"))
+    assert "Transparency effects: yes" in on
+    off = format_transparency_report(parse_transparency_snapshot("TRANSPARENCY=0\n"))
+    assert "Transparency effects: no" in off
+    assert "appsuselighttheme" not in on.lower()
+    assert "accentcolor" not in on.lower()
+
+
+def test_inspect_transparency_mocked_powershell():
+    fake = ShellOutcome(ok=True, stdout="", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ) as mocked:
+        result = DesktopAdapter().execute("inspect_transparency", {}, dry_run=False)
+    assert result.ok
+    assert "no transparency" in result.output.lower()
+    command = str(mocked.call_args[0][0]).lower()
+    assert "enabletransparency" in command
+    assert "appsuselighttheme" not in command
+    assert "accentcolor" not in command
+    assert "set-itemproperty" not in command
+
+
+def test_inspect_transparency_withholds_secret_like_output():
+    fake = ShellOutcome(ok=True, stdout="AppsUseLightTheme=0 AccentColor=0xff password=secret", stderr="")
+    with patch("arbora.adapters.desktop.require_windows", return_value=None), patch(
+        "arbora.adapters.desktop.run_powershell", return_value=fake
+    ):
+        result = DesktopAdapter().execute("inspect_transparency", {}, dry_run=False)
     assert result.ok is False
     assert "secret" in (result.error or "").lower()
 

@@ -284,6 +284,8 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `documentation/125-workday-open-folder.md` | Change doc for workday start opening the work folder |
 | `workflows/safe-disk-cleanup.json` | Bundled inspect-then-hard-confirm Recycle Bin + TEMP cleanup pack |
 | `documentation/126-safe-disk-cleanup.md` | Change doc for safe disk cleanup repair plan |
+| `workflows/inspect-transparency.json` | Bundled read-only transparency effects inspect pack |
+| `documentation/127-inspect-transparency.md` | Change doc for transparency inspect |
 
 ---
 
@@ -979,6 +981,24 @@ Per-file roles and one-line change summaries for Arbora. Update this file on eve
 | `docs/sandbox.md` | Documented free up disk space as a sandbox dry-run goal |
 | `documentation/126-safe-disk-cleanup.md` | Recorded this change set |
 | `documentation/README.md` | Indexed 126 |
+| `README.md` | Documentation latest table |
+
+## 127 — Transparency inspect (2026-11-01)
+
+| File | Change |
+| --- | --- |
+| `src/arbora/adapters/desktop.py` | Added `inspect_transparency` (EnableTransparency; no AppsUseLightTheme dump) |
+| `src/arbora/core/tool_catalog.py` | Allowed `desktop.inspect_transparency` |
+| `src/arbora/core/planner.py` | Transparency inspect journey; theme stays inspect_theme |
+| `src/arbora/cli/main.py` | Documented the example goal |
+| `workflows/inspect-transparency.json` | Bundled inspect-transparency pack |
+| `tests/test_adapters_hardening.py` | Dry-run; format; no AppsUseLightTheme/AccentColor; secrets withheld |
+| `tests/test_broker_and_planner.py` | Transparency vs diagnose / enable / dark mode / color filters |
+| `tests/test_workflow_packs.py` | Pack match for inspect-transparency |
+| `docs/NEXT.md` | Marked P38 plate 115 done |
+| `docs/sandbox.md` | Documented transparency as a sandbox dry-run goal |
+| `documentation/127-inspect-transparency.md` | Recorded this change set |
+| `documentation/README.md` | Indexed 127 |
 | `README.md` | Documentation latest table |
 
 ## 087 — Notepad type and named save (2026-09-13)
